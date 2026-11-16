@@ -1,0 +1,113 @@
+# Roadmap pratica — dal libro al Q&A valutato
+
+Principio guida: **eval-driven development**. Prima si costruisce il modo di misurare, poi si ottimizza.
+Ogni fase ha un deliverable concreto e un obiettivo di apprendimento.
+
+---
+
+## Fase 0 — Setup progetto
+
+- Inizializza il progetto con `uv`, struttura cartelle come in `docs/steering/structure.md`.
+- Tooling: `ruff` (lint + format), `mypy --strict`, `pytest`, `pre-commit`.
+- `git init` + `.gitignore` che esclude `data/` ed `eval/runs/`.
+- Variabili d'ambiente in `.env` (mai committato): `ANTHROPIC_API_KEY`.
+
+**Deliverable:** `uv run pytest` passa su un test vuoto; lint e type-check verdi.
+
+---
+
+## Fase 1 — Ingestion e ispezione
+
+1. Loader per il formato che possiedi (preferibilmente ePub).
+2. Cleaner + Structurer → `data/processed/book.json` (capitoli, sezioni, tabelle, pagine).
+3. Script di ispezione: stampa l'albero dei capitoli, conta parole per sezione, elenca le tabelle trovate.
+4. **Controlla a mano** 5–10 sezioni e tutte le tabelle chiave (zone, ore per periodo).
+
+**Apprendimento:** la qualità del RAG nasce qui. Tabelle rotte = risposte numeriche sbagliate.
+**Deliverable:** `book.json` affidabile + test sul Cleaner con esempi reali di artefatti.
+
+---
+
+## Fase 2 — Golden dataset (prima del retrieval!)
+
+1. Scrivi a mano **30 domande** iniziali coprendo tutte le categorie (`factual`, `table`, `conceptual`, `multi_hop`, `out_of_scope`, `follow_up`).
+2. Per ognuna: risposta di riferimento + sezione/span del libro che la supporta.
+2b. Tutte le domande in inglese, più ~10 messaggi `non_english` (incluse domande brevi e casi limite) per testare il language gate.
+3. Più avanti: estendi a 80–100, anche con domande sintetiche **revisionate**.
+
+**Apprendimento:** scrivere le domande ti obbliga a capire cosa significa "risposta corretta".
+**Deliverable:** `eval/datasets/golden.jsonl` + schema pydantic che lo valida.
+
+---
+
+## Fase 3 — Baseline "naive RAG" + harness di valutazione
+
+1. Chunker fixed-size (es. 500 token, overlap 50).
+2. Embedder `bge-m3`, indice in memoria con `numpy`, retrieval top-5 dense.
+3. Language gate con `lingua-py`: messaggio non inglese → avviso, nessuna query.
+3b. Generator Claude con prompt semplice + citazioni, risposte in inglese.
+4. **Eval runner**: esegue il golden set, calcola metriche di retrieval (hit rate, recall@k, MRR) e di generazione (judge), salva il run.
+5. CLI: `ask "domanda"` ed `eval run --config configs/experiments/baseline.yaml`.
+
+**Apprendimento:** avere un numero di partenza. Sarà probabilmente mediocre: va bene.
+**Deliverable:** primo run in `eval/runs/` con metriche per categoria.
+
+---
+
+## Fase 4 — Ottimizzare il retrieval (un esperimento alla volta)
+
+Ogni riga è un esperimento con la sua config; si confronta sempre con il run migliore precedente.
+
+| # | Esperimento | Ipotesi |
+|---|---|---|
+| 4.1 | Chunking structure-aware (sezioni, tabelle intatte) | Migliora `table` e `factual` |
+| 4.2 | Variazione di dimensione chunk e k | Trovare il punto ottimale |
+| 4.3 | Ibrido dense + BM25 con RRF | Migliora termini esatti ("Build 2", "LTHR") |
+| 4.4 | Query rewriting con LLM (multi-query o HyDE) | Migliora domande vaghe o formulate diversamente dal libro |
+| 4.5 | Reranker cross-encoder | Migliora la precisione dei primi 5 |
+| 4.6 | Contextual chunking | Migliora chunk ambigui |
+| 4.7 | Parent-child | Migliora `multi_hop` / `conceptual` |
+
+**Apprendimento:** capire *quale leva sposta quale metrica* e in quale categoria di domande.
+**Deliverable:** report di confronto tra run + scelta motivata della config migliore (registrata in un ADR).
+
+---
+
+## Fase 5 — Ottimizzare la generazione
+
+1. Prompt: grounding rigoroso, formato citazioni, risposta in italiano con termini originali.
+2. Gestione `out_of_scope`: rifiuto esplicito.
+3. Multi-turn: condensation della domanda di follow-up in una domanda autonoma prima del retrieval.
+3b. Metrica *gate accuracy* (deterministica) sulla categoria `non_english`.
+4. **Calibrazione del judge**: etichetta a mano ~30 risposte, misura accordo judge/umano, correggi la rubrica.
+
+**Deliverable:** faithfulness e refusal correctness misurati e affidabili.
+
+---
+
+## Fase 6 — Confronto con baseline long-context
+
+- Generator che riceve l'intero libro in contesto con prompt caching.
+- Stesso golden set: confronta qualità, costo e latenza con la miglior config RAG.
+
+**Apprendimento:** capire concretamente i trade-off RAG vs long-context.
+**Deliverable:** tabella comparativa + conclusioni in `docs/adr/`.
+
+---
+
+## Fase 7 — Interfaccia chat minima
+
+- Streamlit o Gradio che chiama la stessa `qa.answer()` (nessuna logica nella UI).
+- Mostra le citazioni espandibili (capitolo/sezione + estratto breve).
+- Pulsante 👍/👎 che salva l'interazione: diventa materiale per nuove domande del golden set.
+
+**Deliverable:** chat locale utilizzabile.
+
+---
+
+## Dopo (fuori scope ora)
+
+- Multilingua: il language gate viene sostituito da un query processor LLM (lingua di risposta + query tradotta in inglese per il retrieval) e il golden set si estende con le stesse domande in più lingue.
+- Regole del libro come codice deterministico (calcolo zone, ATP) esposte come tool.
+- Profilo atleta e onboarding.
+- Integrazione con dati di allenamento reali (Strava/Garmin).

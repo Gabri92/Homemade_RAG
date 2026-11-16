@@ -1,0 +1,28 @@
+# Book content and derivatives — never commit (copyright)
+data/
+eval/runs/
+*.epub
+*.pdf
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+dist/
+build/
+*.egg-info/
+
+# Model / embedding caches
+.cache/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
