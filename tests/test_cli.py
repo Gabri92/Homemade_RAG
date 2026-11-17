@@ -23,6 +23,20 @@ def test_dump_writes_blocks_to_output_file(
     assert "Chapter One" in output.read_text(encoding="utf-8")
 
 
+def test_dump_clean_applies_the_cleaner(
+    make_epub: Callable[[list[tuple[str, str]]], Path], tmp_path: Path
+) -> None:
+    book = make_epub(
+        [("ch01.xhtml", "<p>Scoring:</p><table><tr><td>A</td></tr><tr><td>1</td></tr></table>")]
+    )
+    output = tmp_path / "clean.txt"
+
+    result = runner.invoke(app, ["dump", str(book), "--clean", "--output", str(output)])
+
+    assert result.exit_code == 0, result.output
+    assert "1 blocks written" in result.output  # intro paragraph attached to its table
+
+
 def test_dump_rejects_missing_book(tmp_path: Path) -> None:
     result = runner.invoke(app, ["dump", str(tmp_path / "missing.epub")])
 

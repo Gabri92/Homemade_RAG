@@ -1,29 +1,38 @@
 """Command-line entry point. No logic here: parse arguments, call a module, report."""
 
+import logging
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
-from tricoach.ingest import format_blocks, load_epub
+from tricoach.ingest import clean, format_blocks, load_epub
 
 app = typer.Typer(help="Q&A assistant over The Triathlete's Training Bible.", no_args_is_help=True)
 
-DEFAULT_DUMP = Path("data/processed/blocks_dump.txt")
+PROCESSED = Path("data/processed")
 
 
 @app.callback()
 def main() -> None:
     """Keep subcommands explicit (`tricoach dump ...`) even while there is only one."""
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
 @app.command()
 def dump(
     book: Annotated[Path, typer.Argument(exists=True, dir_okay=False, help="ePub file.")],
-    output: Annotated[Path, typer.Option(help="Where to write the dump.")] = DEFAULT_DUMP,
+    cleaned: Annotated[
+        bool, typer.Option("--clean", help="Apply the Cleaner before dumping.")
+    ] = False,
+    output: Annotated[
+        Path | None,
+        typer.Option(help="Where to write the dump [default: data/processed/blocks_<stage>.txt]."),
+    ] = None,
 ) -> None:
-    """Write the raw loader output (before cleaning) to a text file for inspection."""
-    blocks = load_epub(book)
+    """Write the loader output (raw, or cleaned with --clean) to a text file for inspection."""
+    blocks = clean(load_epub(book)) if cleaned else load_epub(book)
+    output = output or PROCESSED / f"blocks_{'clean' if cleaned else 'raw'}.txt"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(format_blocks(blocks), encoding="utf-8")
     typer.echo(f"{len(blocks)} blocks written to {output}")

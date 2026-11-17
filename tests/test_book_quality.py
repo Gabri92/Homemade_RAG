@@ -6,7 +6,7 @@ Skipped automatically when the book is not in data/raw/ (it is never committed).
 import book_expectations as expected  # tests/ is on sys.path (pytest rootdir-relative import)
 import pytest
 
-from tricoach.ingest import load_epub
+from tricoach.ingest import clean, load_epub
 from tricoach.models import Block
 
 pytestmark = [
@@ -17,7 +17,14 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def blocks() -> list[Block]:
+    """Raw loader output."""
     return load_epub(expected.BOOK_PATH)
+
+
+@pytest.fixture(scope="module")
+def cleaned(blocks: list[Block]) -> list[Block]:
+    """Output after the Cleaner."""
+    return clean(blocks)
 
 
 def tables(blocks: list[Block]) -> list[Block]:
@@ -75,3 +82,37 @@ def test_book_captions_are_not_duplicated_as_paragraphs(blocks: list[Block]) -> 
     leaked = [b for b in blocks if b.kind == "paragraph" and first_word(b) in ("FIGURE", "TABLE")]
 
     assert leaked == []
+
+
+# --- finding #8: split tables (after cleaning) -------------------------------------
+
+
+def test_book_split_weekly_plans_are_one_table(cleaned: list[Block]) -> None:
+    for title in expected.SPLIT_PLAN_TABLES:
+        plan = next(t for t in tables(cleaned) if t.text.startswith(title))
+
+        assert all(week in plan.text for week in expected.SPLIT_PLAN_WEEKS), title
+
+
+def test_book_cleaner_merges_only_the_continuation_tables(
+    blocks: list[Block], cleaned: list[Block]
+) -> None:
+    assert len(tables(cleaned)) == len(tables(blocks)) - expected.CONTINUATION_TABLES
+
+
+# --- finding #9: untitled tables (after cleaning) ----------------------------------
+
+
+def test_book_no_table_is_left_without_a_title(cleaned: list[Block]) -> None:
+    untitled = [t for t in tables(cleaned) if t.text.startswith("|")]
+
+    assert untitled == []
+
+
+def test_book_cleaner_attaches_one_intro_per_untitled_table(
+    blocks: list[Block], cleaned: list[Block]
+) -> None:
+    def paragraphs(bs: list[Block]) -> int:
+        return sum(b.kind == "paragraph" for b in bs)
+
+    assert paragraphs(blocks) - paragraphs(cleaned) == expected.UNTITLED_TABLES
