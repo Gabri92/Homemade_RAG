@@ -1,6 +1,6 @@
-"""Ingestion: book file -> list of format-independent blocks.
+"""ePub loader: ePub file -> list of format-independent blocks.
 
-Only the loader knows the file format; everything downstream works on `Block`s.
+The only ingestion code that knows about ePub/HTML; everything downstream works on `Block`s.
 """
 
 from pathlib import Path
@@ -179,18 +179,3 @@ def _grid_to_markdown(rows: list[list[str]]) -> str:
 
 def _markdown_row(cells: list[str]) -> str:
     return "| " + " | ".join(cells) + " |"
-
-
-# --- dump -----------------------------------------------------------------------
-
-
-def format_blocks(blocks: list[Block]) -> str:
-    """Human-readable dump: one block per entry, tagged with kind, level and source."""
-    return "\n".join(_format_block(block) for block in blocks) + "\n"
-
-
-def _format_block(block: Block) -> str:
-    tag = block.kind if block.level is None else f"{block.kind} L{block.level}"
-    # Multi-line blocks (tables) are indented so each entry stays visually separate.
-    text = block.text.replace("\n", "\n    ")
-    return f"[{tag}] {block.source}\n    {text}"

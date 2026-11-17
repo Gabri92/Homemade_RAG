@@ -107,6 +107,11 @@ Ogni riga è un esperimento con la sua config; si confronta sempre con il run mi
 
 ## Dopo (fuori scope ora)
 
+- **Sorgenti aggiunte dall'utente** (stile NotebookLM): le regole di Loader e Cleaner sono già generiche (lavorano su semantica HTML e su `Block`), ma soglie e valori attesi sono tarati su un solo libro. Per generalizzare:
+  1. **corpus di ingestion**: alcuni ePub/PDF di editori diversi e liberi da copyright (es. Project Gutenberg, Standard Ebooks, articoli open access), ognuno con i suoi valori attesi, eseguiti come test di regressione;
+  2. **report di qualità automatico** calcolato su ogni file caricato, senza valori attesi: invarianti generiche (copertura del testo sorgente, struttura dei titoli, tabelle senza titolo, figure senza didascalia, tasso di duplicati, blocchi anomali) → avvisi all'utente quando un documento è estratto male;
+  3. **valutazione a valle**: un piccolo golden set di domande per ogni documento del corpus, perché la qualità dell'ingestion si misura alla fine dalle risposte.
+
 - **Figure con la multimodalità di Claude**: in ingestion, le immagini (prima le tabelle pubblicate come immagine, poi grafici e illustrazioni) vengono passate a Claude, che trascrive le tabelle in Markdown e descrive le figure. Il testo generato sostituisce il blocco `figure` con la sola didascalia ed è salvato in cache, così ogni immagine si paga una volta sola. Si misura come esperimento: domande del golden set che dipendono da figure, prima e dopo.
 
 - Multilingua: il language gate viene sostituito da un query processor LLM (lingua di risposta + query tradotta in inglese per il retrieval) e il golden set si estende con le stesse domande in più lingue.
