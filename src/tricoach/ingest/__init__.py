@@ -9,6 +9,7 @@ from tricoach.ingest.cleaning import (
     attach_intro_to_untitled_tables,
     clean,
     merge_continued_tables,
+    remove_pull_quotes,
 )
 from tricoach.ingest.dump import format_blocks
 from tricoach.ingest.epub import html_to_blocks, load_epub
@@ -21,4 +22,5 @@ __all__ = [
     "html_to_blocks",
     "load_epub",
     "merge_continued_tables",
+    "remove_pull_quotes",
 ]

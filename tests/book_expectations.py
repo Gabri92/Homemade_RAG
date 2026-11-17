@@ -21,6 +21,10 @@ CONTINUATION_TABLES = 4
 # Untitled tables (finding #9): questionnaire scoring tables, titled by their intro paragraph
 UNTITLED_TABLES = 4
 
+# Pull quotes (finding #4): measured against the HTML sidenotes (div.sidenote)
+SIDENOTES = 214
+PULL_QUOTES_REMOVED = 157
+
 # Figures (finding #3)
 FIGURES = 64
 FIGURES_CAPTIONED_FIGURE = 39

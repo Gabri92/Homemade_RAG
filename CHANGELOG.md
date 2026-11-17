@@ -13,6 +13,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Real-book regression tests (`tests/test_book_quality.py`, marker `book`), skipped when the book is absent.
 - `docs/ingestion-findings.md`: findings from the book inspection, with rules and regression tests.
 - Cleaner (`ingest/cleaning.py`): `merge_continued_tables` joins tables split across `<table>` elements; `attach_intro_to_untitled_tables` titles untitled tables with their intro paragraph.
+- Cleaner rule `remove_pull_quotes`: drops pull quotes that repeat a sentence of a longer nearby block (157 removed on the book, 0 body paragraphs).
 - `tricoach dump --clean`: dumps the cleaned blocks to `blocks_clean.txt` (raw dump renamed `blocks_raw.txt`).
 
 ### Fixed

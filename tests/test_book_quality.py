@@ -3,10 +3,13 @@
 Skipped automatically when the book is not in data/raw/ (it is never committed).
 """
 
+import zipfile
+
 import book_expectations as expected  # tests/ is on sys.path (pytest rootdir-relative import)
 import pytest
+from bs4 import BeautifulSoup
 
-from tricoach.ingest import clean, load_epub
+from tricoach.ingest import attach_intro_to_untitled_tables, clean, load_epub, remove_pull_quotes
 from tricoach.models import Block
 
 pytestmark = [
@@ -29,6 +32,10 @@ def cleaned(blocks: list[Block]) -> list[Block]:
 
 def tables(blocks: list[Block]) -> list[Block]:
     return [b for b in blocks if b.kind == "table"]
+
+
+def paragraphs(blocks: list[Block]) -> int:
+    return sum(b.kind == "paragraph" for b in blocks)
 
 
 def figures(blocks: list[Block]) -> list[Block]:
@@ -109,10 +116,32 @@ def test_book_no_table_is_left_without_a_title(cleaned: list[Block]) -> None:
     assert untitled == []
 
 
-def test_book_cleaner_attaches_one_intro_per_untitled_table(
-    blocks: list[Block], cleaned: list[Block]
-) -> None:
-    def paragraphs(bs: list[Block]) -> int:
-        return sum(b.kind == "paragraph" for b in bs)
+def test_book_cleaner_attaches_one_intro_per_untitled_table(blocks: list[Block]) -> None:
+    attached = attach_intro_to_untitled_tables(blocks)
 
-    assert paragraphs(blocks) - paragraphs(cleaned) == expected.UNTITLED_TABLES
+    assert paragraphs(blocks) - paragraphs(attached) == expected.UNTITLED_TABLES
+
+
+# --- finding #4: pull quotes ---------------------------------------------------------
+
+
+def sidenote_texts() -> set[tuple[str, str]]:
+    """(file name, text) of every paragraph inside a div.sidenote: the labels for #4."""
+    labels = set()
+    with zipfile.ZipFile(expected.BOOK_PATH) as book:
+        for name in (n for n in book.namelist() if n.endswith(".xhtml")):
+            soup = BeautifulSoup(book.read(name), "html.parser")
+            for p in soup.select("div.sidenote p"):
+                labels.add((name.rsplit("/", 1)[-1], " ".join(p.get_text().split())))
+    return labels
+
+
+def test_book_pull_quotes_are_removed_and_nothing_else(blocks: list[Block]) -> None:
+    kept = remove_pull_quotes(blocks)
+    removed = [b for b in blocks if b not in kept]
+    labels = sidenote_texts()
+
+    assert len(labels) == expected.SIDENOTES
+    assert len(removed) == expected.PULL_QUOTES_REMOVED
+    # precision: every removed block is a sidenote, never body text
+    assert all((b.source.rsplit("/", 1)[-1], b.text) in labels for b in removed)

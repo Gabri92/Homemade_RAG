@@ -1,4 +1,9 @@
-from tricoach.ingest import attach_intro_to_untitled_tables, clean, merge_continued_tables
+from tricoach.ingest import (
+    attach_intro_to_untitled_tables,
+    clean,
+    merge_continued_tables,
+    remove_pull_quotes,
+)
 from tricoach.models import Block
 
 CH1, CH2 = "ch01.xhtml", "ch02.xhtml"
@@ -85,6 +90,52 @@ def test_paragraph_from_another_file_is_not_attached() -> None:
     assert attach_intro_to_untitled_tables(blocks) == blocks
 
 
+# --- #4 remove_pull_quotes -------------------------------------------------------
+
+ORIGINAL = (
+    "Recovery is where fitness is built. Only experience will tell you how many warning "
+    "signs you can tolerate, but two or more warnings on waking may be enough for you to "
+    "decide to take it easy that day and skip the hard session you had planned."
+)
+PULL_QUOTE = "Two or more warnings on waking may be enough to decide to take it easy that day."
+
+
+def test_pull_quote_before_its_original_is_removed() -> None:
+    blocks = [para("Intro."), para(PULL_QUOTE), para("Other text."), para(ORIGINAL)]
+
+    assert remove_pull_quotes(blocks) == [para("Intro."), para("Other text."), para(ORIGINAL)]
+
+
+def test_pull_quote_after_its_original_is_removed() -> None:
+    assert remove_pull_quotes([para(ORIGINAL), para(PULL_QUOTE)]) == [para(ORIGINAL)]
+
+
+def test_pull_quote_of_another_file_is_kept() -> None:
+    blocks = [para(ORIGINAL, CH1), para(PULL_QUOTE, CH2)]
+
+    assert remove_pull_quotes(blocks) == blocks
+
+
+def test_similar_paragraphs_of_similar_length_are_both_kept() -> None:
+    # e.g. two workout variants that differ only in a few details
+    variant = ORIGINAL.replace("hard session", "long ride")
+
+    assert remove_pull_quotes([para(ORIGINAL), para(variant)]) == [para(ORIGINAL), para(variant)]
+
+
+def test_short_label_referenced_by_a_paragraph_is_kept() -> None:
+    label = "SIDEBAR 1.1 Evaluating Mental Toughness"
+    text = f"How patient are you? {label}, at the end of this chapter, will help you decide."
+
+    assert remove_pull_quotes([para(label), para(text)]) == [para(label), para(text)]
+
+
+def test_unrelated_short_sentence_is_kept() -> None:
+    blocks = [para("Rest is part of training."), para(ORIGINAL)]
+
+    assert remove_pull_quotes(blocks) == blocks
+
+
 # --- clean: order and idempotence ------------------------------------------------
 
 
@@ -100,7 +151,8 @@ def test_split_untitled_table_is_merged_and_titled_by_its_intro() -> None:
 
 def test_clean_is_idempotent() -> None:
     blocks = [
-        para("Intro."),
+        para(PULL_QUOTE),
+        para(ORIGINAL),
         table(WEEK1),
         table(WEEK2),
         para("How to determine rating:"),
