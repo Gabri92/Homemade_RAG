@@ -5,7 +5,7 @@ Principio: **KISS**. Un modulo per concetto, funzioni prima di classi, nessuno s
 ## Layout
 ```
 src/tricoach/
-  models.py      # dataclass: Section, Chunk, RetrievedChunk, Answer, Citation
+  models.py      # dataclass: Block, Section, Chunk, RetrievedChunk, Answer, Citation
   config.py      # settings (.env) + config esperimento (YAML -> pydantic)
   ingest.py      # ePub/PDF -> testo pulito -> sezioni -> data/processed/book.json
   chunking.py    # strategie di chunking (funzioni) + registro CHUNKERS
@@ -26,6 +26,7 @@ eval/datasets/         # golden.jsonl (committato)
 eval/runs/             # output dei run (gitignored)
 data/                  # raw/, processed/, index/ (gitignored)
 tests/                 # test_<modulo>.py, conftest.py con fixture condivise e mini-libro sintetico
+                       # test_book_quality.py + book_expectations.py: controlli sul libro reale (marker `book`)
 ```
 
 ## Regole

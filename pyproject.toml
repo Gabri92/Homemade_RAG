@@ -4,8 +4,14 @@ version = "0.1.0"
 description = "Q&A assistant over The Triathlete's Training Bible: a hands-on RAG learning project."
 requires-python = ">=3.12"
 dependencies = [
+    "beautifulsoup4>=4.15.0",
+    "ebooklib>=0.21",
     "pydantic-settings>=2.16.3",
+    "typer>=0.29.1",
 ]
+
+[project.scripts]
+tricoach = "tricoach.cli:app"
 
 [dependency-groups]
 dev = [
@@ -52,4 +58,5 @@ testpaths = ["tests"]
 addopts = "-m 'not integration'"
 markers = [
     "integration: calls real APIs or loads real models (slow, may cost money)",
+    "book: checks on the real book in data/raw/ (skipped when the book is missing)",
 ]

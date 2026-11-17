@@ -9,7 +9,7 @@ Leggi e rispetta i file di steering:
 @docs/steering/structure.md
 @docs/steering/conventions.md
 
-Riferimenti (leggili quando tocchi l'area relativa): `docs/architecture.md`, `docs/roadmap.md`, `docs/adr/`.
+Riferimenti (leggili quando tocchi l'area relativa): `docs/architecture.md`, `docs/roadmap.md`, `docs/adr/`, `docs/ingestion-findings.md` (difetti del libro e loro stato: aggiornalo quando correggi o trovi un problema di ingestion).
 
 ## Regole sempre valide
 

@@ -107,6 +107,8 @@ Ogni riga è un esperimento con la sua config; si confronta sempre con il run mi
 
 ## Dopo (fuori scope ora)
 
+- **Figure con la multimodalità di Claude**: in ingestion, le immagini (prima le tabelle pubblicate come immagine, poi grafici e illustrazioni) vengono passate a Claude, che trascrive le tabelle in Markdown e descrive le figure. Il testo generato sostituisce il blocco `figure` con la sola didascalia ed è salvato in cache, così ogni immagine si paga una volta sola. Si misura come esperimento: domande del golden set che dipendono da figure, prima e dopo.
+
 - Multilingua: il language gate viene sostituito da un query processor LLM (lingua di risposta + query tradotta in inglese per il retrieval) e il golden set si estende con le stesse domande in più lingue.
 - Regole del libro come codice deterministico (calcolo zone, ATP) esposte come tool.
 - Profilo atleta e onboarding.

@@ -23,12 +23,14 @@ uv run ruff format .                      # format
 uv run mypy src                           # type check
 uv run pytest                             # test (veloci, offline)
 uv run pytest -m integration              # test che chiamano API/modelli reali
+uv run pytest -m book                     # solo i controlli sul libro reale (girano anche con `pytest`, saltati se il libro manca)
+uv run tricoach dump data/raw/<libro>.epub  # output grezzo del loader -> data/processed/blocks_dump.txt
 uv run tricoach ingest                    # libro -> data/processed -> data/index
 uv run tricoach ask "domanda"             # Q&A singolo
 uv run tricoach eval run --config configs/experiments/<nome>.yaml
 uv run tricoach eval compare <run_a> <run_b>
 ```
-> I comandi `tricoach` saranno disponibili dalla Fase 3 della roadmap.
+> Disponibile ora: `dump`. `ingest` e `inspect` arrivano nella Fase 1, `ask` ed `eval` nella Fase 3. `uv run tricoach --help` elenca i comandi esistenti.
 
 ## Segreti e configurazione
 - `ANTHROPIC_API_KEY` e simili solo in `.env` (gitignored), letti tramite `pydantic-settings`.

@@ -15,6 +15,7 @@ Il libro contiene tre tipi di contenuto, che si comportano in modo molto diverso
 | **Prosa narrativa** | filosofia di allenamento, limitatori, recupero, tapering | Pochi problemi: è il caso ideale | Chunking per sezione, retrieval semantico |
 | **Tabelle e regole numeriche** | % delle zone su LTHR, ore settimanali per periodo/ore annue, durata dei mesocicli | Un chunker ingenuo **spezza le tabelle**; gli embedding catturano male i numeri; l'LLM tende a "interpolare" valori inventati | Estrarre le tabelle come **unità atomiche** (mai spezzate), in Markdown, con una didascalia testuale che descrive cosa contengono |
 | **Descrizioni di workout** | codici e descrizioni degli allenamenti per abilità | Molto simili tra loro → retrieval confonde workout vicini | Un chunk per workout + metadati (sport, abilità, periodo) |
+| **Figure e tabelle-immagine** | grafici, illustrazioni, alcune tabelle pubblicate come immagine | Sono pixel: un RAG testuale non ne vede il contenuto. Le tabelle-immagine sono le più critiche (numeri) | **Ora:** un blocco `figure` con la sola didascalia, per sapere che lì c'era una figura. **Futuro:** trascrizione/descrizione con la multimodalità di Claude (vedi roadmap, "Dopo") |
 
 **Regola d'oro:** quando una risposta dipende da un numero, deve venire *letteralmente* da un chunk recuperato e citato.
 In futuro (fase "coach") queste regole diventeranno **codice deterministico** (tool), e il RAG resterà per spiegare il *perché*.
