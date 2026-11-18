@@ -1,5 +1,6 @@
 """Smoke tests: each command starts, rejects bad input and reports. Logic is tested in modules."""
 
+import json
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -61,6 +62,46 @@ def test_inspect_exits_1_when_there_are_warnings(make_epub: MakeEpub) -> None:
 
     assert result.exit_code == 1
     assert "WARNING" in result.output
+
+
+def _golden_and_book(make_epub: MakeEpub, tmp_path: Path, section_id: str) -> list[str]:
+    book = tmp_path / "book.json"
+    epub = make_epub([("ch01.xhtml", "<h1>Chapter One</h1><p>First.</p>")])
+    runner.invoke(app, ["ingest", str(epub), "--output", str(book)])
+    question = {
+        "id": "q-001",
+        "question": "What comes first?",
+        "category": "factual",
+        "reference_answer": "The first paragraph.",
+        "relevant_section_ids": [section_id],
+    }
+    golden = tmp_path / "golden.jsonl"
+    golden.write_text(json.dumps(question) + "\n", encoding="utf-8")
+    return ["eval", "check", str(golden), "--book", str(book)]
+
+
+def test_eval_check_reports_counts_and_exits_0(make_epub: MakeEpub, tmp_path: Path) -> None:
+    result = runner.invoke(app, _golden_and_book(make_epub, tmp_path, "chapter-one"))
+
+    assert result.exit_code == 0, result.output
+    assert "1 questions: factual 1" in result.output
+
+
+def test_eval_check_exits_1_on_unknown_section(make_epub: MakeEpub, tmp_path: Path) -> None:
+    result = runner.invoke(app, _golden_and_book(make_epub, tmp_path, "renamed"))
+
+    assert result.exit_code == 1
+    assert "unknown section 'renamed'" in result.output
+
+
+def test_eval_check_exits_1_on_invalid_golden_file(make_epub: MakeEpub, tmp_path: Path) -> None:
+    args = _golden_and_book(make_epub, tmp_path, "chapter-one")
+    Path(args[2]).write_text("{not json\n", encoding="utf-8")
+
+    result = runner.invoke(app, args)
+
+    assert result.exit_code == 1
+    assert "Invalid JSON" in result.output
 
 
 def test_dump_rejects_missing_book(tmp_path: Path) -> None:
