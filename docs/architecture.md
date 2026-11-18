@@ -251,4 +251,4 @@ An experiment = a new config, not a code change. `index` and `llm` are passed as
 ## 9. Data and copyright
 
 - The book (`data/raw/`) and all its derivatives (`data/processed/`, `data/index/`) **must never be committed** (they are in `.gitignore`, and a pre-commit hook refuses them).
-- Strictly personal use with a legally owned copy. Public distribution would require revisiting the approach (licence or reworded content).
+- Strictly personal use with a legally owned copy. Public distribution would require revisiting the approach (licence or reworded content). The planned shared demo (`docs/steering/product.md`, "Shared demo") counts as distribution: this must be settled before its link goes out.

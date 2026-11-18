@@ -113,6 +113,8 @@ Each row is an experiment with its own config; it is always compared with the pr
 
 ## Later (out of scope for now)
 
+- **Shared demo (build in public)**: part of the product reachable through a link, no accounts (see `docs/steering/product.md`, "Shared demo"). Before it goes out: settle the copyright question and add a usage limit.
+
 - **User-added sources** (NotebookLM style): the Loader and Cleaner rules are already generic (they work on HTML semantics and on `Block`), but thresholds and expected values are tuned on a single book. To generalize:
   1. **ingestion corpus**: a few copyright-free ePubs/PDFs from different publishers (e.g. Project Gutenberg, Standard Ebooks, open-access articles), each with its own expected values, run as regression tests;
   2. **automatic quality report** computed on every uploaded file, with no expected values: generic invariants (coverage of the source text, heading structure, untitled tables, figures without captions, duplicate rate, anomalous blocks) → warnings to the user when a document is extracted badly;
