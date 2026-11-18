@@ -1,9 +1,11 @@
-# Ingestion — problemi trovati nel libro e correzioni
+# Ingestion — problemi trovati e correzioni
 
-Documento di sviluppo: raccoglie i difetti trovati ispezionando il dump del Loader (`tricoach dump`) e l'HTML dell'ePub, con la regola scelta per ciascuno e il test che ne impedisce il ritorno.
-Sorgente analizzata: *The Triathlete's Training Bible*, 5ª ed., ePub (54 documenti XHTML).
+Documento di sviluppo: raccoglie i difetti trovati ispezionando l'output della pipeline (`tricoach dump`, `tricoach inspect`) e l'HTML degli ePub, con la regola scelta per ciascuno e il test che ne impedisce il ritorno.
 
-> Nessun testo del libro qui: solo struttura, conteggi e titoli brevi.
+- **Libro di riferimento:** *The Triathlete's Training Bible*, 5ª ed., ePub (54 documenti XHTML).
+- **Corpus di generalizzazione:** tre ePub di Standard Ebooks (vedi "Test di generalizzazione").
+
+> Nessun testo dei libri qui: solo struttura, conteggi e titoli brevi.
 
 ## Correzioni
 
@@ -12,47 +14,22 @@ Sorgente analizzata: *The Triathlete's Training Bible*, 5ª ed., ePub (54 docume
 | 1 | Titoli delle tabelle persi (29 tabelle su 37): il titolo sta nel `<caption>`, il Loader leggeva solo le celle | Testo del `<caption>` come prima riga del blocco tabella | Loader | Alta | ✅ | `test_table_caption_*`, `test_book_tables_keep_their_titles` |
 | 2 | Celle unite (`rowspan`/`colspan`, 4 tabelle) spostavano i valori di colonna (es. Table 9.2) | Srotolare la griglia ripetendo il valore in ogni cella coperta: ogni riga resta autosufficiente | Loader | Alta | ✅ | `test_table_rowspan_*`, `test_table_colspan_*`, `test_book_table_9_2_rows_keep_their_period` |
 | 3 | Figure presenti solo come paragrafi-didascalia (39 figure + 5 tabelle pubblicate come immagine) | Ogni immagine diventa un blocco `figure` con la didascalia del suo contenitore; la didascalia non è più un paragrafo separato | Loader | Media | ✅ | `test_figure_*`, `test_book_figures_are_kept` |
-| 4 | Citazioni in evidenza (*pull quote*) ripetute: 157 dei 214 `div.sidenote` ripetono una frase del testo, a volte riformulata | Si rimuove un paragrafo se: è una **frase completa** di almeno 5 parole, almeno il **50%** dei suoi trigrammi di parole compare in un blocco dello **stesso file** almeno **1/0,6 volte più lungo**. Riconoscimento dal contenuto, valido per ogni formato. Restano da esaminare a mano i 57 riquadri non rimossi (vedi sotto) | Cleaner | Alta | ✅ | `test_pull_quote_*`, `test_book_pull_quotes_are_removed_and_nothing_else` |
-| 5 | Front e back matter mescolati al contenuto | Ruolo per file dai **landmarks** della `nav.xhtml`; glossario e appendici inclusi, indice analitico e bibliografia esclusi | Loader (ruolo in `Block.role`) + Structurer (`Section.include` da `INCLUDED_ROLES`: nel dubbio si include, mai l'indice analitico) | Alta | ✅ | `test_landmark_roles_*`, `test_inclusion_depends_on_the_role`, `test_book_excludes_only_non_content_parts` |
+| 4 | Citazioni in evidenza (*pull quote*) ripetute: 157 dei 214 `div.sidenote` ripetono una frase del testo, a volte riformulata | Si rimuove un paragrafo se è una **frase completa** di almeno 5 parole, se almeno il **50%** dei suoi trigrammi di parole compare in un blocco dello **stesso file**, e se è lungo al massimo il **60%** di quel blocco. Riconoscimento dal contenuto, valido per ogni formato (valutazione sotto) | Cleaner | Alta | ✅ | `test_pull_quote_*`, `test_book_pull_quotes_are_removed_and_nothing_else` |
+| 5 | Front e back matter mescolati al contenuto | Ruolo per file dai **landmarks** della `nav.xhtml` (poi esteso dalla #13); glossario e appendici inclusi, indice analitico e bibliografia esclusi | Loader (ruolo in `Block.role`) + Structurer (`Section.include` da `INCLUDED_ROLES`: nel dubbio si include, mai l'indice analitico) | Alta | ✅ | `test_landmark_types_*`, `test_inclusion_depends_on_the_role`, `test_book_excludes_only_non_content_parts` |
 | 6 | Numeri di pagina del cartaceo disponibili (360 marcatori `epub:type="pagebreak"`; etichette testuali: A, B, i–xix, 1–342; 168 a metà paragrafo) | `Block.page` = pagina dell'ultimo marcatore **prima del primo testo** del blocco (un marcatore a metà paragrafo vale per i blocchi successivi); la pagina prosegue da un file all'altro. Nelle unioni del Cleaner si tiene la pagina del primo blocco | Loader | Alta | ✅ | `test_block_takes_the_page_*`, `test_book_every_body_block_has_a_page`, `test_book_table_11_1_is_on_its_printed_page` (p. 172, verificata a mano nell'XHTML: il marcatore sta all'inizio del `<caption>`) |
 | 7 | Contenuto delle immagini non visibile a un RAG testuale | Trascrizione/descrizione con la multimodalità di Claude | Futuro (`roadmap.md`, "Dopo") | Da misurare | 💤 | — |
 | 8 | Tabelle spezzate: Table 9.3 e 9.4 sono un piano di 3 settimane pubblicato come 3 `<table>`, solo la prima con titolo (4 tabelle di continuazione) | Una tabella senza titolo che segue **immediatamente** un'altra tabella ne è la continuazione: si uniscono in un unico blocco sotto il titolo della prima. Vale per ogni formato (nei PDF le tabelle si spezzano a ogni cambio pagina) | Cleaner | Alta | ✅ | `test_untitled_tables_right_after_*`, `test_book_split_weekly_plans_are_one_table` |
 | 9 | Tabelle senza titolo (4 tabelle di punteggio dei questionari, cap. 5–6): il contesto è solo nel paragrafo che le precede; se il chunking le separa restano numeri senza significato | Se una tabella non ha titolo e il blocco **immediatamente precedente** è un **paragrafo** dello **stesso file**, quel paragrafo diventa la prima riga del blocco tabella (come un `<caption>`) e non resta come paragrafo separato | Cleaner | Alta | ✅ | `test_paragraph_before_untitled_table_*`, `test_book_no_table_is_left_without_a_title` |
 | 10 | **Glossario perso**: le 123 definizioni sono una lista di definizioni (`<dl>`/`<dt>`/`<dd>`), elemento che il Loader non leggeva (restava solo il titolo) | Ogni `<dt>` diventa un paragrafo "termine: definizione" con tutti i suoi `<dd>` | Loader | Alta | ✅ | `test_definition_list_*`, `test_book_glossary_keeps_every_definition` |
-| 11 | `praise.xhtml` (33 blocchi di recensioni promozionali) non è nei landmarks, quindi risulta `body`. I landmarks hanno anche un errore: "bodymatter" punta alla copertina | Regola **algoritmica**, valida per altri libri: (A) un file senza landmark **racchiuso tra due file di front matter** diventa `frontmatter`; (B) conferma: se ha pagine in numeri arabi, avviso nel log. Nota: la versione "prima dell'ultimo landmark iniziale" era sbagliata, perché qui i ringraziamenti (p. xv) stanno in fondo all'ePub. Override manuale per sorgente solo se servirà | Structurer | Media | ✅ | `test_unlisted_file_between_front_matter_files_*`, `test_book_excludes_only_non_content_parts` |
-
-| 12 | **Bug dello Structurer** (trovato sul corpus): un file senza titoli con un ruolo nuovo apre una sezione fittizia di livello 1 che diventa **antenata di tutti i capitoli successivi** (ID come `frontmatter/xv`) | La sezione fittizia non entra nella gerarchia: dopo di essa la pila dei titoli riparte vuota | Structurer | Alta | ✅ | `test_section_without_heading_is_not_an_ancestor_*`, `test_headingless_sections_are_never_ancestors` |
-| 13 | **Ruoli incompleti** (corpus): negli ePub di Standard Ebooks i landmarks elencano solo 3–4 file; ogni file dichiara però la sua divisione e il suo tipo con `epub:type` su `<body>`/`<section>` (`frontmatter`, `backmatter`, `dedication`, `colophon`, `appendix`…). Risultato: imprint, dedica, colophon, "uncopyright" risultano `body` e inclusi; tipi multipli come "backmatter endnotes" non sono riconosciuti | `role_from_types`: tipi dei landmarks + tipi del file (`<section>` poi `<body>`); vince il **primo tipo specifico** (`chapter`/`part` = body), altrimenti la divisione, altrimenti body; prefissi di vocabolario (`z3998:`) e generi ignorati. Note (`endnotes`, `translator-note`) incluse; imprint, colophon, elenco illustrazioni esclusi | Loader + Structurer | Alta | ✅ | `test_role_comes_from_the_most_specific_declared_type`, `test_load_epub_reads_the_type_each_file_declares`, `test_non_content_parts_are_excluded_*` |
-| 14 | **Rimandi alle note attaccati alle parole** (corpus): 8 / 142 / 439 rimandi `epub:type="noteref"` in Slocum / Engels / Whymper diventano "summit12" → token sporchi per BM25 | Il Loader toglie i rimandi (`noteref`/`doc-noteref`) e i collegamenti di ritorno nelle note (`backlink`); il testo delle note resta nella loro sezione. Nuovo controllo in `inspect` "words glued to numbers" (parola minuscola + numero, con o senza punteggiatura; codici come "AE1" esclusi): 0 su Friel, 90 / 3 / 277 sul corpus prima, 0 dopo | Loader + `inspect` | Alta | ✅ | `test_note_references_are_removed_*`, `test_numbers_glued_to_words_*`, `test_only_missing_page_markers_are_reported` |
+| 11 | `praise.xhtml` (33 blocchi di recensioni promozionali) non è nei landmarks, quindi risulta `body`. I landmarks hanno anche un errore: "bodymatter" punta alla copertina | Regola **algoritmica**, valida per altri libri: (A) un file senza landmark **racchiuso tra due file di front matter** diventa `frontmatter`; (B) conferma: se ha pagine in numeri arabi, avviso nel log. La prima versione ("prima dell'ultimo landmark iniziale") era sbagliata: qui i ringraziamenti (p. xv) stanno in fondo all'ePub. Override manuale per sorgente solo se servirà | Structurer | Media | ✅ | `test_unlisted_file_between_front_matter_files_*`, `test_book_excludes_only_non_content_parts` |
+| 12 | **Bug dello Structurer** (corpus): un file senza titoli con un ruolo nuovo apre una sezione fittizia di livello 1 che diventa **antenata di tutti i capitoli successivi** (ID come `frontmatter/xv`) | La sezione fittizia non entra nella gerarchia: dopo di essa la pila dei titoli riparte vuota | Structurer | Alta | ✅ | `test_section_without_heading_is_not_an_ancestor_*`, `test_headingless_sections_are_never_ancestors` |
+| 13 | **Ruoli incompleti** (corpus): negli ePub di Standard Ebooks i landmarks elencano solo 3–4 file; ogni file dichiara però divisione e tipo con `epub:type` su `<body>`/`<section>` (`frontmatter`, `backmatter`, `dedication`, `colophon`, `appendix`…). Imprint, dedica, colophon, "uncopyright" risultavano `body` e inclusi; tipi multipli come "backmatter endnotes" non erano riconosciuti | `role_from_types`: tipi dei landmarks + tipi del file (`<section>` poi `<body>`); vince il **primo tipo specifico** (`chapter`/`part` = body), altrimenti la divisione, altrimenti body; prefissi di vocabolario (`z3998:`) e generi ignorati. Note (`endnotes`, `translator-note`) incluse; imprint, colophon, elenco illustrazioni esclusi | Loader + Structurer | Alta | ✅ | `test_role_comes_from_the_most_specific_declared_type`, `test_load_epub_reads_the_type_each_file_declares`, `test_non_content_parts_are_excluded_*` |
+| 14 | **Rimandi alle note attaccati alle parole** (corpus): 8 / 142 / 439 rimandi `epub:type="noteref"` in Slocum / Engels / Whymper diventavano "summit12" → token sporchi per BM25 | Il Loader toglie i rimandi (`noteref`/`doc-noteref`) e i collegamenti di ritorno nelle note (`backlink`); il testo delle note resta nella loro sezione. Controllo in `inspect` "words glued to numbers" (parola minuscola + numero, con o senza punteggiatura; codici come "AE1" esclusi): 0 su Friel, 90 / 3 / 277 sul corpus prima, 0 dopo | Loader + `inspect` | Alta | ✅ | `test_note_references_are_removed_*`, `test_numbers_glued_to_words_*`, `test_only_missing_page_markers_are_reported` |
 | 15 | Nessun marcatore di pagina negli ePub del corpus | Comportamento corretto: citazioni solo per sezione, `inspect` avvisa | — | — | ✅ (atteso) | `test_missing_page_markers_*` |
 
 Legenda: ✅ fatto · 🔶 in parte · ⏳ da fare · 💤 rimandato.
 
-## Test di generalizzazione (corpus)
-
-Tre ePub di **Standard Ebooks** in `data/corpus/` (locale): Whymper, *Scrambles Amongst the Alps* (59,7 MB, 145 figure, appendici, 439 rimandi a note); Slocum, *Sailing Alone Around the World* (2,5 MB); Engels, *The Condition of the Working Class in England* (0,7 MB, 142 rimandi a note). Solo `tricoach inspect`, nessuna modifica al codice.
-
-| Controllo | Engels | Slocum | Whymper | Lettura |
-|---|---|---|---|---|
-| Copertura del testo | 100,0% | 100,0% | 99,9% | Il Loader non perde testo |
-| Titoli | L2: 20 | L2: 28 | L2: 39 | Capitoli come `<h2>`: gestiti |
-| Pagine | 0% ⚠ | 0% ⚠ | 0% ⚠ | Atteso (#15) |
-| Sezioni > 2000 parole | 11 (max 19.444) | 22 | 24 (max 15.778) | Capitoli senza sottotitoli: il chunker dovrà dividerli |
-
-Il report **non** ha visto i problemi #12–#14: sono emersi guardando gli ID delle sezioni e l'HTML. Conferma che `inspect` copre perdite e struttura grossolana, non la correttezza di ruoli e gerarchia.
-
-**Dopo le correzioni** (#12–#14): capitoli di primo livello (`i`, `ii`… invece di `frontmatter/i`), escluse solo parti non di contenuto, appendici e note incluse, unico avviso le pagine.
-
-| | Engels | Slocum | Whymper |
-|---|---|---|---|
-| Sezioni incluse | 15 / 21 | 23 / 30 | 34 / 42 |
-| Escluse | titlepage, halftitlepage, imprint, dedication, colophon, copyright-page | idem + loi | idem + epigraph, frontispiece, loi |
-| Appendici incluse | — | — | 9 |
-| Parole attaccate a numeri | 0 | 0 | 0 |
-
-Regressione: `tests/corpus/` (marker `corpus`) ripete questi controlli a ogni `uv run pytest`; i libri mancanti vengono saltati. Dove scaricarli: `tests/corpus/expectations.py`.
-
-## Struttura dell'ePub (per chi tocca il Loader)
+## Struttura dell'ePub di riferimento (per chi tocca il Loader)
 
 - **Semantica:** `epub:type` nei capitoli c'è solo come `pagebreak`. I ruoli dei file (cover, dedication, preface, acknowledgments, epilogue, glossary, bibliography, index, copyright, about the author) sono nei **landmarks** della pagina di navigazione.
 - **Tabelle:** 37 elementi `<table>`; titolo in `<caption>` (29), celle unite in 4.
@@ -68,8 +45,8 @@ Misurati sui blocchi dopo il Cleaner (titoli: 19 L1, 86 L2, 142 L3, 101 L4, 20 L
 | Livelli saltati (es. L2 → L4) | **Nessuno** | Il titolo si aggancia all'ultimo antenato di livello inferiore ✅ `test_skipped_levels_*` |
 | La gerarchia attraversa i file | I file `ch13_sub*` (workout) iniziano a L3/L4: continuano il capitolo del file precedente | Gerarchia sull'intera sequenza di blocchi, non per file ✅ `test_hierarchy_continues_across_files` |
 | Titoli duplicati | Soprattutto nei workout: "AE1: Recovery" ×3, "Aerobic Capacity Workouts" ×4, "Swim/Bike/Run" ×2 | ID = percorso dei titoli (es. `appendix-c-bike-workouts/aerobic-endurance-workouts/ae1-recovery`), suffisso `-2` se il percorso si ripete ✅ `test_same_title_*`, `test_book_section_ids_are_unique` |
-| Contenuto prima del primo titolo di un file | 1 caso (`ch13_sub08`, 1 blocco) | Appartiene alla sezione aperta in precedenza ✅ |
-| File senza titoli | `cover`, `title`, `dedication`, `copyright` | Sezione intitolata con il ruolo (es. `copyright-page`), esclusa dall'indice ✅ `test_content_without_heading_*` |
+| Contenuto prima del primo titolo di un file | 1 caso (`ch13_sub08`, 1 blocco) | Appartiene alla sezione aperta in precedenza ✅ `test_hierarchy_continues_across_files` |
+| File senza titoli | `cover`, `title`, `dedication`, `copyright` | Sezione intitolata con il ruolo (es. `copyright-page`), esclusa dall'indice e mai antenata di altre sezioni (#12) ✅ `test_content_without_heading_*` |
 
 Risultato sul libro: **372 sezioni, 325 incluse**, 14 capitoli, ID tutti unici, ogni sezione inclusa con pagine (es. `…/11-rest-and-recovery/morning-warnings`, pp. 171–172). 24 sezioni sono solo titoli (es. "PART I …") senza contenuto proprio.
 
@@ -77,7 +54,7 @@ Effetto sul RAG dei titoli duplicati: tre sezioni "AE1: Recovery" sono distingui
 
 ## Report di qualità generico (`tricoach inspect`)
 
-Controlli senza valori attesi, quindi validi per qualsiasi sorgente (base del futuro controllo automatico sulle sorgenti dell'utente). Sul libro: nessun avviso.
+Controlli senza valori attesi, quindi validi per qualsiasi sorgente (base del futuro controllo automatico sulle sorgenti dell'utente). Sul libro di riferimento: nessun avviso.
 
 | Controllo | Avviso se | Sul libro |
 |---|---|---|
@@ -85,6 +62,7 @@ Controlli senza valori attesi, quindi validi per qualsiasi sorgente (base del fu
 | Titoli per livello | nessun titolo | L1 19 · L2 86 · L3 142 · L4 101 · L5 20 |
 | Tabelle senza titolo (sezioni incluse) | > 0 | 0 |
 | Paragrafi duplicati | ripetuti **nella stessa sezione** | 0 nella stessa sezione, 1 tra sezioni (nota identica sotto due workout dell'appendice E: voluta) |
+| Parole attaccate a numeri | > 0,2 ogni 10.000 parole | 0 |
 | Blocchi con pagina | < 95% | 100% |
 | Informativi | — | 325/372 sezioni incluse; 15/60 figure senza didascalia; 4 sezioni > 2000 parole (la più lunga: glossario); 24 sezioni vuote |
 
@@ -101,7 +79,7 @@ La regola è stata trattata come un classificatore: i 214 `div.sidenote` dell'HT
 | Solo sovrapposizione ≥ 0,5 | 157 | 6 |
 | + almeno 5 parole, ≤ 60% della lunghezza dell'originale, frase completa | **157** | **0** |
 
-I 6 errori della prima variante erano di due tipi: testi brevissimi citati da un paragrafo (titoli "SIDEBAR x.y", ISBN) e paragrafi quasi uguali ma di pari lunghezza (varianti di workout in appendice). Rimuoverli avrebbe fatto perdere contenuto: per questo le due condizioni in più.
+I 6 errori della prima variante erano di due tipi: testi brevissimi citati da un paragrafo (titoli "SIDEBAR x.y", ISBN) e paragrafi quasi uguali ma di pari lunghezza (varianti di workout in appendice). Rimuoverli avrebbe fatto perdere contenuto: per questo le condizioni in più.
 
 Distribuzione utile per il futuro: una citazione ha 5–23 parole (mediana 13), è lunga in mediana l'11% del paragrafo originale e sta in mediana a 3 blocchi da esso.
 
@@ -111,6 +89,37 @@ Distribuzione utile per il futuro: una citazione ha 5–23 parole (mediana 13), 
 
 Conclusione: soglia 0,5 confermata, non abbassarla. Stima finale sul libro: precisione 100%, richiamo ~100% (157 citazioni su 157). Elenco per la revisione: `data/processed/pull_quote_review.txt` (locale).
 
-## Test sul libro reale
+## Test di generalizzazione (corpus)
 
-`tests/book/test_ingestion.py` (marker `book`) verifica sul libro vero che i problemi chiusi non ritornino. Gira con il normale `uv run pytest` ed è saltato automaticamente se il libro non è in `data/raw/`. I valori attesi sono in `tests/book/expectations.py`.
+Tre ePub di **Standard Ebooks** in `data/corpus/` (locale, da dove scaricarli: `tests/corpus/expectations.py`):
+
+- Whymper, *Scrambles Amongst the Alps* (59,7 MB, 145 figure, appendici, 439 rimandi a note);
+- Slocum, *Sailing Alone Around the World* (2,5 MB);
+- Engels, *The Condition of the Working Class in England* (0,7 MB, 142 rimandi a note).
+
+**Prima prova** (solo `tricoach inspect`, nessuna modifica al codice):
+
+| Controllo | Engels | Slocum | Whymper | Lettura |
+|---|---|---|---|---|
+| Copertura del testo | 100,0% | 100,0% | 99,9% | Il Loader non perde testo |
+| Titoli | L2: 20 | L2: 28 | L2: 39 | Capitoli come `<h2>`: gestiti |
+| Pagine | 0% ⚠ | 0% ⚠ | 0% ⚠ | Atteso (#15) |
+| Sezioni > 2000 parole | 11 (max 19.444) | 22 | 24 (max 15.778) | Capitoli senza sottotitoli: il chunker dovrà dividerli |
+
+Il report **non** ha visto i problemi #12–#14: sono emersi guardando gli ID delle sezioni e l'HTML. `inspect` copre perdite e struttura grossolana, non la correttezza di ruoli e gerarchia.
+
+**Dopo le correzioni** (#12–#14, v0.2.1): capitoli di primo livello (`i`, `ii`… invece di `frontmatter/i`), escluse solo parti non di contenuto, appendici e note incluse, unico avviso le pagine.
+
+| | Engels | Slocum | Whymper |
+|---|---|---|---|
+| Sezioni incluse | 15 / 21 | 23 / 30 | 34 / 42 |
+| Escluse | titlepage, halftitlepage, imprint, dedication, colophon, copyright-page | come Engels + loi | come Engels + epigraph, frontispiece, loi |
+| Appendici incluse | — | — | 9 |
+| Parole attaccate a numeri | 0 | 0 | 0 |
+
+## Test di regressione
+
+- **Libro di riferimento:** `tests/book/test_ingestion.py` (marker `book`), valori attesi in `tests/book/expectations.py`.
+- **Corpus:** `tests/corpus/test_generalization.py` (marker `corpus`), valori attesi in `tests/corpus/expectations.py`.
+
+Girano entrambi con il normale `uv run pytest`; un libro mancante viene saltato automaticamente.
