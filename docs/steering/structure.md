@@ -13,6 +13,7 @@ src/tricoach/
     cleaning.py  #   Cleaner: regole strutturali su list[Block]
     structure.py #   Structurer: list[Block] -> Book (sezioni, id, ruoli, inclusione, pagine)
     book_file.py #   save_book / load_book di book.json, con SCHEMA_VERSION
+    quality.py   #   report di qualità generico (nessun valore atteso): `tricoach inspect`
     dump.py      #   format_blocks per l'ispezione
   chunking.py    # strategie di chunking (funzioni) + registro CHUNKERS
   index.py       # embedding, indice numpy, BM25, salvataggio/caricamento

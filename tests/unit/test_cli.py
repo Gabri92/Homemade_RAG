@@ -44,6 +44,25 @@ def test_ingest_writes_book_json(make_epub: MakeEpub, tmp_path: Path) -> None:
     assert '"schema_version": 1' in output.read_text(encoding="utf-8")
 
 
+def test_inspect_prints_the_report_and_exits_0_without_warnings(make_epub: MakeEpub) -> None:
+    page = '<span epub:type="pagebreak" aria-label=" page 1. "></span>'
+    book = make_epub([("ch01.xhtml", f"{page}<h1>Chapter One</h1><p>First.</p>")])
+
+    result = runner.invoke(app, ["inspect", str(book)])
+
+    assert result.exit_code == 0, result.output
+    assert "text coverage" in result.output
+
+
+def test_inspect_exits_1_when_there_are_warnings(make_epub: MakeEpub) -> None:
+    book = make_epub([("ch01.xhtml", "<p>No headings at all.</p>")])
+
+    result = runner.invoke(app, ["inspect", str(book)])
+
+    assert result.exit_code == 1
+    assert "WARNING" in result.output
+
+
 def test_dump_rejects_missing_book(tmp_path: Path) -> None:
     result = runner.invoke(app, ["dump", str(tmp_path / "missing.epub")])
 

@@ -19,6 +19,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - `Block.role` (landmark type of the block's file, default `body`) and `Block.page` (printed-page label where the block starts, from EPUB page markers); both shown in the dump.
 
 - Structurer (`ingest/structure.py`): sections from headings across files, stable path-based ids, roles with front-matter inference (#11), `include` policy, page ranges; `Book`/`Section` models.
+- Generic quality report (`ingest/quality.py`) and the `tricoach inspect` command: text coverage, headings, untitled tables, duplicates within a section, pages; exit code 1 on warnings.
 - `book.json` with `schema_version` (`save_book`/`load_book`) and the `tricoach ingest` command.
 
 ### Fixed

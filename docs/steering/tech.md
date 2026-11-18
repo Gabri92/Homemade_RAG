@@ -29,11 +29,12 @@ uv run tricoach dump data/raw/<libro>.epub          # output del loader -> data/
 uv run tricoach dump data/raw/<libro>.epub --clean  # dopo il Cleaner -> data/processed/blocks_clean.txt
 git diff --no-index data/processed/blocks_raw.txt data/processed/blocks_clean.txt  # cosa ha cambiato il Cleaner
 uv run tricoach ingest data/raw/<libro>.epub  # load + clean + structure -> data/processed/book.json
+uv run tricoach inspect data/raw/<libro>.epub # report di qualità (solo numeri); exit code 1 se ci sono avvisi
 uv run tricoach ask "domanda"             # Q&A singolo
 uv run tricoach eval run --config configs/experiments/<nome>.yaml
 uv run tricoach eval compare <run_a> <run_b>
 ```
-> Disponibili ora: `dump`, `ingest`. `inspect` arriva a fine Fase 1, `ask` ed `eval` nella Fase 3. `uv run tricoach --help` elenca i comandi esistenti.
+> Disponibili ora: `dump`, `ingest`, `inspect`. `ask` ed `eval` arrivano nella Fase 3. `uv run tricoach --help` elenca i comandi esistenti.
 
 ## Segreti e configurazione
 - `ANTHROPIC_API_KEY` e simili solo in `.env` (gitignored), letti tramite `pydantic-settings`.

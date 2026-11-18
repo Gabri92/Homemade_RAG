@@ -6,7 +6,15 @@ from typing import Annotated
 
 import typer
 
-from tricoach.ingest import clean, format_blocks, ingest_epub, load_epub, save_book
+from tricoach.ingest import (
+    clean,
+    format_blocks,
+    format_report,
+    ingest_epub,
+    inspect_epub,
+    load_epub,
+    save_book,
+)
 
 app = typer.Typer(help="Q&A assistant over The Triathlete's Training Bible.", no_args_is_help=True)
 
@@ -30,6 +38,17 @@ def ingest(
     save_book(structured, output)
     included = sum(s.include for s in structured.sections)
     typer.echo(f"{len(structured.sections)} sections ({included} included) written to {output}")
+
+
+@app.command()
+def inspect(
+    book: Annotated[Path, typer.Argument(exists=True, dir_okay=False, help="ePub file.")],
+) -> None:
+    """Print a generic ingestion quality report (counts only, no book text)."""
+    report = inspect_epub(book)
+    typer.echo(format_report(report), nl=False)
+    if any(check.warning for check in report):
+        raise typer.Exit(code=1)
 
 
 @app.command()

@@ -15,7 +15,8 @@ from tricoach.ingest.cleaning import (
     remove_pull_quotes,
 )
 from tricoach.ingest.dump import format_blocks
-from tricoach.ingest.epub import html_to_blocks, load_epub
+from tricoach.ingest.epub import epub_text, html_to_blocks, load_epub
+from tricoach.ingest.quality import Check, format_report, quality_report
 from tricoach.ingest.structure import mark_front_matter, structure
 from tricoach.models import Book
 
@@ -25,18 +26,29 @@ def ingest_epub(path: Path) -> Book:
     return structure(clean(load_epub(path)), source=path.name)
 
 
+def inspect_epub(path: Path) -> list[Check]:
+    """Ingest an ePub and return its generic quality report."""
+    raw = load_epub(path)
+    return quality_report(raw, structure(clean(raw), source=path.name), epub_text(path))
+
+
 __all__ = [
     "CLEANING_STEPS",
     "SCHEMA_VERSION",
+    "Check",
     "attach_intro_to_untitled_tables",
     "clean",
+    "epub_text",
     "format_blocks",
+    "format_report",
     "html_to_blocks",
     "ingest_epub",
+    "inspect_epub",
     "load_book",
     "load_epub",
     "mark_front_matter",
     "merge_continued_tables",
+    "quality_report",
     "remove_pull_quotes",
     "save_book",
     "structure",

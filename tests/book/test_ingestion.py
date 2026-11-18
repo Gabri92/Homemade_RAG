@@ -8,7 +8,12 @@ import zipfile
 from bs4 import BeautifulSoup
 
 from tests.book import expectations as expected
-from tricoach.ingest import attach_intro_to_untitled_tables, remove_pull_quotes
+from tricoach.ingest import (
+    attach_intro_to_untitled_tables,
+    epub_text,
+    quality_report,
+    remove_pull_quotes,
+)
 from tricoach.models import Block, Book
 
 
@@ -206,3 +211,12 @@ def test_book_same_workout_for_different_sports_has_distinct_sections(book: Book
 
 def test_book_every_included_section_has_pages(book: Book) -> None:
     assert [s.id for s in book.sections if s.include and not s.first_page] == []
+
+
+# --- generic quality report (tricoach inspect) -------------------------------------
+
+
+def test_book_quality_report_has_no_warnings(blocks: list[Block], book: Book) -> None:
+    report = quality_report(blocks, book, epub_text(expected.BOOK_PATH))
+
+    assert [(c.name, c.value) for c in report if c.warning] == []

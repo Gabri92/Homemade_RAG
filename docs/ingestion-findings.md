@@ -46,6 +46,23 @@ Risultato sul libro: **372 sezioni, 325 incluse**, 14 capitoli, ID tutti unici, 
 
 Effetto sul RAG dei titoli duplicati: tre sezioni "AE1: Recovery" sono distinguibili **solo** dal percorso (lo sport). Il percorso dovrà quindi accompagnare i chunk, altrimenti il retrieval non sa per quale sport è un workout.
 
+## Report di qualità generico (`tricoach inspect`)
+
+Controlli senza valori attesi, quindi validi per qualsiasi sorgente (base del futuro controllo automatico sulle sorgenti dell'utente). Sul libro: nessun avviso.
+
+| Controllo | Avviso se | Sul libro |
+|---|---|---|
+| Copertura del testo (lettere e cifre dei blocchi / del sorgente) | < 98% | 100,0% |
+| Titoli per livello | nessun titolo | L1 19 · L2 86 · L3 142 · L4 101 · L5 20 |
+| Tabelle senza titolo (sezioni incluse) | > 0 | 0 |
+| Paragrafi duplicati | ripetuti **nella stessa sezione** | 0 nella stessa sezione, 1 tra sezioni (nota identica sotto due workout dell'appendice E: voluta) |
+| Blocchi con pagina | < 95% | 100% |
+| Informativi | — | 325/372 sezioni incluse; 15/60 figure senza didascalia; 4 sezioni > 2000 parole (la più lunga: glossario); 24 sezioni vuote |
+
+**Limite noto, misurato:** la copertura del testo vede le perdite **grandi**, non quelle piccole e sparse. Simulando i bug corretti: senza glossario (#10) scende a **97,0%** → avviso; senza titoli delle tabelle (#1) a **99,81%** → nessun avviso. Per le perdite piccole servono controlli mirati (come i test sul libro reale).
+
+Lezione dal primo giro: il controllo dei duplicati segnalava tutte le ripetizioni; l'unica trovata era voluta (stessa nota sotto due workout). Ora avvisa solo per ripetizioni nella stessa sezione, dove indicano un difetto.
+
 ## Valutazione della regola #4 (citazioni in evidenza)
 
 La regola è stata trattata come un classificatore: i 214 `div.sidenote` dell'HTML fanno da etichette, i 1375 paragrafi restanti sono il testo normale che **non** va mai rimosso.

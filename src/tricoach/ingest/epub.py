@@ -45,6 +45,18 @@ def load_epub(path: Path) -> list[Block]:
     return blocks
 
 
+def epub_text(path: Path) -> str:
+    """All visible text of the book's content documents: the reference for text coverage."""
+    book = epub.read_epub(str(path), options={"ignore_ncx": True})
+    texts = []
+    for item_id, _linear in book.spine:
+        item = book.get_item_with_id(item_id)
+        if item is not None and _is_book_content(item):
+            soup = BeautifulSoup(item.get_content(), "html.parser")
+            texts.append((soup.body or soup).get_text(" "))
+    return "\n".join(texts)
+
+
 def _is_book_content(item: epub.EpubItem) -> bool:
     # ebooklib types the EPUB3 navigation page as a regular document (ITEM_DOCUMENT):
     # only its class tells it apart.
