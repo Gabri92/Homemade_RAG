@@ -66,4 +66,4 @@ Conclusione: soglia 0,5 confermata, non abbassarla. Stima finale sul libro: prec
 
 ## Test sul libro reale
 
-`tests/test_book_quality.py` (marker `book`) verifica sul libro vero che i problemi chiusi non ritornino. Gira con il normale `uv run pytest` ed è saltato automaticamente se il libro non è in `data/raw/`. I valori attesi sono in `tests/book_expectations.py`.
+`tests/book/test_ingestion.py` (marker `book`) verifica sul libro vero che i problemi chiusi non ritornino. Gira con il normale `uv run pytest` ed è saltato automaticamente se il libro non è in `data/raw/`. I valori attesi sono in `tests/book/expectations.py`.

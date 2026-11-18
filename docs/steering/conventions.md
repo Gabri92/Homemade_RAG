@@ -28,7 +28,18 @@
 - Un'eccezione personalizzata solo quando il chiamante deve gestirla in modo diverso.
 
 ## Test
-- Un file `tests/test_<modulo>.py` per modulo; test di funzioni pure senza mock.
+- **Un tipo di test, una cartella:**
+
+  | Cartella | Cosa | Quando gira |
+  |---|---|---|
+  | `tests/unit/` | Una funzione con dati sintetici; rispecchia `src/tricoach/` (`src/tricoach/ingest/cleaning.py` → `tests/unit/ingest/test_cleaning.py`) | Sempre; `uv run pytest tests/unit` durante lo sviluppo (< 1 s) |
+  | `tests/book/` | L'ingestion sul libro reale contro i valori di `expectations.py` | Con `uv run pytest`; saltati se il libro manca |
+  | `tests/integration/` | (Fase 3) componenti con API/modelli reali | Solo con `-m integration` |
+  | `tests/e2e/` | (Fase 3) domanda → risposta citata | Da decidere con la Fase 3 |
+
+  Marker e salti si applicano **per cartella** nel suo `conftest.py`, non file per file. Le cartelle `integration/` ed `e2e/` si creano quando arriva il primo test.
+- Un file `test_<modulo>.py` per modulo; test di funzioni pure senza mock.
+- I test sono un package (`tests/__init__.py`): si importa in modo esplicito, es. `from tests.conftest import MakeEpub`.
 - Le dipendenze esterne (LLM, modello di embedding) si sostituiscono passando un fake come parametro, non con `monkeypatch` sparsi.
 - Le strategie di un registro si testano con un unico test parametrizzato su tutte le voci.
 - `cli.py`: un test di fumo per comando con il `CliRunner` di typer (avvio, errore su input non valido, output atteso). La logica si testa nei moduli, non attraverso la CLI.

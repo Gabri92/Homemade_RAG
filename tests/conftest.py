@@ -6,9 +6,11 @@ from pathlib import Path
 import pytest
 from ebooklib import epub
 
+MakeEpub = Callable[[list[tuple[str, str]]], Path]
+
 
 @pytest.fixture
-def make_epub(tmp_path: Path) -> Callable[[list[tuple[str, str]]], Path]:
+def make_epub(tmp_path: Path) -> MakeEpub:
     """Build a minimal ePub from (file_name, body_html) chapters, in the given spine order."""
 
     def build(chapters: list[tuple[str, str]]) -> Path:

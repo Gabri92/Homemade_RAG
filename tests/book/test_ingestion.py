@@ -1,33 +1,15 @@
 """Regression checks on the real book: findings in docs/ingestion-findings.md must not come back.
 
-Skipped automatically when the book is not in data/raw/ (it is never committed).
+Marker, skip and the `blocks`/`cleaned` fixtures come from tests/book/conftest.py.
 """
 
 import zipfile
 
-import book_expectations as expected  # tests/ is on sys.path (pytest rootdir-relative import)
-import pytest
 from bs4 import BeautifulSoup
 
-from tricoach.ingest import attach_intro_to_untitled_tables, clean, load_epub, remove_pull_quotes
+from tests.book import expectations as expected
+from tricoach.ingest import attach_intro_to_untitled_tables, remove_pull_quotes
 from tricoach.models import Block
-
-pytestmark = [
-    pytest.mark.book,
-    pytest.mark.skipif(not expected.BOOK_PATH.exists(), reason="book not in data/raw/"),
-]
-
-
-@pytest.fixture(scope="module")
-def blocks() -> list[Block]:
-    """Raw loader output."""
-    return load_epub(expected.BOOK_PATH)
-
-
-@pytest.fixture(scope="module")
-def cleaned(blocks: list[Block]) -> list[Block]:
-    """Output after the Cleaner."""
-    return clean(blocks)
 
 
 def tables(blocks: list[Block]) -> list[Block]:

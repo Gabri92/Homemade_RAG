@@ -5,7 +5,7 @@ Only counts and short titles: never copy book text here.
 
 from pathlib import Path
 
-BOOK_PATH = Path(__file__).parents[1] / "data" / "raw" / "The_Triathletes_Training_Bible.epub"
+BOOK_PATH = Path(__file__).parents[2] / "data" / "raw" / "The_Triathletes_Training_Bible.epub"
 
 # Tables (finding #1 and #2)
 TABLES = 37

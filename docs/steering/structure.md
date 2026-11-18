@@ -29,8 +29,13 @@ configs/experiments/   # una YAML per esperimento
 eval/datasets/         # golden.jsonl (committato)
 eval/runs/             # output dei run (gitignored)
 data/                  # raw/, processed/, index/ (gitignored)
-tests/                 # test_<modulo>.py, conftest.py con fixture condivise e mini-libro sintetico
-                       # test_book_quality.py + book_expectations.py: controlli sul libro reale (marker `book`)
+tests/                 # un tipo di test = una cartella (vedi conventions.md, "Test")
+  conftest.py          #   fixture condivise (make_epub: mini-ePub sintetico)
+  unit/                #   veloci, offline; rispecchia src/tricoach/ (unit/ingest/test_cleaning.py, ...)
+  book/                #   sul libro reale: marker `book` e salto automatico in book/conftest.py
+    expectations.py    #     valori attesi del libro (solo numeri e titoli brevi)
+  integration/         #   (dalla Fase 3) API e modelli reali, marker `integration`
+  e2e/                 #   (dalla Fase 3) domanda -> risposta citata sul libro reale
 ```
 
 ## Regole

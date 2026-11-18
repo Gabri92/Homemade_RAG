@@ -21,7 +21,8 @@ uv sync                                   # installa dipendenze
 uv run ruff check . --fix                 # lint
 uv run ruff format .                      # format
 uv run mypy src                           # type check
-uv run pytest                             # test (veloci, offline)
+uv run pytest                             # tutti i test (unit + libro reale se presente)
+uv run pytest tests/unit                  # solo unit: il ciclo veloce durante lo sviluppo
 uv run pytest -m integration              # test che chiamano API/modelli reali
 uv run pytest -m book                     # solo i controlli sul libro reale (girano anche con `pytest`, saltati se il libro manca)
 uv run tricoach dump data/raw/<libro>.epub          # output del loader -> data/processed/blocks_raw.txt

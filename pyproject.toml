@@ -55,6 +55,7 @@ plugins = ["pydantic.mypy"]
 # --- pytest ---------------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]  # tests are a package: `from tests.conftest import ...`
 addopts = "-m 'not integration'"
 markers = [
     "integration: calls real APIs or loads real models (slow, may cost money)",

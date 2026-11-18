@@ -1,12 +1,9 @@
-from collections.abc import Callable
-from pathlib import Path
-
-from tricoach.ingest import format_blocks, html_to_blocks, load_epub
+from tests.conftest import MakeEpub
+from tricoach.ingest import html_to_blocks, load_epub
 from tricoach.ingest.epub import landmark_roles
 from tricoach.models import Block
 
 SOURCE = "ch01.xhtml"
-MakeEpub = Callable[[list[tuple[str, str]]], Path]  # see the `make_epub` fixture in conftest.py
 
 
 def blocks_of(html: str) -> list[Block]:
@@ -293,20 +290,3 @@ def test_load_epub_follows_spine_order_and_skips_navigation(make_epub: MakeEpub)
 
     assert [b.text for b in blocks] == ["Chapter One", "First.", "Chapter Two", "Second."]
     assert [b.source for b in blocks] == ["ch01.xhtml"] * 2 + ["ch02.xhtml"] * 2
-
-
-# --- format_blocks --------------------------------------------------------------
-
-
-def test_format_blocks_tags_each_block_and_indents_multiline_text() -> None:
-    blocks = [
-        Block("heading", "Base Period", SOURCE, level=2),
-        Block("table", "| A |\n| --- |", SOURCE),
-    ]
-
-    blocks[0] = Block("heading", "Base Period", SOURCE, level=2, page="12")
-
-    assert format_blocks(blocks) == (
-        "[heading L2] ch01.xhtml · p. 12 · body\n    Base Period\n"
-        "[table] ch01.xhtml · body\n    | A |\n    | --- |\n"
-    )
