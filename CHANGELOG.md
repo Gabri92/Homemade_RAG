@@ -5,6 +5,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-18
+
 ### Added
 - `inspect` check "words glued to numbers" (leftover note references).
 - Generalization tests on public-domain ePubs from Standard Ebooks (`tests/corpus/`, marker `corpus`).
