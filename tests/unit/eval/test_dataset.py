@@ -7,7 +7,8 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from tricoach.eval.dataset import GoldenQuestion, load_golden
+from tricoach.eval.dataset import GoldenQuestion, check_references, load_golden
+from tricoach.models import Book, Section
 
 EXAMPLE = Path(__file__).parents[3] / "eval" / "datasets" / "example.jsonl"
 
@@ -117,3 +118,33 @@ def test_example_file_is_valid() -> None:
     questions = load_golden(EXAMPLE)
 
     assert {q.category for q in questions} == {"factual", "follow_up", "non_english"}
+
+
+def _book(*sections: tuple[str, bool]) -> Book:
+    return Book(
+        source="synthetic.epub",
+        sections=tuple(
+            Section(
+                id=id_, title=id_, level=1, path=(id_,), role="body", include=include, blocks=()
+            )
+            for id_, include in sections
+        ),
+    )
+
+
+def test_check_references_passes_when_every_section_is_indexed() -> None:
+    questions = [GoldenQuestion.model_validate(_question())]
+
+    assert check_references(questions, _book(("chapter-one/base", True))) == []
+
+
+def test_check_references_reports_unknown_and_excluded_sections() -> None:
+    question = _question(category="multi_hop", relevant_section_ids=["renamed", "glossary"])
+    book = _book(("chapter-one/base", True), ("glossary", False))
+
+    problems = check_references([GoldenQuestion.model_validate(question)], book)
+
+    assert problems == [
+        "q-001: unknown section 'renamed'",
+        "q-001: section 'glossary' is excluded from the index",
+    ]

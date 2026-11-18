@@ -10,6 +10,8 @@ from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
+from tricoach.models import Book
+
 Category = Literal[
     "factual", "table", "conceptual", "multi_hop", "out_of_scope", "follow_up", "non_english"
 ]
@@ -110,4 +112,21 @@ def _dataset_problems(questions: list[GoldenQuestion]) -> list[str]:
                 f"{question.id}: previous_id {question.previous_id!r} is not an earlier question"
             )
         seen.add(question.id)
+    return problems
+
+
+def check_references(questions: list[GoldenQuestion], book: Book) -> list[str]:
+    """List the cited section ids that are missing from `book` or excluded from the index.
+
+    Section ids are stable across runs, but an ingestion fix can still rename or drop a
+    section: this check keeps that from silently orphaning golden-set references.
+    """
+    included = {section.id: section.include for section in book.sections}
+    problems = []
+    for question in questions:
+        for section_id in question.relevant_section_ids:
+            if section_id not in included:
+                problems.append(f"{question.id}: unknown section {section_id!r}")
+            elif not included[section_id]:
+                problems.append(f"{question.id}: section {section_id!r} is excluded from the index")
     return problems
