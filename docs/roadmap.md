@@ -69,7 +69,7 @@ Ogni riga è un esperimento con la sua config; si confronta sempre con il run mi
 | 4.5 | Reranker cross-encoder | Migliora la precisione dei primi 5 |
 | 4.6 | Contextual chunking | Migliora chunk ambigui |
 | 4.7 | Parent-child | Migliora `multi_hop` / `conceptual` |
-| 4.8 | **Baseline di pipeline generica**: ingestion e chunking con LlamaIndex (loader ePub + node parser) contro la nostra ingestion, a parità di retrieval, LLM e golden set. Opzionale: Unstructured come seconda baseline | Misura quanto vale il lavoro fatto sui dati (tabelle, glossario, citazioni ripetute, ruoli) e su quali categorie di domande. La baseline resta **solo** un termine di confronto (ADR 0001: niente framework nella pipeline principale) |
+| 4.8 | **Baseline di pipeline generica**: ingestion e chunking con uno strumento pubblico contro la nostra ingestion, a parità di retrieval, LLM e golden set. **Strumento da valutare** prima dell'esperimento (candidati: LlamaIndex, Unstructured, Docling, pandoc + chunker semplice), in base a supporto ePub, qualità dell'output e dipendenze | Misura quanto vale il lavoro fatto sui dati (tabelle, glossario, citazioni ripetute, ruoli) e su quali categorie di domande. La baseline resta **solo** un termine di confronto (ADR 0001: niente framework nella pipeline principale) |
 
 **Apprendimento:** capire *quale leva sposta quale metrica* e in quale categoria di domande.
 **Deliverable:** report di confronto tra run + scelta motivata della config migliore (registrata in un ADR).
