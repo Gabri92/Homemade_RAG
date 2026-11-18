@@ -30,7 +30,9 @@ Each phase has a concrete deliverable and a learning goal.
 
 ---
 
-## Phase 2 — Golden dataset (before retrieval!)
+## Phase 2 — Golden dataset (before retrieval!) 🚧
+
+> Status: format, validation and `tricoach eval check` done (ADR 0003: references are section ids). Questions being written by hand.
 
 1. Write **30 initial questions** by hand covering every category (`factual`, `table`, `conceptual`, `multi_hop`, `out_of_scope`, `follow_up`).
 2. For each one: a reference answer + the book section/span that supports it.

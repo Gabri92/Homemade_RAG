@@ -23,23 +23,24 @@ src/tricoach/
   llm.py         # (placeholder) the single access point to the Anthropic API
   qa.py          # (placeholder) answer(question) -> Answer: gate -> retrieve -> generate
   prompts/       # (placeholder) prompts as versioned .md files
-  eval/          # (placeholder)
-    dataset.py   #   loads and validates golden.jsonl
-    metrics.py   #   metrics (pure functions)
-    judge.py     #   LLM-as-judge
-    run.py       #   runs an experiment, saves and compares runs
-  cli.py         # typer commands: dump, ingest, inspect (then ask, eval)
+  eval/          # evaluation harness
+    dataset.py   #   golden set: GoldenQuestion schema, load_golden, check_references
+    metrics.py   #   (placeholder) metrics (pure functions)
+    judge.py     #   (placeholder) LLM-as-judge
+    run.py       #   (placeholder) runs an experiment, saves and compares runs
+  cli.py         # typer commands: dump, ingest, inspect, eval check (then ask, eval run/compare)
 .claude/               # Claude Code project settings: settings.json (hooks) + hooks/ scripts
 configs/experiments/   # one YAML per experiment (from Phase 3)
-eval/datasets/         # golden.jsonl (committed, from Phase 2)
+eval/datasets/         # golden.jsonl (committed, hand-written) + example.jsonl (synthetic format example)
 eval/runs/             # run outputs (gitignored)
 data/                  # raw/, processed/, index/ (gitignored)
 notes/                 # personal notes: prompting, building in public (gitignored)
 tests/                 # one kind of test = one folder (see conventions.md, "Tests")
   conftest.py          #   shared fixtures (make_epub: synthetic mini-ePub)
-  unit/                #   fast, offline; mirrors src/tricoach/ (unit/ingest/test_cleaning.py, ...)
+  unit/                #   fast, offline; mirrors src/tricoach/ (unit/ingest/test_cleaning.py, unit/eval/test_dataset.py, ...)
   book/                #   on the real book: `book` marker and automatic skip in book/conftest.py
     expectations.py    #     expected values for the book (numbers and short titles only)
+    test_golden.py     #     golden-set section ids exist in the current ingestion (skipped until golden.jsonl exists)
   corpus/              #   generalization on ePubs from other publishers in data/corpus/ (`corpus` marker)
     expectations.py    #     expected values and where to download each ePub
   integration/         #   (from Phase 3) real APIs and models, `integration` marker
