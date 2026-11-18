@@ -1,30 +1,30 @@
 # Product
 
-## Cosa stiamo costruendo
-Un assistente conversazionale che risponde a domande sul metodo di allenamento descritto in *The Triathlete's Training Bible* di Joe Friel, citando sempre le fonti nel libro.
+## What we are building
+A conversational assistant that answers questions about the training method described in Joe Friel's *The Triathlete's Training Bible*, always citing its sources in the book.
 
-## Obiettivi (in ordine di priorità)
-1. **Apprendimento**: capire il RAG componente per componente, con implementazioni leggibili anziché framework opachi.
-2. **Misurabilità**: ogni scelta è supportata da metriche sul golden dataset.
-3. **Qualità delle risposte**: corrette, ancorate al libro, con citazioni verificabili, in italiano.
+## Goals (in priority order)
+1. **Learning**: understand RAG component by component, with readable implementations instead of opaque frameworks.
+2. **Measurability**: every choice is backed by metrics on the golden dataset.
+3. **Answer quality**: correct, grounded in the book, with verifiable citations, in English.
 
-## Utente
-L'autore del progetto: triatleta che usa il libro come riferimento. Il libro è in inglese e, per ora, anche domande e risposte sono solo in inglese.
+## User
+The project's author: a triathlete who uses the book as a reference. The book is in English and, for now, questions and answers are English only.
 
-## Scope attuale
-- Q&A sul libro (singola domanda e follow-up).
-- Pipeline di ingestion, retrieval, generazione, valutazione.
-- Interfaccia CLI; chat minima (Streamlit/Gradio) a fine roadmap.
+## Current scope
+- Q&A about the book (single question and follow-ups).
+- Ingestion, retrieval, generation and evaluation pipelines.
+- CLI interface; a minimal chat (Streamlit/Gradio) at the end of the roadmap.
 
-## Non-goals (per ora)
-- Multilingua (domande o risposte in lingue diverse dall'inglese).
-- Generazione di piani di allenamento, calcolo zone, profilo atleta.
-- Integrazione con Strava/Garmin o altri dati di attività.
-- Distribuzione pubblica, multi-utente, autenticazione.
-- Uso di framework RAG "tutto incluso" (LangChain, LlamaIndex) per la pipeline principale: nasconderebbero proprio ciò che vogliamo imparare.
+## Non-goals (for now)
+- Multilingual support (questions or answers in languages other than English).
+- Generating training plans, computing zones, athlete profile.
+- Integration with Strava/Garmin or other activity data.
+- Public distribution, multiple users, authentication.
+- Using "batteries-included" RAG frameworks (LangChain, LlamaIndex) for the main pipeline: they would hide exactly what we want to learn.
 
-## Principi di comportamento dell'assistente
-- Risponde solo da contenuto recuperato; se non basta, lo dice.
-- Cita capitolo/sezione per ogni affermazione.
-- Accetta e risponde solo in inglese: un messaggio in un'altra lingua riceve un avviso e non avvia la query (vedi `docs/architecture.md` §4.1).
-- Nessun consiglio medico; parafrasa invece di riprodurre lunghi passaggi.
+## Assistant behaviour principles
+- Answers only from retrieved content; if that is not enough, it says so.
+- Cites chapter/section for every claim.
+- Accepts and answers English only: a message in another language gets a notice and does not start the query (see `docs/architecture.md` §4.1).
+- No medical advice; paraphrases instead of reproducing long passages.

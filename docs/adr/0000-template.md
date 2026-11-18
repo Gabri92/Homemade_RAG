@@ -1,17 +1,17 @@
-# ADR NNNN — Titolo della decisione
+# ADR NNNN — Title of the decision
 
-- **Data:** YYYY-MM-DD
-- **Stato:** proposta | accettata | sostituita da ADR XXXX
+- **Date:** YYYY-MM-DD
+- **Status:** proposed | accepted | superseded by ADR XXXX
 
-## Contesto
-Qual è il problema, quali vincoli, quali dati (metriche di eval, se presenti).
+## Context
+What the problem is, which constraints apply, which data we have (eval metrics, if any).
 
-## Decisione
-Cosa abbiamo deciso, in una o due frasi.
+## Decision
+What we decided, in one or two sentences.
 
-## Alternative considerate
-- Alternativa A — perché scartata
-- Alternativa B — perché scartata
+## Alternatives considered
+- Alternative A — why it was rejected
+- Alternative B — why it was rejected
 
-## Conseguenze
-Cosa diventa più facile, cosa più difficile, cosa andrà rivisto.
+## Consequences
+What becomes easier, what becomes harder, what will need revisiting.

@@ -1,25 +1,25 @@
-# ADR 0002 — `ingest.py` diventa il package `ingest/`
+# ADR 0002 — `ingest.py` becomes the `ingest/` package
 
-- **Data:** 2026-11-17
-- **Stato:** accettata
+- **Date:** 2026-11-17
+- **Status:** accepted
 
-## Contesto
-`ingest.py` era a 196 righe e stava per ricevere il Cleaner (circa +100). Soprattutto avrebbe contenuto codice che cambia per motivi diversi: il Loader cambia con il **formato** del file (ePub oggi, PDF probabile domani), il Cleaner con i **difetti dei dati**, il dump con le esigenze di **ispezione**. Sono due dei segnali di crescita previsti in `structure.md`.
+## Context
+`ingest.py` had reached 196 lines and was about to receive the Cleaner (roughly +100). Above all, it would have held code that changes for different reasons: the Loader changes with the file **format** (ePub today, probably PDF tomorrow), the Cleaner with the **defects in the data**, the dump with **inspection** needs. These are two of the growth signals listed in `structure.md`.
 
-## Decisione
-Refactoring senza cambi di comportamento:
+## Decision
+Refactoring with no change in behaviour:
 ```
 ingest/
-  __init__.py   # API pubblica: load_epub, html_to_blocks, format_blocks (poi clean, ...)
-  epub.py       # Loader ePub
+  __init__.py   # public API: load_epub, html_to_blocks, format_blocks (then clean, ...)
+  epub.py       # ePub Loader
   dump.py       # format_blocks
 ```
-Il Cleaner arriverà come `ingest/cleaning.py`, un eventuale loader PDF come `ingest/pdf.py`. Chi usa l'ingestion importa solo da `tricoach.ingest`: i test esistenti passano senza modifiche, ed è la prova che il refactoring non cambia il comportamento.
+The Cleaner will arrive as `ingest/cleaning.py`, a PDF loader (if any) as `ingest/pdf.py`. Callers import only from `tricoach.ingest`: the existing tests pass unchanged, which proves the refactoring does not change behaviour.
 
-## Alternative considerate
-- **Restare in un solo file** — semplice ancora per poco, ma mescola tre motivi di cambiamento.
-- **Moduli piatti separati** (`loader.py`, `cleaning.py` accanto a `ingest.py`) — disperde in cima al package concetti che appartengono a un'unica fase della pipeline.
+## Alternatives considered
+- **Stay in a single file** — simple for a little longer, but it mixes three reasons to change.
+- **Separate flat modules** (`loader.py`, `cleaning.py` next to `ingest.py`) — scatters at the top of the package concepts that belong to a single pipeline stage.
 
-## Conseguenze
-- Aggiungere un formato o una regola di pulizia tocca un solo file.
-- I moduli interni non vanno importati direttamente da fuori del package.
+## Consequences
+- Adding a format or a cleaning rule touches a single file.
+- The internal modules must not be imported directly from outside the package.

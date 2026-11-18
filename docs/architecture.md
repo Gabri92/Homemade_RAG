@@ -1,218 +1,218 @@
-# Architettura — Q&A RAG su "The Triathlete's Training Bible"
+# Architecture — RAG Q&A on "The Triathlete's Training Bible"
 
-> Scope attuale: **solo Q&A sul libro**. Obiettivo primario: capire il RAG in pratica e **misurarne la qualità**.
-> Lingua: **solo inglese** per domande e risposte.
-> Fuori scope (per ora): multilingua, generazione piani, calcolo zone, profilo atleta, integrazione dati Strava/Garmin.
+> Current scope: **Q&A about the book only**. Primary goal: understand RAG in practice and **measure its quality**.
+> Language: **English only** for questions and answers.
+> Out of scope (for now): multilingual, plan generation, zone calculation, athlete profile, Strava/Garmin data integration.
 
 ---
 
-## 1. Modello della conoscenza: perché il libro non è "solo testo"
+## 1. Knowledge model: why the book is not "just text"
 
-Il libro contiene tre tipi di contenuto, che si comportano in modo molto diverso in un RAG:
+The book holds several kinds of content, which behave very differently in a RAG system:
 
-| Tipo | Esempi | Problema nel RAG | Strategia |
+| Kind | Examples | Problem in RAG | Strategy |
 |---|---|---|---|
-| **Prosa narrativa** | filosofia di allenamento, limitatori, recupero, tapering | Pochi problemi: è il caso ideale | Chunking per sezione, retrieval semantico |
-| **Tabelle e regole numeriche** | % delle zone su LTHR, ore settimanali per periodo/ore annue, durata dei mesocicli | Un chunker ingenuo **spezza le tabelle**; gli embedding catturano male i numeri; l'LLM tende a "interpolare" valori inventati | Estrarre le tabelle come **unità atomiche** (mai spezzate), in Markdown, con una didascalia testuale che descrive cosa contengono |
-| **Descrizioni di workout** | codici e descrizioni degli allenamenti per abilità | Molto simili tra loro → retrieval confonde workout vicini | Un chunk per workout + metadati (sport, abilità, periodo) |
-| **Figure e tabelle-immagine** | grafici, illustrazioni, alcune tabelle pubblicate come immagine | Sono pixel: un RAG testuale non ne vede il contenuto. Le tabelle-immagine sono le più critiche (numeri) | **Ora:** un blocco `figure` con la sola didascalia, per sapere che lì c'era una figura. **Futuro:** trascrizione/descrizione con la multimodalità di Claude (vedi roadmap, "Dopo") |
+| **Narrative prose** | training philosophy, limiters, recovery, tapering | Few problems: the ideal case | Chunking by section, semantic retrieval |
+| **Tables and numeric rules** | zone percentages of LTHR, weekly hours by period/annual hours, mesocycle length | A naive chunker **splits tables**; embeddings capture numbers poorly; the LLM tends to "interpolate" invented values | Extract tables as **atomic units** (never split), in Markdown, with a textual caption describing what they contain |
+| **Workout descriptions** | workout codes and descriptions by ability | Very similar to each other → retrieval confuses neighbouring workouts | One chunk per workout + metadata (sport, ability, period) |
+| **Figures and image tables** | charts, illustrations, some tables published as images | They are pixels: a text RAG cannot see their content. Image tables are the most critical (numbers) | **Now:** a `figure` block with just the caption, so we know a figure was there. **Future:** transcription/description with Claude's multimodality (see roadmap, "Later") |
 
-**Regola d'oro:** quando una risposta dipende da un numero, deve venire *letteralmente* da un chunk recuperato e citato.
-In futuro (fase "coach") queste regole diventeranno **codice deterministico** (tool), e il RAG resterà per spiegare il *perché*.
-Per ora, nel Q&A puro, trattarle bene nel chunking è sufficiente — ed è un ottimo banco di prova per la valutazione.
+**Golden rule:** when an answer depends on a number, that number must come *literally* from a retrieved, cited chunk.
+In the future ("coach" phase) these rules will become **deterministic code** (tools), and RAG will remain to explain the *why*.
+For now, in pure Q&A, handling them well during chunking is enough — and it is an excellent test bed for evaluation.
 
 ---
 
-## 2. Vista d'insieme
+## 2. Overview
 
-Due pipeline separate, collegate solo dall'indice.
+Two separate pipelines, connected only by the index.
 
 ```mermaid
 flowchart LR
   subgraph Ingestion [Ingestion - offline]
     A[PDF / ePub] --> B[Loader]
     B --> C[Cleaner]
-    C --> D[Structurer<br/>capitoli, sezioni, tabelle]
+    C --> D[Structurer<br/>chapters, sections, tables]
     D --> E[Chunker]
-    E --> F[Enricher<br/>metadati, contesto]
+    E --> F[Enricher<br/>metadata, context]
     F --> G[Embedder]
-    G --> H[(Indice<br/>vettoriale + BM25)]
+    G --> H[(Index<br/>vector + BM25)]
   end
 
   subgraph Query [Query - online]
-    Q[Domanda utente] --> L{Language gate<br/>è inglese?}
-    L -- no --> N[Avviso: solo inglese<br/>nessuna query]
-    L -- sì --> S[Retriever<br/>dense + BM25]
+    Q[User question] --> L{Language gate<br/>is it English?}
+    L -- no --> N[Notice: English only<br/>no query]
+    L -- yes --> S[Retriever<br/>dense + BM25]
     H --> S
     S --> T[Reranker]
     T --> U[Context builder]
     U --> V[Generator LLM]
-    V --> W[Risposta + citazioni]
+    V --> W[Answer + citations]
   end
 
   subgraph Eval [Evaluation - offline]
     X[(Golden dataset)] --> Y[Runner]
     Y --> Query
-    Y --> Z[Metriche + report]
+    Y --> Z[Metrics + report]
   end
 ```
 
 ---
 
-## 3. Pipeline di ingestion
+## 3. Ingestion pipeline
 
-| Step | Responsabilità | Note pratiche |
+| Step | Responsibility | Practical notes |
 |---|---|---|
-| **Loader** | Estrae testo grezzo da PDF/ePub | ePub è molto più pulito del PDF (struttura HTML già presente). Per PDF: `pymupdf`. |
-| **Cleaner** | Rimuove header/footer, numeri di pagina, sillabazioni, artefatti | Ispeziona sempre l'output a mano: è dove nascono metà dei problemi di qualità. |
-| **Structurer** | Ricostruisce gerarchia: parte → capitolo → sezione; isola tabelle e sidebar | Produce un `Document` strutturato, salvato in `data/processed/` come JSON. |
-| **Chunker** | Divide in `Chunk` | Strategie intercambiabili (vedi §5). |
-| **Enricher** | Aggiunge metadati e, opzionalmente, contesto generato | `chapter`, `section`, `page`, `content_type` (prose/table/workout), `sport`. |
-| **Embedder** | Calcola vettori | Modello intercambiabile (vedi §6). |
-| **Index** | Persiste vettori + indice lessicale | Per un libro (~1–3k chunk) basta un indice in memoria / su file. |
+| **Loader** | Extracts raw text from PDF/ePub | ePub is much cleaner than PDF (the HTML structure is already there). For PDF: `pymupdf`. |
+| **Cleaner** | Removes headers/footers, page numbers, hyphenation, artifacts | Always inspect the output by hand: this is where half of the quality problems start. |
+| **Structurer** | Rebuilds the hierarchy: part → chapter → section; isolates tables and sidebars | Produces a structured `Book`, saved as JSON in `data/processed/`. |
+| **Chunker** | Splits into `Chunk`s | Interchangeable strategies (see §5). |
+| **Enricher** | Adds metadata and, optionally, generated context | `chapter`, `section`, `page`, `content_type` (prose/table/workout), `sport`. |
+| **Embedder** | Computes vectors | Interchangeable model (see §6). |
+| **Index** | Persists vectors + lexical index | For one book (~1–3k chunks) an in-memory / on-file index is enough. |
 
-Ogni step produce un artefatto su disco → si può ispezionare, versionare (localmente) e rieseguire solo lo step cambiato.
+Each step produces an artifact on disk → it can be inspected, versioned (locally) and only the changed step re-run.
 
 ---
 
-## 4. Pipeline di query
+## 4. Query pipeline
 
-1. **Language gate** — controllo locale e deterministico: se il messaggio non è in inglese, restituisce un avviso e **la pipeline si ferma** (niente retrieval, niente chiamate LLM). Vedi §4.1.
-2. **Retriever** — ibrido:
-   - *dense* (similarità coseno tra embedding) → coglie il significato;
-   - *BM25* (lessicale) → coglie termini esatti ("Build 2", "LTHR", "Zone 5b").
-   - Fusione con **Reciprocal Rank Fusion (RRF)**. Recupera un top-k largo (es. 20–30).
-3. **Reranker** — un cross-encoder riordina i candidati e tiene i migliori (es. 5). Di solito è il miglioramento singolo più grande.
-4. **Context builder** — formatta i chunk con ID e riferimento (capitolo/sezione/pagina), deduplica, rispetta un budget di token.
-5. **Generator** — l'LLM risponde **solo** dal contesto, cita gli ID dei chunk, e dichiara "not in the book" quando serve. Risponde sempre in inglese.
+1. **Language gate** — a local, deterministic check: if the message is not in English, it returns a notice and **the pipeline stops** (no retrieval, no LLM calls). See §4.1.
+2. **Retriever** — hybrid:
+   - *dense* (cosine similarity between embeddings) → captures meaning;
+   - *BM25* (lexical) → captures exact terms ("Build 2", "LTHR", "Zone 5b").
+   - Fusion with **Reciprocal Rank Fusion (RRF)**. Retrieves a wide top-k (e.g. 20–30).
+3. **Reranker** — a cross-encoder reorders the candidates and keeps the best (e.g. 5). Usually the biggest single improvement.
+4. **Context builder** — formats the chunks with ID and reference (chapter/section/page), deduplicates, respects a token budget.
+5. **Generator** — the LLM answers **only** from the context, cites chunk IDs, and says "not in the book" when needed. It always answers in English.
 
-### 4.1 Lingua: solo inglese (per ora)
+### 4.1 Language: English only (for now)
 
-Domande e risposte sono **solo in inglese**, la stessa lingua del libro. Così il retrieval non ha problemi cross-lingua (BM25 ed embedding confrontano testo inglese con testo inglese) e la pipeline resta semplice.
+Questions and answers are **English only**, the same language as the book. This way retrieval has no cross-language issues (BM25 and embeddings compare English text with English text) and the pipeline stays simple.
 
-**Language gate** — primo step della pipeline, prima di qualsiasi costo:
-- rilevamento **locale e deterministico** con `lingua-py`, limitato a un insieme ristretto di lingue (EN, IT, ES, FR, DE) per essere più preciso;
-- messaggio non inglese → la pipeline restituisce un avviso fisso e **non esegue la query**:
+**Language gate** — the first step of the pipeline, before any cost:
+- **local, deterministic** detection with `lingua-py`, restricted to a small set of languages (EN, IT, ES, FR, DE) to be more accurate;
+- non-English message → the pipeline returns a fixed notice and **does not run the query**:
   > *"I can only answer questions in English for now. Please rephrase your question in English."*
-- **messaggi molto brevi** (es. meno di 3 parole: "LTHR?", "Build 2") o con confidenza bassa → **passano**. Il rilevamento su testi brevi è inaffidabile, e bloccare una domanda legittima è peggio che lasciar passare un caso dubbio;
-- i termini del metodo (Build, LTHR, Zone 5b) sono già inglesi, quindi non creano problemi.
+- **very short messages** (e.g. fewer than 3 words: "LTHR?", "Build 2") or low confidence → **let through**. Detection on short texts is unreliable, and blocking a legitimate question is worse than letting a doubtful case through;
+- the method's terms (Build, LTHR, Zone 5b) are already English, so they cause no problems.
 
-Il gate è una sola funzione (`is_english` in `language.py`), chiamata all'inizio di `answer()`: quando arriverà il multilingua, si sostituisce lì.
+The gate is a single function (`is_english` in `language.py`), called at the start of `answer()`: when multilingual support arrives, it is replaced there.
 
 ### Conversation design (Q&A)
 
-- **Lingua:** solo inglese; i messaggi in altre lingue ricevono l'avviso del language gate.
-- **Persona:** coach esperto, conciso, che cita le fonti ("Friel, cap. 7 — Base period").
-- **Grounding:** nessuna affermazione senza citazione; se il contesto non basta lo dice esplicitamente invece di usare conoscenza generale.
-- **Guardrail:** niente diagnosi mediche; su dolore/infortuni rimanda a un professionista.
-- **Copyright:** riassume e parafrasa, non riproduce lunghi passaggi verbatim.
-- **Multi-turn:** la domanda di follow-up viene riscritta come domanda autonoma (*condensation*) prima del retrieval: "and how long does it last?" → "How long does the Build period last?".
+- **Language:** English only; messages in other languages get the language gate notice.
+- **Persona:** an expert, concise coach who cites sources ("Friel, ch. 7 — Base period").
+- **Grounding:** no claim without a citation; if the context is not enough it says so explicitly instead of using general knowledge.
+- **Guardrails:** no medical diagnoses; on pain/injuries it refers to a professional.
+- **Copyright:** summarizes and paraphrases, does not reproduce long passages verbatim.
+- **Multi-turn:** a follow-up question is rewritten as a standalone question (*condensation*) before retrieval: "and how long does it last?" → "How long does the Build period last?".
 
 ---
 
-## 5. Strategie di chunking (da confrontare)
+## 5. Chunking strategies (to compare)
 
-| Strategia | Descrizione | Quando vince |
+| Strategy | Description | When it wins |
 |---|---|---|
-| **Fixed-size + overlap** | N token con sovrapposizione | Baseline: semplice, serve per avere un riferimento |
-| **Structure-aware** | Un chunk per sezione/sottosezione, split solo se troppo lunga; tabelle intatte | Libri ben strutturati come questo |
-| **Contextual chunking** | A ogni chunk si antepone 1–2 frasi generate dall'LLM che lo collocano nel libro ("Questo passaggio, dal capitolo sul periodo Base, descrive…") | Chunk che da soli sono ambigui (pronomi, "questo periodo") |
-| **Parent-child** | Si indicizzano chunk piccoli, ma si passa all'LLM la sezione "genitore" più ampia | Domande che richiedono contesto ampio |
+| **Fixed-size + overlap** | N tokens with overlap | Baseline: simple, gives a reference point |
+| **Structure-aware** | One chunk per section/subsection, split only if too long; tables intact | Well-structured books like this one |
+| **Contextual chunking** | Each chunk is prefixed with 1–2 LLM-generated sentences that place it in the book ("This passage, from the chapter on the Base period, describes…") | Chunks that are ambiguous on their own (pronouns, "this period") |
+| **Parent-child** | Small chunks are indexed, but the wider "parent" section is passed to the LLM | Questions that need wide context |
 
 ---
 
-## 6. Scelte tecnologiche iniziali
+## 6. Initial technology choices
 
-Ogni libreria esterna vive in un solo modulo (vedi §8): cambiarla tocca un file.
+Every external library lives in a single module (see §8): changing it touches one file.
 
-| Componente | Scelta iniziale | Alternativa da provare |
+| Component | Initial choice | Alternative to try |
 |---|---|---|
-| Linguaggio | Python 3.12+, gestito con `uv` | — |
-| Estrazione | `ebooklib` + `beautifulsoup4` (ePub) / `pymupdf` (PDF) | — |
-| Embedding | `BAAI/bge-m3` locale (gratuito; multilingue, quindi già pronto per il futuro) | Voyage AI (API) |
-| Indice vettoriale | In memoria con `numpy` (brute force: con pochi chunk è istantaneo e didattico) | LanceDB / Qdrant |
-| Lessicale | `rank-bm25` | — |
-| Reranker | `BAAI/bge-reranker-v2-m3` locale | Rerank via API |
-| Language gate | `lingua-py` locale (nessuna chiamata LLM) | — |
-| LLM generazione | Claude (`claude-sonnet-5-5`) via SDK `anthropic` | — |
-| LLM judge (eval) | Claude (`claude-opus-5-5`) | — |
+| Language | Python 3.12+, managed with `uv` | — |
+| Extraction | `ebooklib` + `beautifulsoup4` (ePub) / `pymupdf` (PDF) | — |
+| Embedding | local `BAAI/bge-m3` (free; multilingual, so already ready for the future) | Voyage AI (API) |
+| Vector index | in memory with `numpy` (brute force: with few chunks it is instant and instructive) | LanceDB / Qdrant |
+| Lexical | `rank-bm25` | — |
+| Reranker | local `BAAI/bge-reranker-v2-m3` | Rerank via API |
+| Language gate | local `lingua-py` (no LLM call) | — |
+| Generation LLM | Claude (`claude-sonnet-5-5`) via the `anthropic` SDK | — |
+| Judge LLM (eval) | Claude (`claude-opus-5-5`) | — |
 | Config | YAML + `pydantic` | — |
-| UI (più avanti) | CLI → Streamlit/Gradio | — |
+| UI (later) | CLI → Streamlit/Gradio | — |
 
-**Baseline long-context:** oltre al RAG, si implementa un `Generator` che riceve **l'intero libro** in contesto (con prompt caching), se entra nella finestra del modello. Confrontarlo col RAG nell'eval è il modo più istruttivo per capire quando il RAG serve davvero.
+**Long-context baseline:** besides RAG, we implement a `Generator` that receives **the whole book** in context (with prompt caching), if it fits in the model's window. Comparing it with RAG in the eval is the most instructive way to understand when RAG is really needed.
 
 ---
 
-## 7. Valutazione
+## 7. Evaluation
 
-La valutazione è il cuore del progetto: **ogni cambiamento alla pipeline è un esperimento misurato**.
+Evaluation is the heart of the project: **every change to the pipeline is a measured experiment**.
 
 ### 7.1 Golden dataset
 
-File `eval/datasets/golden.jsonl`, una riga per domanda:
+File `eval/datasets/golden.jsonl`, one line per question:
 
 ```json
 {
   "id": "q-042",
   "question": "How long does the Base period typically last and how is it divided?",
   "category": "factual",
-  "reference_answer": "…risposta scritta a mano…",
+  "reference_answer": "…hand-written answer…",
   "relevant_chunk_ids": ["ch07-s02-c01", "ch07-s02-c02"],
   "language": "en"
 }
 ```
 
-- **50–100 domande** scritte a mano (è tempo ben speso: le leggi e capisci il libro).
-- **Categorie** (per vedere *dove* la pipeline sbaglia):
-  - `factual` — un fatto in un punto preciso;
-  - `table` — risposta in una tabella (numeri);
-  - `conceptual` — spiegazione di un concetto;
-  - `multi_hop` — richiede più sezioni;
-  - `out_of_scope` — non è nel libro → la risposta corretta è dichiararlo;
-  - `follow_up` — seconda domanda di una conversazione.
-- Domande **sintetiche** generate dall'LLM a partire dai chunk sono utili per aumentare il volume, ma vanno **riviste a mano**.
-- Domande tutte in **inglese**, più una categoria `non_english` (~10 messaggi in IT/ES/FR, più qualche caso limite: messaggi brevi, inglese con un termine straniero) per testare il language gate. Per questi la risposta attesa è l'avviso, con zero chunk recuperati.
-- I `relevant_chunk_ids` dipendono dal chunking: si salvano anche come **span di testo/sezione**, così si rimappano automaticamente quando cambia la strategia di chunking.
+- **50–100 questions** written by hand (time well spent: you read them and understand the book).
+- **Categories** (to see *where* the pipeline fails):
+  - `factual` — a fact in one precise place;
+  - `table` — the answer is in a table (numbers);
+  - `conceptual` — explanation of a concept;
+  - `multi_hop` — needs several sections;
+  - `out_of_scope` — not in the book → the correct answer is to say so;
+  - `follow_up` — second question of a conversation.
+- **Synthetic** questions generated by the LLM from the chunks help increase volume, but must be **reviewed by hand**.
+- All questions in **English**, plus a `non_english` category (~10 messages in IT/ES/FR, plus a few edge cases: short messages, English with a foreign term) to test the language gate. For these the expected answer is the notice, with zero chunks retrieved.
+- `relevant_chunk_ids` depend on the chunking: they are also stored as **text/section spans**, so they are remapped automatically when the chunking strategy changes.
 
-### 7.2 Metriche di retrieval (deterministiche, economiche)
+### 7.2 Retrieval metrics (deterministic, cheap)
 
-| Metrica | Domanda a cui risponde |
+| Metric | Question it answers |
 |---|---|
-| **Hit rate@k** | Almeno un chunk rilevante è nei primi k? |
-| **Recall@k** | Quale frazione dei chunk rilevanti è nei primi k? |
-| **MRR** | Quanto in alto compare il primo chunk rilevante? |
-| **nDCG@k** | Qualità complessiva dell'ordinamento |
+| **Hit rate@k** | Is at least one relevant chunk in the top k? |
+| **Recall@k** | What fraction of the relevant chunks is in the top k? |
+| **MRR** | How high does the first relevant chunk appear? |
+| **nDCG@k** | Overall quality of the ranking |
 
-Se il retrieval è scarso, nessun prompt salverà la generazione: si ottimizza **prima** il retrieval.
+If retrieval is poor, no prompt will save generation: optimize retrieval **first**.
 
-### 7.3 Metriche di generazione (LLM-as-judge)
+### 7.3 Generation metrics (LLM-as-judge)
 
-| Metrica | Cosa misura |
+| Metric | What it measures |
 |---|---|
-| **Faithfulness / groundedness** | Ogni affermazione è supportata dal contesto recuperato? (anti-allucinazione) |
-| **Answer correctness** | La risposta concorda con la `reference_answer`? |
-| **Answer relevance** | Risponde davvero alla domanda? |
-| **Citation accuracy** | I chunk citati supportano davvero le frasi a cui sono attaccati? |
-| **Refusal correctness** | Su `out_of_scope` dice "non è nel libro" invece di inventare? |
-| **Gate accuracy** | Il language gate blocca i messaggi non inglesi e lascia passare quelli inglesi? *Deterministica*: precision/recall sul blocco, senza judge. Un falso blocco su una domanda inglese è l'errore più grave. |
+| **Faithfulness / groundedness** | Is every claim supported by the retrieved context? (anti-hallucination) |
+| **Answer correctness** | Does the answer agree with the `reference_answer`? |
+| **Answer relevance** | Does it really answer the question? |
+| **Citation accuracy** | Do the cited chunks really support the sentences they are attached to? |
+| **Refusal correctness** | On `out_of_scope`, does it say "not in the book" instead of inventing? |
+| **Gate accuracy** | Does the language gate block non-English messages and let English ones through? *Deterministic*: precision/recall on blocking, no judge. A false block on an English question is the most serious error. |
 
-Buone pratiche per il judge:
-- **Rubrica esplicita** con scala piccola (es. 1–3 o pass/fail) e motivazione prima del voto.
-- **Calibrazione:** etichetta a mano ~30 risposte e misura l'accordo col judge prima di fidarti dei numeri.
-- Judge di un modello diverso/più forte rispetto al generatore, temperatura 0.
+Good practices for the judge:
+- **Explicit rubric** with a small scale (e.g. 1–3 or pass/fail) and reasoning before the score.
+- **Calibration:** label ~30 answers by hand and measure agreement with the judge before trusting the numbers.
+- A judge from a different/stronger model than the generator, temperature 0.
 
-### 7.4 Esperimenti
+### 7.4 Experiments
 
-- Ogni esperimento = un file `configs/experiments/<nome>.yaml` (chunker, embedder, k, reranker, prompt, modello).
-- Il runner salva in `eval/runs/<timestamp>-<nome>/`: config usata, output per domanda, metriche aggregate **per categoria**.
-- Un report confronta due run fianco a fianco (delta metriche + domande che sono peggiorate).
-- Si traccia anche **costo e latenza** per domanda.
+- Each experiment = a `configs/experiments/<name>.yaml` file (chunker, embedder, k, reranker, prompt, model).
+- The runner saves to `eval/runs/<timestamp>-<name>/`: the config used, per-question output, aggregate metrics **per category**.
+- A report compares two runs side by side (metric deltas + questions that got worse).
+- **Cost and latency** per question are tracked too.
 
 ---
 
-## 8. Design del codice
+## 8. Code design
 
-Semplice: funzioni in pochi moduli (vedi `docs/steering/structure.md`). Le varianti da confrontare negli esperimenti sono **funzioni con la stessa firma in un dizionario**, scelte per nome dalla config:
+Simple: functions in a few modules (see `docs/steering/structure.md`). The variants to compare in experiments are **functions with the same signature in a dictionary**, picked by name from the config:
 
 ```python
 # chunking.py
@@ -233,11 +233,11 @@ def answer(question: str, index: Index, llm: LLM, cfg: QAConfig) -> Answer:
     return generate(question, context, llm, cfg.prompt)
 ```
 
-Un esperimento = una nuova config, non una modifica al codice. `index` e `llm` sono passati come parametri, così nei test si sostituiscono con dei fake.
+An experiment = a new config, not a code change. `index` and `llm` are passed as parameters, so tests replace them with fakes.
 
 ---
 
-## 9. Dati e copyright
+## 9. Data and copyright
 
-- Il libro (`data/raw/`) e tutti i suoi derivati (`data/processed/`, `data/index/`) **non vanno mai committati** (sono in `.gitignore`).
-- Uso esclusivamente personale con una copia posseduta legalmente. Per una distribuzione pubblica servirebbe rivedere l'approccio (licenza o contenuti riformulati).
+- The book (`data/raw/`) and all its derivatives (`data/processed/`, `data/index/`) **must never be committed** (they are in `.gitignore`, and a pre-commit hook refuses them).
+- Strictly personal use with a legally owned copy. Public distribution would require revisiting the approach (licence or reworded content).
