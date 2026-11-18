@@ -5,6 +5,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-18
+
+Phase 1 — ingestion and inspection. Known open issues (#12–#14 in `docs/ingestion-findings.md`) affect other ePubs, not the reference book.
+
 ### Added
 - `Block`: format-independent intermediate representation for ingestion.
 - ePub loader (`load_epub`): reads documents in spine order and converts headings, paragraphs, list items and tables (as Markdown) into blocks.
