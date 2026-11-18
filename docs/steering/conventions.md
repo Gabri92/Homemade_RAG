@@ -56,7 +56,7 @@
 - Small commits, messages in English in Conventional Commits style (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `exp:` for experiments).
 - One experiment = one commit with the config + a summary of the metrics in the message.
 - **Branches:** `main` holds only finished work (definition of done green). Work happens on a branch per roadmap phase (`feat/phase-1-ingestion`) or per experiment (`exp/<name>`), with one commit per module or step. At the end of a phase: merge into `main` with `--no-ff`, so the phase stays visible in the history.
-- Pre-commit hooks: ruff, mypy, the **full test suite** (on commits touching Python, `pyproject.toml` or `uv.lock`), and `forbid-book-files`, which refuses book files (`data/`, `eval/runs/`, `*.epub`, `*.pdf`) even when they were added with `git add -f`. Never skip them with `--no-verify`.
+- Pre-commit hooks: ruff, mypy, the **full test suite** (on commits touching Python, `pyproject.toml`, `uv.lock` or the golden-set files in `eval/datasets/`), and `forbid-book-files`, which refuses book files (`data/`, `eval/runs/`, `*.epub`, `*.pdf`) even when they were added with `git add -f`. Never skip them with `--no-verify`.
 - While Claude Code works, a `Stop` hook runs the fast part of the definition of done (lint, types, unit tests) before each turn ends (see `docs/working-with-claude-code.md`).
 
 ## Versioning
