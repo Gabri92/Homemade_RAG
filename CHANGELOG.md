@@ -5,6 +5,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+- Pre-commit hook `forbid-book-files`: refuses `data/`, `eval/runs/`, `*.epub` and `*.pdf` even after `git add -f`.
+- Pre-commit hook `pytest`: the full test suite runs on every commit that touches Python files, `pyproject.toml` or `uv.lock`.
+- Claude Code `Stop` hook (`.claude/hooks/check_done.py`): lint, types and unit tests before Claude ends a turn with code changes.
+- Placeholder modules for Phase 3 (`chunking`, `index`, `retrieval`, `language`, `llm`, `qa`, `eval/`, `prompts/`), docstring only.
+- `docs/working-with-claude-code.md`: Claude Code setup, planned skills and subagents.
+
+### Changed
+- All documentation translated to English (the project is built in public); answers are English only, as in the rest of the docs.
+
 ## [0.2.1] - 2026-11-18
 
 ### Added
