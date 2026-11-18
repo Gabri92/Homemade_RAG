@@ -1,6 +1,6 @@
 [project]
 name = "tricoach"
-version = "0.2.0"
+version = "0.2.1"
 description = "Q&A assistant over The Triathlete's Training Bible: a hands-on RAG learning project."
 requires-python = ">=3.12"
 dependencies = [
@@ -60,4 +60,5 @@ addopts = "-m 'not integration'"
 markers = [
     "integration: calls real APIs or loads real models (slow, may cost money)",
     "book: checks on the real book in data/raw/ (skipped when the book is missing)",
+    "corpus: generalization checks on other ePubs in data/corpus/ (skipped when missing)",
 ]

@@ -34,6 +34,7 @@
   |---|---|---|
   | `tests/unit/` | Una funzione con dati sintetici; rispecchia `src/tricoach/` (`src/tricoach/ingest/cleaning.py` → `tests/unit/ingest/test_cleaning.py`) | Sempre; `uv run pytest tests/unit` durante lo sviluppo (< 1 s) |
   | `tests/book/` | L'ingestion sul libro reale contro i valori di `expectations.py` | Con `uv run pytest`; saltati se il libro manca |
+  | `tests/corpus/` | Generalizzazione: la stessa ingestion su ePub di altri editori (`data/corpus/`) | Con `uv run pytest`; ogni libro mancante è saltato |
   | `tests/integration/` | (Fase 3) componenti con API/modelli reali | Solo con `-m integration` |
   | `tests/e2e/` | (Fase 3) domanda → risposta citata | Da decidere con la Fase 3 |
 

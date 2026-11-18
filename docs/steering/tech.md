@@ -25,6 +25,7 @@ uv run pytest                             # tutti i test (unit + libro reale se 
 uv run pytest tests/unit                  # solo unit: il ciclo veloce durante lo sviluppo
 uv run pytest -m integration              # test che chiamano API/modelli reali
 uv run pytest -m book                     # solo i controlli sul libro reale (girano anche con `pytest`, saltati se il libro manca)
+uv run pytest -m corpus                   # solo la generalizzazione su data/corpus/ (fonti in tests/corpus/expectations.py)
 uv run tricoach dump data/raw/<libro>.epub          # output del loader -> data/processed/blocks_raw.txt
 uv run tricoach dump data/raw/<libro>.epub --clean  # dopo il Cleaner -> data/processed/blocks_clean.txt
 git diff --no-index data/processed/blocks_raw.txt data/processed/blocks_clean.txt  # cosa ha cambiato il Cleaner

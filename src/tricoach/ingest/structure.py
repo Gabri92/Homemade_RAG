@@ -23,6 +23,8 @@ FRONT_ROLES = frozenset(
         "copyright-page",
         "dedication",
         "epigraph",
+        "frontispiece",
+        "imprint",
         "toc",
         "foreword",
         "preface",
@@ -43,6 +45,11 @@ INCLUDED_ROLES = frozenset(
         "conclusion",
         "appendix",
         "glossary",
+        # Notes explain the text; their references are stripped from it (#14).
+        "endnotes",
+        "footnotes",
+        "rearnotes",
+        "translator-note",
     }
 )
 _ARABIC_PAGE = re.compile(r"\d+")
@@ -70,8 +77,10 @@ def structure(blocks: list[Block], source: str) -> Book:
             path = tuple(title for _, title in stack)
             drafts.append(_Draft(block.text, block.level, path, block.role, block.page))
         elif not drafts or block.role != drafts[-1].role:
-            # Content without a heading in a new part of the book (cover, copyright, ...)
-            stack = [(1, block.role)]
+            # Content without a heading in a new part of the book (cover, copyright, ...).
+            # The section is named after its role but is not a heading: it must not
+            # become the parent of the chapters that follow (#12), so the stack is reset.
+            stack = []
             drafts.append(_Draft(block.role, 1, (block.role,), block.role, None, [block]))
         else:
             # Includes content before the first heading of a file: it continues the

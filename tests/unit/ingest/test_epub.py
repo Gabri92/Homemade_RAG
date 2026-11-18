@@ -1,6 +1,8 @@
+import pytest
+
 from tests.conftest import MakeEpub
 from tricoach.ingest import html_to_blocks, load_epub
-from tricoach.ingest.epub import landmark_roles
+from tricoach.ingest.epub import landmark_types, role_from_types
 from tricoach.models import Block
 
 SOURCE = "ch01.xhtml"
@@ -134,6 +136,25 @@ def test_table_rowspan_in_middle_column_keeps_later_cells_aligned() -> None:
     assert blocks[0].text.splitlines()[2:] == ["| a1 | b | c1 |", "| a2 | b | c2 |"]
 
 
+# --- note references (#14) -------------------------------------------------------
+
+
+def test_note_references_are_removed_from_the_text() -> None:
+    blocks = blocks_of(
+        '<p>We reached the summit.<a href="endnotes.xhtml#n12" epub:type="noteref">12</a> '
+        'Then we rested<a href="#n13" role="doc-noteref">13</a> for an hour.</p>'
+    )
+
+    assert blocks[0].text == "We reached the summit. Then we rested for an hour."
+
+
+def test_backlinks_in_notes_are_removed() -> None:
+    backlink = '<a href="#r12" epub:type="backlink">↩</a>'
+    blocks = blocks_of(f"<ol><li><p>Whymper climbed it in 1865. {backlink}</p></li></ol>")
+
+    assert blocks[0].text == "Whymper climbed it in 1865."
+
+
 # --- definition lists (glossary) -------------------------------------------------
 
 
@@ -255,11 +276,47 @@ NAV = """<html><body>
 </ol></nav></body></html>"""
 
 
-def test_landmark_roles_map_files_to_their_landmark_type() -> None:
-    assert landmark_roles(NAV) == {
-        "cover.xhtml": "cover",
-        "glossary.xhtml": "glossary",
-        "index.xhtml": "index",
+def test_landmark_types_map_files_to_all_their_landmark_types() -> None:
+    assert landmark_types(NAV) == {
+        "cover.xhtml": ["cover", "bodymatter"],
+        "glossary.xhtml": ["glossary"],
+        "index.xhtml": ["index"],
+    }
+
+
+@pytest.mark.parametrize(
+    ("types", "role"),
+    [
+        (["glossary"], "glossary"),
+        (["cover", "bodymatter"], "cover"),  # a division never hides a specific type
+        (["backmatter", "endnotes"], "endnotes"),  # "backmatter endnotes" landmark
+        (["frontmatter", "titlepage"], "titlepage"),  # generic landmark + file's own type
+        (["bodymatter", "z3998:non-fiction", "chapter"], "body"),  # chapters are body
+        (["frontmatter", "z3998:frontispiece"], "frontispiece"),  # vocabulary prefix dropped
+        (["backmatter", "z3998:non-fiction"], "backmatter"),  # only a division
+        (["bodymatter"], "body"),
+        ([], "body"),
+    ],
+)
+def test_role_comes_from_the_most_specific_declared_type(types: list[str], role: str) -> None:
+    assert role_from_types(types) == role
+
+
+def test_load_epub_reads_the_type_each_file_declares(make_epub: MakeEpub) -> None:
+    path = make_epub(
+        [
+            ("dedication.xhtml", '<section epub:type="dedication"><p>To my family.</p></section>'),
+            ("chapter-1.xhtml", '<section epub:type="chapter"><h2>I</h2><p>Text.</p></section>'),
+            ("colophon.xhtml", '<section epub:type="colophon"><p>Set in Times.</p></section>'),
+        ]
+    )
+
+    roles = {b.source.rsplit("/", 1)[-1]: b.role for b in load_epub(path)}
+
+    assert roles == {
+        "dedication.xhtml": "dedication",
+        "chapter-1.xhtml": "body",
+        "colophon.xhtml": "colophon",
     }
 
 

@@ -99,6 +99,21 @@ def test_duplicate_paths_get_a_numeric_suffix() -> None:
 # --- roles, files without headings, inclusion ------------------------------------
 
 
+def test_section_without_heading_is_not_an_ancestor_of_later_chapters() -> None:
+    # #12: a headingless title page must not swallow the chapters that follow it.
+    blocks = [
+        para("Sailing Alone", "titlepage.xhtml", role="titlepage"),
+        heading("I", 2, "chapter-1.xhtml"),
+        para("Text.", "chapter-1.xhtml"),
+        heading("II", 2, "chapter-2.xhtml"),
+    ]
+
+    book = structure(blocks, "b")
+
+    assert [s.id for s in book.sections] == ["titlepage", "i", "ii"]
+    assert [s.path for s in book.sections] == [("titlepage",), ("I",), ("II",)]
+
+
 def test_content_without_heading_and_a_new_role_opens_a_section_named_after_the_role() -> None:
     blocks = [
         heading("INDEX", 1, "index.xhtml", role="index"),
@@ -123,7 +138,12 @@ def test_content_without_heading_and_a_new_role_opens_a_section_named_after_the_
         ("glossary", True),
         ("preface", True),
         ("epilogue", True),
+        ("appendix", True),
+        ("endnotes", True),
         ("index", False),
+        ("imprint", False),
+        ("colophon", False),
+        ("loi", False),
         ("bibliography", False),
         ("acknowledgments", False),
         ("copyright-page", False),

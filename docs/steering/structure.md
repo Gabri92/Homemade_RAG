@@ -37,6 +37,8 @@ tests/                 # un tipo di test = una cartella (vedi conventions.md, "T
   unit/                #   veloci, offline; rispecchia src/tricoach/ (unit/ingest/test_cleaning.py, ...)
   book/                #   sul libro reale: marker `book` e salto automatico in book/conftest.py
     expectations.py    #     valori attesi del libro (solo numeri e titoli brevi)
+  corpus/              #   generalizzazione su ePub di altri editori in data/corpus/ (marker `corpus`)
+    expectations.py    #     valori attesi e da dove scaricare ogni ePub
   integration/         #   (dalla Fase 3) API e modelli reali, marker `integration`
   e2e/                 #   (dalla Fase 3) domanda -> risposta citata sul libro reale
 ```

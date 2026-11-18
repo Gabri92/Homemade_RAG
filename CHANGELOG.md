@@ -5,6 +5,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-18
+
+### Added
+- `inspect` check "words glued to numbers" (leftover note references).
+- Generalization tests on public-domain ePubs from Standard Ebooks (`tests/corpus/`, marker `corpus`).
+
+### Fixed
+- A headingless section (e.g. a title page) became the parent of every following chapter (#12).
+- File roles now also come from each file's own `epub:type`, most specific type first; imprint, colophon and lists of illustrations are excluded, notes and appendices included (#13).
+- Note references and backlinks are stripped from the text instead of sticking to words (#14).
+
 ## [0.2.0] - 2026-11-18
 
 Phase 1 — ingestion and inspection. Known open issues (#12–#14 in `docs/ingestion-findings.md`) affect other ePubs, not the reference book.

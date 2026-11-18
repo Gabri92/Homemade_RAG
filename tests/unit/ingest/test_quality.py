@@ -70,6 +70,23 @@ def test_same_note_under_two_sections_is_counted_but_not_a_warning() -> None:
     assert (value, warning) == ("0 in the same section, 1 across sections", None)
 
 
+def test_numbers_glued_to_words_warn_as_leftover_note_references() -> None:
+    blocks = [*GOOD, para("We reached the summit.12 Then we rested13 for an hour.", page="2")]
+
+    value, warning = checks_for(blocks, "x")["words glued to numbers"]
+
+    assert value.startswith("2")
+    assert warning is not None
+
+
+def test_codes_like_workout_names_are_not_glued_numbers() -> None:
+    blocks = [*GOOD, para("Do AE1 and TE1 this week, then MF2 if fresh.", page="2")]
+
+    value, warning = checks_for(blocks, "x")["words glued to numbers"]
+
+    assert (value.startswith("0"), warning) == (True, None)
+
+
 def test_missing_page_markers_warn_about_citations() -> None:
     blocks = [heading("Base"), para("Train easy most of the time.")]
 
