@@ -7,6 +7,9 @@ eval/runs/
 # Secrets
 .env
 
+# Personal notes (prompting, building in public): local only
+notes/
+
 # Python
 __pycache__/
 *.py[cod]

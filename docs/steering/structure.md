@@ -1,95 +1,98 @@
 # Structure
 
-Principio: **KISS**. Un modulo per concetto, funzioni prima di classi, nessuno strato in più finché non serve.
+Principle: **KISS**. One module per concept, functions before classes, no extra layer until it is needed.
 
 ## Layout
+Modules marked *(placeholder)* contain only a docstring describing their purpose: they are filled in from Phase 3 onwards.
 ```
 src/tricoach/
-  models.py      # dataclass: Block, Section, Book, Chunk, RetrievedChunk, Answer, Citation
-  config.py      # settings (.env) + config esperimento (YAML -> pydantic)
-  ingest/        # sorgente -> blocchi -> pulizia -> sezioni -> data/processed/book.json (ADR 0002)
-    __init__.py  #   API pubblica: da fuori si importa solo da `tricoach.ingest`
-    epub.py      #   Loader ePub (un file per formato: domani pdf.py)
-    cleaning.py  #   Cleaner: regole strutturali su list[Block]
-    structure.py #   Structurer: list[Block] -> Book (sezioni, id, ruoli, inclusione, pagine)
-    book_file.py #   save_book / load_book di book.json, con SCHEMA_VERSION
-    quality.py   #   report di qualità generico (nessun valore atteso): `tricoach inspect`
-    dump.py      #   format_blocks per l'ispezione
-  chunking.py    # strategie di chunking (funzioni) + registro CHUNKERS
-  index.py       # embedding, indice numpy, BM25, salvataggio/caricamento
-  retrieval.py   # dense, bm25, fusione RRF, rerank
-  language.py    # language gate: is_english(text)
-  llm.py         # unico punto di accesso all'API Anthropic
-  qa.py          # answer(question) -> Answer: gate -> retrieve -> generate
-  prompts/       # prompt come file .md versionati
-  eval/
-    dataset.py   # carica e valida golden.jsonl
-    metrics.py   # metriche (funzioni pure)
-    judge.py     # LLM-as-judge
-    run.py       # esegue un esperimento, salva e confronta run
-  cli.py         # comandi typer: ingest, ask, eval
-configs/experiments/   # una YAML per esperimento
-eval/datasets/         # golden.jsonl (committato)
-eval/runs/             # output dei run (gitignored)
+  models.py      # dataclasses: Block, Section, Book (then Chunk, RetrievedChunk, Answer, Citation)
+  config.py      # settings (.env) + experiment config (YAML -> pydantic)
+  ingest/        # source -> blocks -> cleaning -> sections -> data/processed/book.json (ADR 0002)
+    __init__.py  #   public API: from outside, import only from `tricoach.ingest`
+    epub.py      #   ePub Loader (one file per format: pdf.py tomorrow)
+    cleaning.py  #   Cleaner: structural rules on list[Block]
+    structure.py #   Structurer: list[Block] -> Book (sections, ids, roles, inclusion, pages)
+    book_file.py #   save_book / load_book for book.json, with SCHEMA_VERSION
+    quality.py   #   generic quality report (no expected values): `tricoach inspect`
+    dump.py      #   format_blocks for inspection
+  chunking.py    # (placeholder) chunking strategies (functions) + CHUNKERS registry
+  index.py       # (placeholder) embeddings, numpy index, BM25, save/load
+  retrieval.py   # (placeholder) dense, bm25, RRF fusion, rerank
+  language.py    # (placeholder) language gate: is_english(text)
+  llm.py         # (placeholder) the single access point to the Anthropic API
+  qa.py          # (placeholder) answer(question) -> Answer: gate -> retrieve -> generate
+  prompts/       # (placeholder) prompts as versioned .md files
+  eval/          # (placeholder)
+    dataset.py   #   loads and validates golden.jsonl
+    metrics.py   #   metrics (pure functions)
+    judge.py     #   LLM-as-judge
+    run.py       #   runs an experiment, saves and compares runs
+  cli.py         # typer commands: dump, ingest, inspect (then ask, eval)
+.claude/               # Claude Code project settings: settings.json (hooks) + hooks/ scripts
+configs/experiments/   # one YAML per experiment (from Phase 3)
+eval/datasets/         # golden.jsonl (committed, from Phase 2)
+eval/runs/             # run outputs (gitignored)
 data/                  # raw/, processed/, index/ (gitignored)
-tests/                 # un tipo di test = una cartella (vedi conventions.md, "Test")
-  conftest.py          #   fixture condivise (make_epub: mini-ePub sintetico)
-  unit/                #   veloci, offline; rispecchia src/tricoach/ (unit/ingest/test_cleaning.py, ...)
-  book/                #   sul libro reale: marker `book` e salto automatico in book/conftest.py
-    expectations.py    #     valori attesi del libro (solo numeri e titoli brevi)
-  corpus/              #   generalizzazione su ePub di altri editori in data/corpus/ (marker `corpus`)
-    expectations.py    #     valori attesi e da dove scaricare ogni ePub
-  integration/         #   (dalla Fase 3) API e modelli reali, marker `integration`
-  e2e/                 #   (dalla Fase 3) domanda -> risposta citata sul libro reale
+notes/                 # personal notes: prompting, building in public (gitignored)
+tests/                 # one kind of test = one folder (see conventions.md, "Tests")
+  conftest.py          #   shared fixtures (make_epub: synthetic mini-ePub)
+  unit/                #   fast, offline; mirrors src/tricoach/ (unit/ingest/test_cleaning.py, ...)
+  book/                #   on the real book: `book` marker and automatic skip in book/conftest.py
+    expectations.py    #     expected values for the book (numbers and short titles only)
+  corpus/              #   generalization on ePubs from other publishers in data/corpus/ (`corpus` marker)
+    expectations.py    #     expected values and where to download each ePub
+  integration/         #   (from Phase 3) real APIs and models, `integration` marker
+  e2e/                 #   (from Phase 3) question -> cited answer on the real book
 ```
 
-## Regole
-- **Dipendenze in una sola direzione:** `cli` → `qa` / `eval` → resto. `models.py` non importa nessun altro modulo del progetto.
-- **Una libreria esterna, un modulo:** `anthropic` solo in `llm.py`, `sentence_transformers` solo in `index.py` / `retrieval.py`, `lingua` solo in `language.py`. Così si sostituisce una tecnologia toccando un file.
-- **Strategie intercambiabili = funzioni con la stessa firma in un dizionario.** Esempio:
+## Rules
+- **Dependencies flow one way:** `cli` → `qa` / `eval` → the rest. `models.py` imports no other project module.
+- **One external library, one module:** `anthropic` only in `llm.py`, `sentence_transformers` only in `index.py` / `retrieval.py`, `lingua` only in `language.py`. Replacing a technology then touches one file.
+- **Interchangeable strategies = functions with the same signature in a dictionary.** Example:
   ```python
   CHUNKERS: dict[str, Callable[[list[Section], ChunkingConfig], list[Chunk]]] = {
       "fixed": fixed_size_chunks,
       "sections": section_chunks,
   }
   ```
-  La config sceglie la chiave. Niente classi, niente factory.
-- **Si divide un modulo solo quando serve:** oltre ~300 righe, oppure quando contiene due cose che cambiano per motivi diversi. A quel punto diventa un package (`chunking/`) con lo stesso nome.
-- **Niente logica in `cli.py`:** legge gli argomenti, chiama `qa` o `eval`, stampa.
+  The config picks the key. No classes, no factories.
+- **Split a module only when needed:** beyond ~300 lines, or when it holds two things that change for different reasons. At that point it becomes a package (`chunking/`) with the same name.
+- **No logic in `cli.py`:** it reads arguments, calls `qa` or `eval`, prints.
 
-## Quando far crescere la struttura
+## When to grow the structure
 
-Semplicità e modularità sono un **compromesso che cambia nel tempo**: si parte piatti e si aggiunge struttura solo quando un segnale concreto lo giustifica. Mai "per il futuro", mai per principio.
+Simplicity and modularity are a **trade-off that changes over time**: start flat and add structure only when a concrete signal justifies it. Never "for the future", never on principle.
 
-| Segnale concreto | Passo successivo (il più piccolo possibile) |
+| Concrete signal | Next step (the smallest possible) |
 |---|---|
-| Un modulo supera ~300 righe o mescola due motivi di cambiamento | Diventa un package con lo stesso nome (`chunking.py` → `chunking/`), stesse funzioni pubbliche |
-| Le varianti in un registro hanno bisogno di firme diverse | Uniformare la firma con un oggetto di config; se non basta, una piccola classe per variante |
-| Esiste una **seconda implementazione reale con stato** (es. un secondo indice vettoriale, un secondo provider LLM) | Introdurre un `Protocol` per quel solo componente |
-| Lo stesso gruppo di parametri passa attraverso molte funzioni | Raggrupparli in un dataclass (es. `Resources(index, llm)`) |
-| Un test richiede `monkeypatch` o setup complicato | La dipendenza va passata come parametro |
-| La stessa conoscenza compare in tre punti | Estrarla in un posto solo (DRY) |
-| Arriva una nuova area di prodotto (es. coach, tool, multilingua) | Un nuovo modulo/package dedicato, senza toccare la struttura esistente |
+| A module exceeds ~300 lines or mixes two reasons to change | It becomes a package with the same name (`chunking.py` → `chunking/`), same public functions |
+| The variants in a registry need different signatures | Unify the signature with a config object; if that is not enough, a small class per variant |
+| There is a **second real stateful implementation** (e.g. a second vector index, a second LLM provider) | Introduce a `Protocol` for that one component |
+| The same group of parameters travels through many functions | Group them in a dataclass (e.g. `Resources(index, llm)`) |
+| A test needs `monkeypatch` or complicated setup | The dependency must be passed as a parameter |
+| The same knowledge appears in three places | Extract it into a single place (DRY) |
+| A new product area arrives (e.g. coach, tools, multilingual) | A new dedicated module/package, without touching the existing structure |
 
-Regole del passaggio:
-- un segnale → un passo; non anticipare i passi successivi;
-- il cambio di struttura è un refactoring separato (commit `refactor:`) con i test verdi prima e dopo;
-- se il cambio tocca più moduli o introduce un nuovo concetto (Protocol, package, livello), va proposto prima e registrato in un ADR.
+Rules for the step:
+- one signal → one step; do not anticipate the next ones;
+- a structural change is a separate refactoring (`refactor:` commit) with tests green before and after;
+- if the change touches several modules or introduces a new concept (Protocol, package, layer), propose it first and record it in an ADR.
 
-## Notebook di esplorazione (promemoria: dalla Fase 3)
+## Exploration notebooks (reminder: from Phase 3)
 
-Da introdurre all'inizio del chunking, non prima (YAGNI). Servono a **sperimentare e imparare** (come tagliano i chunker, cosa restituisce il retrieval, BM25 vs dense), non a costruire il prodotto.
-- Cartella `notebooks/`; dipendenze `jupyter`/`ipykernel` solo nel gruppo dev.
-- I notebook **importano** le funzioni di `tricoach`, non le riscrivono (DRY). Ciò che funziona si sposta nel package, con i suoi test.
-- Si committano **senza output** (contengono testo del libro): pulizia automatica prima del commit.
+To be introduced at the start of chunking, not before (YAGNI). They are for **experimenting and learning** (how chunkers cut, what retrieval returns, BM25 vs dense), not for building the product.
+- `notebooks/` folder; `jupyter`/`ipykernel` dependencies in the dev group only.
+- Notebooks **import** `tricoach` functions, they do not rewrite them (DRY). Whatever works moves into the package, with its tests.
+- They are committed **without outputs** (outputs contain book text): automatic stripping before commit.
 
-## Dove mettere cosa
-| Voglio aggiungere… | Va in… |
+## Where to put what
+| I want to add… | It goes in… |
 |---|---|
-| Una nuova strategia di chunking / retrieval | una funzione in `chunking.py` / `retrieval.py` + una voce nel registro |
-| Un nuovo formato di sorgente | un file in `ingest/` (es. `pdf.py`) che produce `list[Block]` |
-| Una nuova regola di pulizia | una funzione in `ingest/cleaning.py` + una voce nella sequenza `CLEANING_STEPS` |
-| Una nuova metrica | una funzione pura in `eval/metrics.py` |
-| Un nuovo prompt o versione | un nuovo file in `prompts/` |
-| Un nuovo comando | `cli.py` |
-| Un nuovo tipo di dato | `models.py` |
+| A new chunking / retrieval strategy | a function in `chunking.py` / `retrieval.py` + an entry in the registry |
+| A new source format | a file in `ingest/` (e.g. `pdf.py`) that produces `list[Block]` |
+| A new cleaning rule | a function in `ingest/cleaning.py` + an entry in the `CLEANING_STEPS` sequence |
+| A new metric | a pure function in `eval/metrics.py` |
+| A new prompt or prompt version | a new file in `prompts/` |
+| A new command | `cli.py` |
+| A new data type | `models.py` |

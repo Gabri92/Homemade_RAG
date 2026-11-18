@@ -1,20 +1,20 @@
-# ADR 0001 — Pipeline RAG in Python senza framework RAG
+# ADR 0001 — RAG pipeline in Python without a RAG framework
 
-- **Data:** 2026-11-16
-- **Stato:** accettata
+- **Date:** 2026-11-16
+- **Status:** accepted
 
-## Contesto
-L'obiettivo primario del progetto è capire il RAG in pratica e saperlo valutare. Il corpus è un solo libro (~1–3k chunk).
+## Context
+The project's primary goal is to understand RAG in practice and to be able to evaluate it. The corpus is a single book (~1–3k chunks).
 
-## Decisione
-Python 3.12 con componenti scritti a mano in pochi moduli piatti; le varianti da confrontare sono funzioni scelte per nome dalla config (KISS). Indice vettoriale in memoria con `numpy`, BM25 con `rank-bm25`, embedding e reranker locali `bge-m3`, generazione e judge con Claude. Valutazione implementata in casa.
+## Decision
+Python 3.12 with hand-written components in a few flat modules; the variants to compare are functions picked by name from the config (KISS). In-memory vector index with `numpy`, BM25 with `rank-bm25`, local `bge-m3` embeddings and reranker, generation and judge with Claude. Evaluation implemented in-house.
 
-## Alternative considerate
-- **LangChain / LlamaIndex** — accelerano, ma nascondono chunking, retrieval e prompt: in contrasto con l'obiettivo didattico.
-- **Vector DB dedicato (Qdrant, pgvector)** — inutile per poche migliaia di vettori; resta sostituibile dietro l'interfaccia `VectorIndex`.
-- **Ragas per l'eval** — utile come confronto in seguito, ma prima si implementano le metriche a mano per capirle.
+## Alternatives considered
+- **LangChain / LlamaIndex** — they speed things up, but hide chunking, retrieval and prompts: at odds with the learning goal.
+- **Dedicated vector DB (Qdrant, pgvector)** — pointless for a few thousand vectors; it stays replaceable behind the `VectorIndex` interface.
+- **Ragas for eval** — useful as a comparison later, but first the metrics are implemented by hand to understand them.
 
-## Conseguenze
-- Più codice da scrivere, ma ogni componente è leggibile e testabile.
-- Cambiare tecnologia tocca un solo modulo, perché ogni libreria esterna è importata in un posto solo.
-- Se la struttura piatta diventa stretta, la si fa crescere modulo per modulo (un modulo diventa un package) solo quando serve.
+## Consequences
+- More code to write, but every component is readable and testable.
+- Changing a technology touches a single module, because every external library is imported in one place only.
+- If the flat structure becomes too tight, it grows module by module (a module becomes a package) only when needed.

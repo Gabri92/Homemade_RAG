@@ -1,66 +1,68 @@
 # Conventions
 
-## Principi, in ordine di priorità
-1. **KISS** — la soluzione più semplice che funziona. Funzioni prima di classi; una classe solo se tiene stato (es. un indice caricato in memoria).
-2. **YAGNI** — niente astrazioni "per il futuro" (multilingua, coach, tool, profilo atleta) finché non sono nella fase corrente della roadmap.
-3. **DRY** — una sola fonte di verità per ogni cosa:
-   - chiamate all'LLM solo tramite `llm.py` (retry, cache, logging dei costi in un posto solo);
-   - parametri (modelli, k, dimensioni chunk) solo nella config, mai ripetuti nel codice;
-   - prompt solo in `prompts/`;
-   - fixture di test solo in `tests/conftest.py`.
-   DRY vale per la *conoscenza*, non per il codice che si somiglia per caso: meglio due righe ripetute che un'astrazione sbagliata. Si estrae alla **terza** ripetizione.
-4. **SOLID, in modo pragmatico** — non come struttura imposta a priori, ma come criterio quando il codice cresce:
-   - *Single responsibility*: una funzione fa una cosa (un chunker non calcola embedding);
-   - *Open/closed*: una nuova strategia è una nuova funzione nel registro, non un `if` in più nel codice esistente;
-   - *Dependency inversion "leggera"*: le funzioni ricevono ciò che usano come parametro (es. `answer(question, index, llm)`) invece di crearlo al loro interno. È ciò che rende i test facili.
-   - `Protocol` e classi astratte solo quando ci sono **davvero** due implementazioni con stato.
+## Principles, in priority order
+1. **KISS** — the simplest solution that works. Functions before classes; a class only if it holds state (e.g. an index loaded in memory).
+2. **YAGNI** — no abstractions "for the future" (multilingual, coach, tools, athlete profile) until they are in the current roadmap phase.
+3. **DRY** — a single source of truth for everything:
+   - LLM calls only through `llm.py` (retries, cache, cost logging in one place);
+   - parameters (models, k, chunk sizes) only in the config, never repeated in code;
+   - prompts only in `prompts/`;
+   - test fixtures only in `tests/conftest.py`.
+   DRY applies to *knowledge*, not to code that happens to look alike: two repeated lines are better than the wrong abstraction. Extract on the **third** repetition.
+4. **SOLID, pragmatically** — not as structure imposed up front, but as a criterion as the code grows:
+   - *Single responsibility*: a function does one thing (a chunker does not compute embeddings);
+   - *Open/closed*: a new strategy is a new function in the registry, not one more `if` in existing code;
+   - *"Light" dependency inversion*: functions receive what they use as parameters (e.g. `answer(question, index, llm)`) instead of creating it inside. This is what makes tests easy.
+   - `Protocol` and abstract classes only when there **really** are two stateful implementations.
 
-## Stile Python
-- Type hints ovunque; `mypy --strict` deve passare. Niente `Any` senza commento che lo giustifichi.
-- Dati: `@dataclass(frozen=True, slots=True)`; `pydantic` solo per ciò che arriva dall'esterno (config, golden set, output JSON dell'LLM).
-- Nomi descrittivi: `snake_case` funzioni/moduli, `PascalCase` classi, `UPPER_CASE` costanti.
-- Funzioni brevi (indicativamente < 40 righe); se un blocco richiede un commento per essere capito, estrailo in una funzione con un buon nome.
-- Commenti solo per il *perché*. Docstring sulle funzioni pubbliche dei moduli.
-- Niente `print` fuori da `cli.py`: usa `logging`.
+## Python style
+- Type hints everywhere; `mypy --strict` must pass. No `Any` without a comment justifying it.
+- Data: `@dataclass(frozen=True, slots=True)`; `pydantic` only for what comes from outside (config, golden set, LLM JSON output).
+- Descriptive names: `snake_case` for functions/modules, `PascalCase` for classes, `UPPER_CASE` for constants.
+- Short functions (roughly < 40 lines); if a block needs a comment to be understood, extract it into a well-named function.
+- Comments only for the *why*. Docstrings on the public functions of each module.
+- No `print` outside `cli.py`: use `logging`.
 
-## Errori
-- Fallire presto con messaggi chiari. Mai `except Exception: pass`.
-- Un'eccezione personalizzata solo quando il chiamante deve gestirla in modo diverso.
+## Errors
+- Fail early with clear messages. Never `except Exception: pass`.
+- A custom exception only when the caller must handle it differently.
 
-## Test
-- **Un tipo di test, una cartella:**
+## Tests
+- **One kind of test, one folder:**
 
-  | Cartella | Cosa | Quando gira |
+  | Folder | What | When it runs |
   |---|---|---|
-  | `tests/unit/` | Una funzione con dati sintetici; rispecchia `src/tricoach/` (`src/tricoach/ingest/cleaning.py` → `tests/unit/ingest/test_cleaning.py`) | Sempre; `uv run pytest tests/unit` durante lo sviluppo (< 1 s) |
-  | `tests/book/` | L'ingestion sul libro reale contro i valori di `expectations.py` | Con `uv run pytest`; saltati se il libro manca |
-  | `tests/corpus/` | Generalizzazione: la stessa ingestion su ePub di altri editori (`data/corpus/`) | Con `uv run pytest`; ogni libro mancante è saltato |
-  | `tests/integration/` | (Fase 3) componenti con API/modelli reali | Solo con `-m integration` |
-  | `tests/e2e/` | (Fase 3) domanda → risposta citata | Da decidere con la Fase 3 |
+  | `tests/unit/` | One function with synthetic data; mirrors `src/tricoach/` (`src/tricoach/ingest/cleaning.py` → `tests/unit/ingest/test_cleaning.py`) | Always; `uv run pytest tests/unit` during development (< 1 s) |
+  | `tests/book/` | Ingestion on the real book against the values in `expectations.py` | With `uv run pytest`; skipped if the book is missing |
+  | `tests/corpus/` | Generalization: the same ingestion on ePubs from other publishers (`data/corpus/`) | With `uv run pytest`; each missing book is skipped |
+  | `tests/integration/` | (Phase 3) components with real APIs/models | Only with `-m integration` |
+  | `tests/e2e/` | (Phase 3) question → cited answer | To be decided in Phase 3 |
 
-  Marker e salti si applicano **per cartella** nel suo `conftest.py`, non file per file. Le cartelle `integration/` ed `e2e/` si creano quando arriva il primo test.
-- Un file `test_<modulo>.py` per modulo; test di funzioni pure senza mock.
-- I test sono un package (`tests/__init__.py`): si importa in modo esplicito, es. `from tests.conftest import MakeEpub`.
-- Le dipendenze esterne (LLM, modello di embedding) si sostituiscono passando un fake come parametro, non con `monkeypatch` sparsi.
-- Le strategie di un registro si testano con un unico test parametrizzato su tutte le voci.
-- `cli.py`: un test di fumo per comando con il `CliRunner` di typer (avvio, errore su input non valido, output atteso). La logica si testa nei moduli, non attraverso la CLI.
-- I test standard sono deterministici e offline; quelli che chiamano API o modelli reali sono `@pytest.mark.integration`.
-- Fixture: un **mini-libro sintetico** scritto da noi, mai testo del libro reale.
-- Bug trovato → prima un test che lo riproduce, poi la correzione.
+  Markers and skips are applied **per folder** in its `conftest.py`, not file by file. The `integration/` and `e2e/` folders are created when their first test arrives.
+- One `test_<module>.py` file per module; tests of pure functions without mocks.
+- Tests are a package (`tests/__init__.py`): import explicitly, e.g. `from tests.conftest import MakeEpub`.
+- External dependencies (LLM, embedding model) are replaced by passing a fake as a parameter, not with scattered `monkeypatch`.
+- The strategies in a registry are tested with a single test parametrized over all entries.
+- `cli.py`: one smoke test per command with typer's `CliRunner` (startup, error on invalid input, expected output). Logic is tested in the modules, not through the CLI.
+- Standard tests are deterministic and offline; those calling real APIs or models are `@pytest.mark.integration`.
+- Fixtures: a **synthetic mini-book** written by us, never text from the real book.
+- Bug found → first a test that reproduces it, then the fix.
 
-## Prompt
-- Un file per prompt in `src/tricoach/prompts/`, con versione nel nome (`answer_v2.md`).
-- Un prompt usato in un run di eval non si modifica: se ne crea una nuova versione.
+## Prompts
+- One file per prompt in `src/tricoach/prompts/`, with the version in the name (`answer_v2.md`).
+- A prompt used in an eval run is never modified: create a new version instead.
 
 ## Git
-- Commit piccoli, messaggi in inglese in stile Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `exp:` per esperimenti).
-- Un esperimento = commit con config + riepilogo delle metriche nel messaggio.
-- **Branch:** `main` contiene solo lavoro finito (definition of done verde). Si lavora su un branch per fase della roadmap (`feat/phase-1-ingestion`) o per esperimento (`exp/<nome>`), con un commit per modulo o step. A fine fase: merge in `main` con `--no-ff`, così la fase resta visibile nella storia.
+- Small commits, messages in English in Conventional Commits style (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `exp:` for experiments).
+- One experiment = one commit with the config + a summary of the metrics in the message.
+- **Branches:** `main` holds only finished work (definition of done green). Work happens on a branch per roadmap phase (`feat/phase-1-ingestion`) or per experiment (`exp/<name>`), with one commit per module or step. At the end of a phase: merge into `main` with `--no-ff`, so the phase stays visible in the history.
+- Pre-commit hooks: ruff, mypy, the **full test suite** (on commits touching Python, `pyproject.toml` or `uv.lock`), and `forbid-book-files`, which refuses book files (`data/`, `eval/runs/`, `*.epub`, `*.pdf`) even when they were added with `git add -f`. Never skip them with `--no-verify`.
+- While Claude Code works, a `Stop` hook runs the fast part of the definition of done (lint, types, unit tests) before each turn ends (see `docs/working-with-claude-code.md`).
 
 ## Versioning
-- **SemVer in fase 0.x**: la versione vive solo in `pyproject.toml` (unica fonte).
-  - *minor* (`0.2.0`) a ogni fase della roadmap completata e mergiata in `main`;
-  - *patch* (`0.2.1`) per correzioni su `main`.
-- **Tag annotato** `vX.Y.Z` sul commit di merge in `main`.
-- **`CHANGELOG.md`** (formato Keep a Changelog): ogni commit `feat:`/`fix:` aggiunge una riga in `[Unreleased]`; al rilascio la sezione prende numero e data.
-- **Artefatti dati:** `book.json` (costante `SCHEMA_VERSION` in `ingest/book_file.py`) e gli indici contengono un `schema_version` (intero, incrementato a ogni cambio di formato) e la versione di `tricoach` che li ha prodotti. Un artefatto con schema diverso da quello atteso va rigenerato, non letto.
+- **SemVer during 0.x**: the version lives only in `pyproject.toml` (single source).
+  - *minor* (`0.2.0`) for every roadmap phase completed and merged into `main`;
+  - *patch* (`0.2.1`) for fixes on `main`.
+- **Annotated tag** `vX.Y.Z` on the merge commit into `main`.
+- **`CHANGELOG.md`** (Keep a Changelog format): every `feat:`/`fix:` commit adds a line under `[Unreleased]`; at release time the section gets a number and a date.
+- **Data artifacts:** `book.json` (constant `SCHEMA_VERSION` in `ingest/book_file.py`) and the indexes carry a `schema_version` (integer, bumped on every format change) and the `tricoach` version that produced them. An artifact with a schema other than the expected one must be regenerated, not read.
