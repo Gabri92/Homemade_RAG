@@ -4,6 +4,7 @@ Used by `tricoach inspect` today; meant to become the automatic check on user-ad
 sources. Only counts and section ids are reported, never book text.
 """
 
+import re
 from collections import Counter
 from dataclasses import dataclass
 
@@ -13,6 +14,12 @@ MIN_TEXT_COVERAGE = 0.98  # below this, the loader is silently dropping content
 MIN_PAGE_SHARE = 0.95
 DUPLICATE_MIN_WORDS = 8  # shorter repeats ("See Table 4.1.") are normal
 LONG_SECTION_WORDS = 2000  # informational: such sections must be split by the chunker
+# A lowercase word followed (maybe after punctuation) by a number: "summit.12", "pass5".
+# Codes such as "AE1" are uppercase and do not match. Measured: 0 on the reference book,
+# 3-277 per book on ePubs whose note references were not stripped (#14).
+_CLOSING_PUNCTUATION = ".,;:!?)" + chr(0x2019) + chr(0x201D)  # incl. typographic quotes
+_GLUED_NUMBER = re.compile(rf"\b[a-z]{{3,}}[{re.escape(_CLOSING_PUNCTUATION)}]?\d{{1,3}}\b")
+MAX_GLUED_PER_10K_WORDS = 0.2
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,6 +40,7 @@ def quality_report(raw_blocks: list[Block], book: Book, source_text: str) -> lis
         _untitled_tables(blocks),
         _figures_without_caption(blocks),
         _duplicate_paragraphs(included),
+        _words_glued_to_numbers(blocks),
         _blocks_with_page(blocks),
         _long_sections(included),
         Check("empty sections", str(sum(not s.blocks for s in book.sections))),
@@ -93,6 +101,18 @@ def _duplicate_paragraphs(sections: list[Section]) -> Check:
     return Check(
         "duplicate paragraphs", f"{within} in the same section, {across} across sections", warning
     )
+
+
+def _words_glued_to_numbers(blocks: list[Block]) -> Check:
+    count = sum(len(_GLUED_NUMBER.findall(b.text)) for b in blocks)
+    words = sum(len(b.text.split()) for b in blocks) or 1
+    rate = 10_000 * count / words
+    warning = (
+        "note references left in the text: words like 'summit12' miss keyword search"
+        if rate > MAX_GLUED_PER_10K_WORDS
+        else None
+    )
+    return Check("words glued to numbers", f"{count} ({rate:.1f} per 10k words)", warning)
 
 
 def _blocks_with_page(blocks: list[Block]) -> Check:

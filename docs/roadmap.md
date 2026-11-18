@@ -18,7 +18,7 @@ Ogni fase ha un deliverable concreto e un obiettivo di apprendimento.
 
 ## Fase 1 — Ingestion e ispezione ✅ (v0.2.0)
 
-> Stato a chiusura: Loader ePub, Cleaner, Structurer → `book.json`, `dump`/`ingest`/`inspect`, test sul libro reale. Problemi trovati, regole e aperti in `docs/ingestion-findings.md`. Restano aperti **#12–#14**, emersi dal test su altri ePub (corpus Standard Ebooks): non toccano il libro di Friel e vanno chiusi prima di usare altre sorgenti.
+> Stato a chiusura: Loader ePub, Cleaner, Structurer → `book.json`, `dump`/`ingest`/`inspect`, test sul libro reale. Problemi trovati, regole e aperti in `docs/ingestion-findings.md`. I problemi **#12–#14**, emersi dal test su altri ePub (corpus Standard Ebooks), sono chiusi in v0.2.1, con test di generalizzazione in `tests/corpus/`.
 
 1. Loader per il formato che possiedi (preferibilmente ePub).
 2. Cleaner + Structurer → `data/processed/book.json` (capitoli, sezioni, tabelle, pagine).

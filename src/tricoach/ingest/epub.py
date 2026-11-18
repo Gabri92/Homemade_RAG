@@ -26,11 +26,12 @@ def load_epub(path: Path) -> list[Block]:
     """Read an ePub and return its content blocks in reading (spine) order.
 
     Navigation documents (table of contents) are skipped: they are not book content.
-    Each block gets the role of its file (from the landmarks) and the printed page
-    where it starts (from the page markers); the page carries over between files.
+    Each block gets the role of its file (from the landmarks and the file's own
+    epub:type) and the printed page where it starts (from the page markers); the page
+    carries over between files.
     """
     book = epub.read_epub(str(path), options={"ignore_ncx": True})
-    roles = _book_landmark_roles(book)
+    landmarks = _book_landmark_types(book)
     blocks: list[Block] = []
     page: str | None = None
     for item_id, _linear in book.spine:
@@ -39,7 +40,7 @@ def load_epub(path: Path) -> list[Block]:
             continue
         name = item.get_name()
         soup = _parse(item.get_content())
-        role = roles.get(posixpath.basename(name), BODY)
+        role = role_from_types(landmarks.get(posixpath.basename(name), []) + _file_types(soup))
         blocks.extend(_soup_to_blocks(soup, name, role, page))
         page = _last_page(soup, page)
     return blocks
@@ -77,7 +78,18 @@ def _parse(html: str | bytes) -> BeautifulSoup:
     soup = BeautifulSoup(html, "html.parser")
     for line_break in soup.find_all("br"):
         line_break.replace_with(" ")
+    for link in soup.find_all(_is_note_link):
+        # #14: note numbers would stick to words ("summit.12"); notes keep their own text.
+        link.decompose()
     return soup
+
+
+_NOTE_LINK_TYPES = frozenset({"noteref", "backlink"})
+_NOTE_LINK_ROLES = frozenset({"doc-noteref", "doc-backlink"})
+
+
+def _is_note_link(tag: Tag) -> bool:
+    return bool(_NOTE_LINK_TYPES & set(_epub_types(tag))) or tag.get("role") in _NOTE_LINK_ROLES
 
 
 def _soup_to_blocks(
@@ -94,32 +106,54 @@ def _soup_to_blocks(
     return blocks
 
 
-# --- roles (landmarks) ----------------------------------------------------------
+# --- roles (landmarks + each file's own epub:type) -------------------------------
+
+_DIVISIONS = {"frontmatter": "frontmatter", "bodymatter": BODY, "backmatter": "backmatter"}
+_BODY_TYPES = frozenset({"chapter", "part", "volume", "division", "subchapter"})
+_GENRES = frozenset({"fiction", "non-fiction"})
 
 
-def landmark_roles(nav_html: str | bytes) -> dict[str, str]:
-    """File name -> landmark type ("glossary", "index", ...) from an EPUB3 navigation page.
+def role_from_types(types: list[str]) -> str:
+    """Role from EPUB structural types, most specific first (#13).
 
-    Files not listed are regular content (role "body"). "bodymatter" is skipped: it
-    marks where the content starts, it is not a kind of part.
+    The first specific type wins ("glossary", "titlepage", "colophon"; "chapter" and
+    similar mean body); otherwise the division (front/body/back matter); otherwise body.
+    Vocabulary prefixes ("z3998:") and genres ("non-fiction") are ignored.
     """
+    terms = [t.rsplit(":", 1)[-1] for t in types]
+    specific = [t for t in terms if t not in _DIVISIONS and t not in _GENRES]
+    if specific:
+        return BODY if specific[0] in _BODY_TYPES else specific[0]
+    return next((_DIVISIONS[t] for t in terms if t in _DIVISIONS), BODY)
+
+
+def landmark_types(nav_html: str | bytes) -> dict[str, list[str]]:
+    """File name -> every landmark type listed for it in an EPUB3 navigation page."""
     soup = BeautifulSoup(nav_html, "html.parser")
-    roles: dict[str, str] = {}
+    types: dict[str, list[str]] = {}
     for nav in soup.find_all("nav"):
         if not isinstance(nav, Tag) or "landmarks" not in _epub_types(nav):
             continue
         for link in nav.find_all("a", href=True):
-            kind = " ".join(_epub_types(link))
-            if isinstance(link, Tag) and kind and kind != "bodymatter":
+            if isinstance(link, Tag):
                 file_name = posixpath.basename(str(link["href"]).split("#")[0])
-                roles.setdefault(file_name, kind)
-    return roles
+                types.setdefault(file_name, []).extend(_epub_types(link))
+    return types
 
 
-def _book_landmark_roles(book: epub.EpubBook) -> dict[str, str]:
+def _file_types(soup: BeautifulSoup) -> list[str]:
+    """Types a document declares about itself: its top-level section first, then <body>."""
+    body = soup.body
+    if body is None:
+        return []
+    top = body.find(["section", "article"], recursive=False)
+    return (_epub_types(top) if isinstance(top, Tag) else []) + _epub_types(body)
+
+
+def _book_landmark_types(book: epub.EpubBook) -> dict[str, list[str]]:
     for item in book.get_items():
         if isinstance(item, epub.EpubNav):
-            return landmark_roles(item.get_content())
+            return landmark_types(item.get_content())
     return {}
 
 

@@ -60,4 +60,5 @@ addopts = "-m 'not integration'"
 markers = [
     "integration: calls real APIs or loads real models (slow, may cost money)",
     "book: checks on the real book in data/raw/ (skipped when the book is missing)",
+    "corpus: generalization checks on other ePubs in data/corpus/ (skipped when missing)",
 ]
