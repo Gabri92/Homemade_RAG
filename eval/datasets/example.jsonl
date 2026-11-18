@@ -1,0 +1,3 @@
+{"id": "q-001", "question": "How many rest days per week does the synthetic plan recommend?", "category": "factual", "reference_answer": "Two rest days per week, one of them after the longest session.", "relevant_section_ids": ["chapter-one/rest-days"], "language": "en"}
+{"id": "q-002", "question": "And what should I do on those days?", "category": "follow_up", "reference_answer": "Light mobility work and no structured training.", "relevant_section_ids": ["chapter-one/rest-days"], "previous_id": "q-001", "language": "en"}
+{"id": "q-003", "question": "Quanti giorni di riposo servono?", "category": "non_english", "language": "it"}
