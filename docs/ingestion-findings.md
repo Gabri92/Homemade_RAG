@@ -21,7 +21,25 @@ Sorgente analizzata: *The Triathlete's Training Bible*, 5ª ed., ePub (54 docume
 | 10 | **Glossario perso**: le 123 definizioni sono una lista di definizioni (`<dl>`/`<dt>`/`<dd>`), elemento che il Loader non leggeva (restava solo il titolo) | Ogni `<dt>` diventa un paragrafo "termine: definizione" con tutti i suoi `<dd>` | Loader | Alta | ✅ | `test_definition_list_*`, `test_book_glossary_keeps_every_definition` |
 | 11 | `praise.xhtml` (33 blocchi di recensioni promozionali) non è nei landmarks, quindi risulta `body`. I landmarks hanno anche un errore: "bodymatter" punta alla copertina | Regola **algoritmica**, valida per altri libri: (A) un file senza landmark **racchiuso tra due file di front matter** diventa `frontmatter`; (B) conferma: se ha pagine in numeri arabi, avviso nel log. Nota: la versione "prima dell'ultimo landmark iniziale" era sbagliata, perché qui i ringraziamenti (p. xv) stanno in fondo all'ePub. Override manuale per sorgente solo se servirà | Structurer | Media | ✅ | `test_unlisted_file_between_front_matter_files_*`, `test_book_excludes_only_non_content_parts` |
 
+| 12 | **Bug dello Structurer** (trovato sul corpus): un file senza titoli con un ruolo nuovo apre una sezione fittizia di livello 1 che diventa **antenata di tutti i capitoli successivi** (ID come `frontmatter/xv`) | La sezione fittizia non deve entrare nella gerarchia: dopo di essa la pila dei titoli riparte vuota | Structurer | Alta | ⏳ | — |
+| 13 | **Ruoli incompleti** (corpus): negli ePub di Standard Ebooks i landmarks elencano solo 3–4 file; ogni file dichiara però la sua divisione e il suo tipo con `epub:type` su `<body>`/`<section>` (`frontmatter`, `backmatter`, `dedication`, `colophon`, `appendix`…). Risultato: imprint, dedica, colophon, "uncopyright" risultano `body` e inclusi; tipi multipli come "backmatter endnotes" non sono riconosciuti | Ruolo a cascata: landmark → `epub:type` del file (tipo specifico) → divisione (front/back); con più tipi, il più specifico | Loader | Alta | ⏳ | — |
+| 14 | **Rimandi alle note attaccati alle parole** (corpus): 8 / 142 / 439 rimandi `epub:type="noteref"` in Slocum / Engels / Whymper diventano "summit12" → token sporchi per BM25 | Il Loader toglie il testo dei rimandi (`noteref`); il contenuto delle note resta nella sezione delle note | Loader | Alta | ⏳ | — |
+| 15 | Nessun marcatore di pagina negli ePub del corpus | Comportamento corretto: citazioni solo per sezione, `inspect` avvisa | — | — | ✅ (atteso) | `test_missing_page_markers_*` |
+
 Legenda: ✅ fatto · 🔶 in parte · ⏳ da fare · 💤 rimandato.
+
+## Test di generalizzazione (corpus)
+
+Tre ePub di **Standard Ebooks** in `data/corpus/` (locale): Whymper, *Scrambles Amongst the Alps* (59,7 MB, 145 figure, appendici, 439 rimandi a note); Slocum, *Sailing Alone Around the World* (2,5 MB); Engels, *The Condition of the Working Class in England* (0,7 MB, 142 rimandi a note). Solo `tricoach inspect`, nessuna modifica al codice.
+
+| Controllo | Engels | Slocum | Whymper | Lettura |
+|---|---|---|---|---|
+| Copertura del testo | 100,0% | 100,0% | 99,9% | Il Loader non perde testo |
+| Titoli | L2: 20 | L2: 28 | L2: 39 | Capitoli come `<h2>`: gestiti |
+| Pagine | 0% ⚠ | 0% ⚠ | 0% ⚠ | Atteso (#15) |
+| Sezioni > 2000 parole | 11 (max 19.444) | 22 | 24 (max 15.778) | Capitoli senza sottotitoli: il chunker dovrà dividerli |
+
+Il report **non** ha visto i problemi #12–#14: sono emersi guardando gli ID delle sezioni e l'HTML. Conferma che `inspect` copre perdite e struttura grossolana, non la correttezza di ruoli e gerarchia.
 
 ## Struttura dell'ePub (per chi tocca il Loader)
 
