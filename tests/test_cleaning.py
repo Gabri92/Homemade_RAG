@@ -67,6 +67,16 @@ def test_paragraph_before_untitled_table_becomes_its_title() -> None:
     ]
 
 
+def test_merged_blocks_keep_the_page_where_they_start() -> None:
+    intro = Block("paragraph", "Scoring:", CH1, page="41")
+    untitled = Block("table", UNTITLED, CH1, page="42")
+    week1 = Block("table", WEEK1, CH1, page="120")
+    week2 = Block("table", WEEK2, CH1, page="121")
+
+    assert attach_intro_to_untitled_tables([intro, untitled])[0].page == "41"
+    assert merge_continued_tables([week1, week2])[0].page == "120"
+
+
 def test_titled_table_keeps_its_preceding_paragraph() -> None:
     blocks = [para("Text."), table(WEEK1)]
 

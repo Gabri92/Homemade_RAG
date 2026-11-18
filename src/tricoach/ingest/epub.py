@@ -3,31 +3,45 @@
 The only ingestion code that knows about ePub/HTML; everything downstream works on `Block`s.
 """
 
+import posixpath
+import re
+from dataclasses import replace
 from pathlib import Path
 
 import ebooklib
 from bs4 import BeautifulSoup, Tag
+from bs4.element import PageElement
 from ebooklib import epub
 
 from tricoach.models import Block
 
 _HEADING_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6")
-_BLOCK_TAGS = (*_HEADING_TAGS, "p", "li", "table", "img")
+_BLOCK_TAGS = (*_HEADING_TAGS, "p", "li", "table", "img", "dt")
 _LIST_TAGS = ("ul", "ol")
 _FIGURE_CONTAINERS = ("figure", "div")
+BODY = "body"
 
 
 def load_epub(path: Path) -> list[Block]:
     """Read an ePub and return its content blocks in reading (spine) order.
 
     Navigation documents (table of contents) are skipped: they are not book content.
+    Each block gets the role of its file (from the landmarks) and the printed page
+    where it starts (from the page markers); the page carries over between files.
     """
     book = epub.read_epub(str(path), options={"ignore_ncx": True})
+    roles = _book_landmark_roles(book)
     blocks: list[Block] = []
+    page: str | None = None
     for item_id, _linear in book.spine:
         item = book.get_item_with_id(item_id)
-        if item is not None and _is_book_content(item):
-            blocks.extend(html_to_blocks(item.get_content(), source=item.get_name()))
+        if item is None or not _is_book_content(item):
+            continue
+        name = item.get_name()
+        soup = _parse(item.get_content())
+        role = roles.get(posixpath.basename(name), BODY)
+        blocks.extend(_soup_to_blocks(soup, name, role, page))
+        page = _last_page(soup, page)
     return blocks
 
 
@@ -37,12 +51,26 @@ def _is_book_content(item: epub.EpubItem) -> bool:
     return item.get_type() == ebooklib.ITEM_DOCUMENT and not isinstance(item, epub.EpubNav)
 
 
-def html_to_blocks(html: str | bytes, source: str) -> list[Block]:
-    """Convert one (X)HTML document into blocks, keeping headings, lists, tables and figures."""
+def html_to_blocks(
+    html: str | bytes, source: str, role: str = BODY, start_page: str | None = None
+) -> list[Block]:
+    """Convert one (X)HTML document into blocks, keeping headings, lists, tables and figures.
+
+    `start_page` is the page in effect before the document's first page marker.
+    """
+    return _soup_to_blocks(_parse(html), source, role, start_page)
+
+
+def _parse(html: str | bytes) -> BeautifulSoup:
     soup = BeautifulSoup(html, "html.parser")
     for line_break in soup.find_all("br"):
         line_break.replace_with(" ")
+    return soup
 
+
+def _soup_to_blocks(
+    soup: BeautifulSoup, source: str, role: str, start_page: str | None
+) -> list[Block]:
     figure_containers = {id(c) for img in soup.find_all("img") if (c := _figure_container(img))}
     blocks: list[Block] = []
     for element in soup.find_all(_BLOCK_TAGS):
@@ -50,8 +78,78 @@ def html_to_blocks(html: str | bytes, source: str) -> list[Block]:
             continue
         block = _element_to_block(element, source)
         if block.text or block.kind == "figure":
-            blocks.append(block)
+            blocks.append(replace(block, role=role, page=_page_at(element, start_page)))
     return blocks
+
+
+# --- roles (landmarks) ----------------------------------------------------------
+
+
+def landmark_roles(nav_html: str | bytes) -> dict[str, str]:
+    """File name -> landmark type ("glossary", "index", ...) from an EPUB3 navigation page.
+
+    Files not listed are regular content (role "body"). "bodymatter" is skipped: it
+    marks where the content starts, it is not a kind of part.
+    """
+    soup = BeautifulSoup(nav_html, "html.parser")
+    roles: dict[str, str] = {}
+    for nav in soup.find_all("nav"):
+        if not isinstance(nav, Tag) or "landmarks" not in _epub_types(nav):
+            continue
+        for link in nav.find_all("a", href=True):
+            kind = " ".join(_epub_types(link))
+            if isinstance(link, Tag) and kind and kind != "bodymatter":
+                file_name = posixpath.basename(str(link["href"]).split("#")[0])
+                roles.setdefault(file_name, kind)
+    return roles
+
+
+def _book_landmark_roles(book: epub.EpubBook) -> dict[str, str]:
+    for item in book.get_items():
+        if isinstance(item, epub.EpubNav):
+            return landmark_roles(item.get_content())
+    return {}
+
+
+def _epub_types(tag: Tag) -> list[str]:
+    return str(tag.get("epub:type", "")).split()
+
+
+# --- pages (printed-page markers) ------------------------------------------------
+
+
+def _page_at(element: Tag, start_page: str | None) -> str | None:
+    """Page where the element starts: the last page marker before its first text.
+
+    A marker in the middle of a paragraph therefore applies to the blocks after it,
+    while a marker at the very start of a heading applies to the heading itself.
+    """
+    first_text = element.find(string=_has_text)
+    anchor: PageElement = first_text if first_text is not None else element
+    marker = anchor.find_previous(_is_page_marker)
+    return _page_label(marker) if isinstance(marker, Tag) else start_page
+
+
+def _last_page(soup: BeautifulSoup, current: str | None) -> str | None:
+    markers = [m for m in soup.find_all(_is_page_marker) if isinstance(m, Tag)]
+    return (_page_label(markers[-1]) or current) if markers else current
+
+
+def _is_page_marker(tag: Tag) -> bool:
+    return "pagebreak" in _epub_types(tag) or tag.get("role") == "doc-pagebreak"
+
+
+def _page_label(marker: Tag) -> str | None:
+    """ " page 224. " -> "224"; falls back to the id ("page_224")."""
+    label = str(marker.get("aria-label") or marker.get("title") or "").strip()
+    label = re.sub(r"^page\s*", "", label, flags=re.IGNORECASE).rstrip(".").strip()
+    if not label:
+        label = re.sub(r"^page[_-]?", "", str(marker.get("id", "")), flags=re.IGNORECASE)
+    return label or None
+
+
+def _has_text(text: str | None) -> bool:
+    return bool(text and text.strip())
 
 
 def _figure_container(img: Tag) -> Tag | None:
@@ -70,8 +168,8 @@ def _figure_container(img: Tag) -> Tag | None:
 
 def _is_nested_content(element: Tag, figure_containers: set[int]) -> bool:
     """True if the element is already covered by an enclosing table, list item or figure."""
-    if element.find_parent("table") is not None:
-        return True
+    if element.find_parent(["table", "dd"]) is not None:
+        return True  # tables and definitions are read as a whole by their own block
     if element.name != "img" and any(id(p) in figure_containers for p in element.parents):
         return True
     return element.name != "li" and element.find_parent("li") is not None
@@ -87,7 +185,20 @@ def _element_to_block(element: Tag, source: str) -> Block:
         return Block("table", _table_text(element), source)
     if name == "img":
         return Block("figure", _figure_caption(element), source)
+    if name == "dt":
+        return Block("paragraph", _definition_text(element), source)
     return Block("paragraph", _text(element), source)
+
+
+def _definition_text(term: Tag) -> str:
+    """Definition-list entry (glossary): "term: definition", with all its <dd> siblings."""
+    definitions = []
+    for sibling in term.find_next_siblings(["dt", "dd"]):
+        if sibling.name == "dt":
+            break
+        definitions.append(_text(sibling))
+    name = _text(term).rstrip(".:")  # terms often end with "." in the markup
+    return f"{name}: {' '.join(definitions)}" if definitions else name
 
 
 def _text(element: Tag) -> str:

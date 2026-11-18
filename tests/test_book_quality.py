@@ -145,3 +145,29 @@ def test_book_pull_quotes_are_removed_and_nothing_else(blocks: list[Block]) -> N
     assert len(removed) == expected.PULL_QUOTES_REMOVED
     # precision: every removed block is a sidenote, never body text
     assert all((b.source.rsplit("/", 1)[-1], b.text) in labels for b in removed)
+
+
+# --- findings #5, #6, #10: roles, pages, glossary ----------------------------------
+
+
+def test_book_every_body_block_has_a_page(blocks: list[Block]) -> None:
+    assert [b for b in blocks if b.role == "body" and not b.page] == []
+
+
+def test_book_table_11_1_is_on_its_printed_page(cleaned: list[Block]) -> None:
+    table = next(t for t in tables(cleaned) if t.text.startswith(expected.TABLE_11_1_TITLE))
+
+    assert table.page == expected.TABLE_11_1_PAGE
+
+
+def test_book_landmark_roles_are_assigned(blocks: list[Block]) -> None:
+    roles = {b.role for b in blocks}
+
+    assert {"body", "glossary", "index", "bibliography", "acknowledgments"} <= roles
+
+
+def test_book_glossary_keeps_every_definition(blocks: list[Block]) -> None:
+    terms = [b for b in blocks if b.role == "glossary" and b.kind == "paragraph"]
+
+    assert len(terms) == expected.GLOSSARY_TERMS
+    assert all(": " in t.text for t in terms)

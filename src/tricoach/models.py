@@ -13,12 +13,17 @@ class Block:
     `text` is plain text; tables are Markdown (preceded by their title, if any);
     figures carry only their caption, which may be empty. `level` is set only for
     headings (1 = highest). `source` is a free-form location used for debugging only.
+    `role` says which part of the book the block belongs to: "body" for the main
+    content, otherwise a landmark type such as "glossary", "index", "acknowledgments".
+    `page` is the printed-page label where the block starts ("224", "xii"), if known.
     """
 
     kind: BlockKind
     text: str
     source: str
     level: int | None = None
+    role: str = "body"
+    page: str | None = None
 
     def __post_init__(self) -> None:
         if (self.kind == "heading") != (self.level is not None):

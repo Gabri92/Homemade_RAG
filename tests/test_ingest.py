@@ -2,6 +2,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from tricoach.ingest import format_blocks, html_to_blocks, load_epub
+from tricoach.ingest.epub import landmark_roles
 from tricoach.models import Block
 
 SOURCE = "ch01.xhtml"
@@ -136,6 +137,29 @@ def test_table_rowspan_in_middle_column_keeps_later_cells_aligned() -> None:
     assert blocks[0].text.splitlines()[2:] == ["| a1 | b | c1 |", "| a2 | b | c2 |"]
 
 
+# --- definition lists (glossary) -------------------------------------------------
+
+
+def test_definition_list_entry_becomes_term_and_definition() -> None:
+    blocks = blocks_of(
+        "<dl>"
+        "<dt>LTHR</dt><dd>Lactate threshold heart rate.</dd>"
+        "<dt>Base period.</dt><dd><p>The general preparation phase.</p></dd>"
+        "</dl>"
+    )
+
+    assert blocks == [
+        Block("paragraph", "LTHR: Lactate threshold heart rate.", SOURCE),
+        Block("paragraph", "Base period: The general preparation phase.", SOURCE),
+    ]
+
+
+def test_term_with_several_definitions_keeps_them_all() -> None:
+    blocks = blocks_of("<dl><dt>Zone</dt><dd>An intensity range.</dd><dd>See Chapter 4.</dd></dl>")
+
+    assert blocks == [Block("paragraph", "Zone: An intensity range. See Chapter 4.", SOURCE)]
+
+
 # --- figures --------------------------------------------------------------------
 
 
@@ -171,6 +195,89 @@ def test_figure_without_caption_is_kept_with_empty_text() -> None:
     assert blocks == [Block("paragraph", "Text.", SOURCE), Block("figure", "", SOURCE)]
 
 
+# --- pages ----------------------------------------------------------------------
+
+
+def marker(label: str) -> str:
+    return f'<span epub:type="pagebreak" id="page_{label}" aria-label=" page {label}. "></span>'
+
+
+def pages_of(html: str, start_page: str | None = None) -> list[tuple[str, str | None]]:
+    blocks = html_to_blocks(f"<html><body>{html}</body></html>", SOURCE, start_page=start_page)
+    return [(b.text, b.page) for b in blocks]
+
+
+def test_block_takes_the_page_of_the_last_marker_before_it() -> None:
+    html = f"{marker('11')}<p>First.</p><p>Second.</p>{marker('12')}<p>Third.</p>"
+
+    assert pages_of(html) == [("First.", "11"), ("Second.", "11"), ("Third.", "12")]
+
+
+def test_marker_in_the_middle_of_a_paragraph_applies_to_the_next_block() -> None:
+    html = f"{marker('224')}<p>Starts on 224 {marker('225')} ends on 225.</p><p>Next.</p>"
+
+    assert pages_of(html) == [("Starts on 224 ends on 225.", "224"), ("Next.", "225")]
+
+
+def test_marker_at_the_start_of_a_heading_applies_to_the_heading() -> None:
+    html = f"<p>Before.</p><h2>{marker('30')}Chapter Two</h2>"
+
+    assert pages_of(html, start_page="29") == [("Before.", "29"), ("Chapter Two", "30")]
+
+
+def test_page_labels_keep_roman_numerals_and_letters() -> None:
+    html = f"{marker('A')}<p>Blank.</p>{marker('xii')}<p>Preface.</p>"
+
+    assert pages_of(html) == [("Blank.", "A"), ("Preface.", "xii")]
+
+
+def test_without_markers_pages_are_unknown() -> None:
+    assert pages_of("<p>No markers.</p>") == [("No markers.", None)]
+
+
+def test_load_epub_carries_the_page_into_the_next_file(make_epub: MakeEpub) -> None:
+    path = make_epub(
+        [
+            ("ch01.xhtml", f"{marker('7')}<p>One.</p>{marker('8')}"),
+            ("ch02.xhtml", "<p>Two.</p>"),
+        ]
+    )
+
+    assert [(b.text, b.page) for b in load_epub(path)] == [("One.", "7"), ("Two.", "8")]
+
+
+# --- roles ----------------------------------------------------------------------
+
+NAV = """<html><body>
+<nav epub:type="toc"><ol><li><a href="ch01.xhtml">Chapter 1</a></li></ol></nav>
+<nav epub:type="landmarks"><ol>
+  <li><a epub:type="cover" href="cover.xhtml">Cover</a></li>
+  <li><a epub:type="bodymatter" href="cover.xhtml">Start of Content</a></li>
+  <li><a epub:type="glossary" href="glossary.xhtml#g1">Glossary</a></li>
+  <li><a epub:type="index" href="../xhtml/index.xhtml">Index</a></li>
+</ol></nav></body></html>"""
+
+
+def test_landmark_roles_map_files_to_their_landmark_type() -> None:
+    assert landmark_roles(NAV) == {
+        "cover.xhtml": "cover",
+        "glossary.xhtml": "glossary",
+        "index.xhtml": "index",
+    }
+
+
+def test_blocks_get_the_role_passed_by_the_loader() -> None:
+    blocks = html_to_blocks("<p>Term: definition.</p>", "glossary.xhtml", role="glossary")
+
+    assert blocks[0].role == "glossary"
+
+
+def test_load_epub_defaults_to_body_without_landmarks(make_epub: MakeEpub) -> None:
+    path = make_epub([("ch01.xhtml", "<p>Text.</p>")])
+
+    assert {b.role for b in load_epub(path)} == {"body"}
+
+
 # --- load_epub ------------------------------------------------------------------
 
 
@@ -197,6 +304,9 @@ def test_format_blocks_tags_each_block_and_indents_multiline_text() -> None:
         Block("table", "| A |\n| --- |", SOURCE),
     ]
 
+    blocks[0] = Block("heading", "Base Period", SOURCE, level=2, page="12")
+
     assert format_blocks(blocks) == (
-        "[heading L2] ch01.xhtml\n    Base Period\n[table] ch01.xhtml\n    | A |\n    | --- |\n"
+        "[heading L2] ch01.xhtml · p. 12 · body\n    Base Period\n"
+        "[table] ch01.xhtml · body\n    | A |\n    | --- |\n"
     )

@@ -16,7 +16,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Cleaner rule `remove_pull_quotes`: drops pull quotes that repeat a sentence of a longer nearby block (157 removed on the book, 0 body paragraphs).
 - `tricoach dump --clean`: dumps the cleaned blocks to `blocks_clean.txt` (raw dump renamed `blocks_raw.txt`).
 
+- `Block.role` (landmark type of the block's file, default `body`) and `Block.page` (printed-page label where the block starts, from EPUB page markers); both shown in the dump.
+
 ### Fixed
+- Glossary definitions (`<dl>`/`<dt>`/`<dd>`) were dropped: each term is now a "term: definition" paragraph.
 - Table titles in `<caption>` were dropped: they are now the first line of the table block.
 - Merged cells (`rowspan`/`colspan`) shifted values into the wrong columns: the grid is now expanded.
 - Figure captions were emitted as loose paragraphs.

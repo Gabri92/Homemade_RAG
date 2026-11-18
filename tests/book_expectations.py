@@ -25,6 +25,10 @@ UNTITLED_TABLES = 4
 SIDENOTES = 214
 PULL_QUOTES_REMOVED = 157
 
+# Roles and pages (findings #5, #6, #10)
+GLOSSARY_TERMS = 123
+TABLE_11_1_PAGE = "172"  # verified by hand in the XHTML: marker page_172 opens the caption
+
 # Figures (finding #3)
 FIGURES = 64
 FIGURES_CAPTIONED_FIGURE = 39

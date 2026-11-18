@@ -91,7 +91,8 @@ def attach_intro_to_untitled_tables(blocks: list[Block]) -> list[Block]:
     for block in blocks:
         previous = result[-1] if result else None
         if previous and previous.kind == "paragraph" and _is_untitled_table(block, previous.source):
-            result[-1] = replace(block, text=f"{previous.text}\n{block.text}")
+            # The merged block starts where the intro starts: keep the intro's page.
+            result[-1] = replace(block, text=f"{previous.text}\n{block.text}", page=previous.page)
         else:
             result.append(block)
     return result
