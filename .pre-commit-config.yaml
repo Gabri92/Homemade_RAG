@@ -2,6 +2,12 @@
 repos:
   - repo: local
     hooks:
+      # The book is copyrighted: refuse its files and derivatives even after `git add -f`.
+      - id: forbid-book-files
+        name: forbid book files (data/, eval/runs/, *.epub, *.pdf)
+        entry: "Book files and derivatives must never be committed (copyright). Unstage them:"
+        language: fail
+        files: '^(data/|eval/runs/)|\.(epub|pdf)$'
       - id: ruff-check
         name: ruff check
         entry: uv run ruff check --fix
@@ -17,4 +23,11 @@ repos:
         entry: uv run mypy src
         language: system
         types: [python]
+        pass_filenames: false
+      # Full suite (unit + real book + corpus, ~15 s): nothing enters the history with broken tests.
+      - id: pytest
+        name: pytest (full suite)
+        entry: uv run pytest -q
+        language: system
+        files: '\.py$|^pyproject\.toml$|^uv\.lock$'
         pass_filenames: false

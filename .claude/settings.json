@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && uv run python .claude/hooks/check_done.py",
+            "timeout": 180,
+            "statusMessage": "Checking the definition of done (fast)..."
+          }
+        ]
+      }
+    ]
+  }
+}

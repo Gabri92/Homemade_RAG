@@ -1,23 +1,23 @@
 # CLAUDE.md
 
-Assistente Q&A basato su *The Triathlete's Training Bible* (Joe Friel). Progetto di apprendimento: RAG in pratica + valutazione rigorosa.
+Q&A assistant built on *The Triathlete's Training Bible* (Joe Friel). A learning project: RAG in practice plus rigorous evaluation.
 
-Leggi e rispetta i file di steering:
+Read and follow the steering files:
 
 @docs/steering/product.md
 @docs/steering/tech.md
 @docs/steering/structure.md
 @docs/steering/conventions.md
 
-Riferimenti (leggili quando tocchi l'area relativa): `docs/architecture.md`, `docs/roadmap.md`, `docs/adr/`, `docs/ingestion-findings.md` (difetti del libro e loro stato: aggiornalo quando correggi o trovi un problema di ingestion).
+References (read them when you touch the related area): `docs/architecture.md`, `docs/roadmap.md`, `docs/adr/`, `docs/ingestion-findings.md` (book defects and their status: update it when you fix or find an ingestion problem), `docs/working-with-claude-code.md` (how this repo is set up for Claude Code). The user's personal notes live in `notes/` (gitignored): never commit them or quote them in repository docs.
 
-## Regole sempre valide
+## Rules that always apply
 
-1. **Mai committare il libro o derivati** (`data/`, `eval/runs/`). Non stampare lunghi estratti verbatim del libro in output, log o test: usa fixture sintetiche.
-2. **Ogni modifica alla pipeline RAG è un esperimento**: nuova config in `configs/experiments/`, eval prima/dopo, delta riportato.
-3. **KISS ora, modularità quando serve.** Niente nuovi moduli, classi o astrazioni se una funzione basta. La struttura cresce solo davanti ai segnali concreti elencati in `structure.md` ("Quando far crescere la struttura"), un passo alla volta. Se una modifica sembra richiedere più struttura, proponila prima di farla.
-4. **Nuove dipendenze**: giustificale e chiedi prima di aggiungerle.
-5. **Definition of done**: `uv run ruff check . && uv run ruff format --check . && uv run mypy src && uv run pytest` tutti verdi.
-6. **Decisioni architetturali** (nuovo componente, cambio tecnologia, scelta di config vincente) → nuovo ADR in `docs/adr/`.
-7. **Mantieni allineati i docs**: se cambi struttura, comandi o convenzioni, aggiorna lo steering file corrispondente nella stessa modifica.
-8. Lingua: codice, identificatori, docstring e commit in **inglese**; documentazione in `docs/` e risposte all'utente in **italiano**.
+1. **Never commit the book or anything derived from it** (`data/`, `eval/runs/`). Do not print long verbatim excerpts of the book in output, logs or tests: use synthetic fixtures.
+2. **Every change to the RAG pipeline is an experiment**: new config in `configs/experiments/`, eval before and after, delta reported.
+3. **KISS now, modularity when needed.** No new modules, classes or abstractions if a function will do. Structure grows only in response to the concrete signals listed in `structure.md` ("When to grow the structure"), one step at a time. If a change seems to need more structure, propose it before making it.
+4. **New dependencies**: justify them and ask before adding them.
+5. **Definition of done**: `uv run ruff check . && uv run ruff format --check . && uv run mypy src && uv run pytest` all green.
+6. **Architectural decisions** (new component, technology change, winning config) → a new ADR in `docs/adr/`.
+7. **Keep the docs aligned**: if you change structure, commands or conventions, update the matching steering file in the same change.
+8. **Language**: everything in the repository (code, docs, comments, commits) is in **English**, because the project is built in public. Chat replies to the user are in **Italian**.

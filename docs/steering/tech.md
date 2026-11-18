@@ -1,52 +1,55 @@
 # Tech
 
 ## Stack
-| Area | Scelta |
+| Area | Choice |
 |---|---|
-| Linguaggio | Python 3.12+ |
-| Package/env | `uv` (mai `pip install` diretto) |
-| Validazione dati e config | `pydantic` v2, `pydantic-settings`, config YAML |
-| LLM | SDK `anthropic`; generazione `claude-sonnet-5-5`, judge `claude-opus-5-5` (configurabili) |
-| Embedding / reranker | `sentence-transformers` con `BAAI/bge-m3` e `BAAI/bge-reranker-v2-m3` |
-| Indice | `numpy` in memoria (persistito su file); `rank-bm25` per il lessicale |
-| Rilevamento lingua | `lingua-py` (language gate: solo inglese) |
-| Estrazione | `ebooklib` + `beautifulsoup4` (ePub), `pymupdf` (PDF) |
+| Language | Python 3.12+ |
+| Packages/env | `uv` (never a direct `pip install`) |
+| Data and config validation | `pydantic` v2, `pydantic-settings`, YAML config |
+| LLM | `anthropic` SDK; generation `claude-sonnet-5-5`, judge `claude-opus-5-5` (configurable) |
+| Embedding / reranker | `sentence-transformers` with `BAAI/bge-m3` and `BAAI/bge-reranker-v2-m3` |
+| Index | in-memory `numpy` (persisted to file); `rank-bm25` for lexical search |
+| Language detection | `lingua-py` (language gate: English only) |
+| Extraction | `ebooklib` + `beautifulsoup4` (ePub), `pymupdf` (PDF) |
 | CLI | `typer` |
-| Test | `pytest` |
-| Qualità | `ruff` (lint + format), `mypy --strict`, `pre-commit` |
+| Tests | `pytest` |
+| Quality | `ruff` (lint + format), `mypy --strict`, `pre-commit` |
 
-## Comandi
+## Commands
 ```bash
-uv sync                                   # installa dipendenze
+uv sync                                   # install dependencies
 uv run ruff check . --fix                 # lint
 uv run ruff format .                      # format
 uv run mypy src                           # type check
-uv run pytest                             # tutti i test (unit + libro reale se presente)
-uv run pytest tests/unit                  # solo unit: il ciclo veloce durante lo sviluppo
-uv run pytest -m integration              # test che chiamano API/modelli reali
-uv run pytest -m book                     # solo i controlli sul libro reale (girano anche con `pytest`, saltati se il libro manca)
-uv run pytest -m corpus                   # solo la generalizzazione su data/corpus/ (fonti in tests/corpus/expectations.py)
-uv run tricoach dump data/raw/<libro>.epub          # output del loader -> data/processed/blocks_raw.txt
-uv run tricoach dump data/raw/<libro>.epub --clean  # dopo il Cleaner -> data/processed/blocks_clean.txt
-git diff --no-index data/processed/blocks_raw.txt data/processed/blocks_clean.txt  # cosa ha cambiato il Cleaner
-uv run tricoach ingest data/raw/<libro>.epub  # load + clean + structure -> data/processed/book.json
-uv run tricoach inspect data/raw/<libro>.epub # report di qualità (solo numeri); exit code 1 se ci sono avvisi
-uv run tricoach ask "domanda"             # Q&A singolo
-uv run tricoach eval run --config configs/experiments/<nome>.yaml
+uv run pytest                             # all tests (unit + real book when present)
+uv run pytest tests/unit                  # unit only: the fast loop during development
+uv run pytest -m integration              # tests that call real APIs/models
+uv run pytest -m book                     # only the real-book checks (they also run with `pytest`, skipped if the book is missing)
+uv run pytest -m corpus                   # only the generalization on data/corpus/ (sources in tests/corpus/expectations.py)
+uv run tricoach dump data/raw/<book>.epub          # loader output -> data/processed/blocks_raw.txt
+uv run tricoach dump data/raw/<book>.epub --clean  # after the Cleaner -> data/processed/blocks_clean.txt
+git diff --no-index data/processed/blocks_raw.txt data/processed/blocks_clean.txt  # what the Cleaner changed
+uv run tricoach ingest data/raw/<book>.epub  # load + clean + structure -> data/processed/book.json
+uv run tricoach inspect data/raw/<book>.epub # quality report (numbers only); exit code 1 on warnings
+uv run tricoach ask "question"            # single Q&A
+uv run tricoach eval run --config configs/experiments/<name>.yaml
 uv run tricoach eval compare <run_a> <run_b>
 ```
-> Disponibili ora: `dump`, `ingest`, `inspect`. `ask` ed `eval` arrivano nella Fase 3. `uv run tricoach --help` elenca i comandi esistenti.
+> Available now: `dump`, `ingest`, `inspect`. `ask` and `eval` arrive in Phase 3. `uv run tricoach --help` lists the existing commands.
 
-## Segreti e configurazione
-- `ANTHROPIC_API_KEY` e simili solo in `.env` (gitignored), letti tramite `pydantic-settings`.
-- Nessun valore magico nel codice: modelli, k, dimensioni chunk, prompt vivono nella config dell'esperimento.
+## Secrets and configuration
+- `ANTHROPIC_API_KEY` and the like only in `.env` (gitignored), read through `pydantic-settings`.
+- No magic values in code: models, k, chunk sizes and prompts live in the experiment config.
 
-## Politica dipendenze
-- Preferire la libreria standard e poche dipendenze mirate.
-- Ogni nuova dipendenza va motivata (cosa risolve, alternativa scartata).
-- Ogni libreria esterna è importata in un solo modulo (vedi `structure.md`).
+## Dependency policy
+- Prefer the standard library and a few targeted dependencies.
+- Every new dependency must be justified (what it solves, which alternative was rejected).
+- Every external library is imported in a single module (see `structure.md`).
 
-## Costi e riproducibilità
-- Temperatura 0 per judge ed esperimenti.
-- Cache su disco degli embedding (chiave = hash testo + modello) e delle risposte del judge per non ripagare chiamate identiche.
-- Ogni run di eval salva la config completa e la versione dei prompt usati.
+## Cost and reproducibility
+- Temperature 0 for the judge and for experiments.
+- On-disk cache for embeddings (key = text hash + model) and judge answers, so identical calls are never paid twice.
+- Every eval run saves the full config and the version of the prompts it used.
+
+## Claude Code
+How the repo is set up for development with Claude Code (steering files, the definition-of-done hooks, the pre-commit guard on book files, planned skills and subagents): see `docs/working-with-claude-code.md`.
