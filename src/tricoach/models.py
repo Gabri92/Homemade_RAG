@@ -28,3 +28,31 @@ class Block:
     def __post_init__(self) -> None:
         if (self.kind == "heading") != (self.level is not None):
             raise ValueError(f"level must be set for headings only, got {self.kind=} {self.level=}")
+
+
+@dataclass(frozen=True, slots=True)
+class Section:
+    """A heading and the content up to the next heading: the unit for chunking and citations.
+
+    `id` is stable across runs (built from the title path, not from positions): the
+    golden set refers to it. `path` holds the titles from the top level down to this
+    section. `include` says whether the section goes into the search index.
+    """
+
+    id: str
+    title: str
+    level: int
+    path: tuple[str, ...]
+    role: str
+    include: bool
+    blocks: tuple[Block, ...]
+    first_page: str | None = None
+    last_page: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Book:
+    """Structured book: the hand-off between ingestion and everything downstream."""
+
+    source: str
+    sections: tuple[Section, ...]

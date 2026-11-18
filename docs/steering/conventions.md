@@ -62,4 +62,4 @@
   - *patch* (`0.2.1`) per correzioni su `main`.
 - **Tag annotato** `vX.Y.Z` sul commit di merge in `main`.
 - **`CHANGELOG.md`** (formato Keep a Changelog): ogni commit `feat:`/`fix:` aggiunge una riga in `[Unreleased]`; al rilascio la sezione prende numero e data.
-- **Artefatti dati:** `book.json` e gli indici contengono un `schema_version` (intero, incrementato a ogni cambio di formato) e la versione di `tricoach` che li ha prodotti. Un artefatto con schema diverso da quello atteso va rigenerato, non letto.
+- **Artefatti dati:** `book.json` (costante `SCHEMA_VERSION` in `ingest/book_file.py`) e gli indici contengono un `schema_version` (intero, incrementato a ogni cambio di formato) e la versione di `tricoach` che li ha prodotti. Un artefatto con schema diverso da quello atteso va rigenerato, non letto.

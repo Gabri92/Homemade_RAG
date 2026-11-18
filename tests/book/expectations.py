@@ -29,6 +29,22 @@ PULL_QUOTES_REMOVED = 157
 GLOSSARY_TERMS = 123
 TABLE_11_1_PAGE = "172"  # verified by hand in the XHTML: marker page_172 opens the caption
 
+# Structurer
+CHAPTERS = 14
+MORNING_WARNINGS_ID = "part-v-stress-rest-and-recovery/11-rest-and-recovery/morning-warnings"
+EXCLUDED_ROLES = {
+    "cover",
+    "frontmatter",  # praise.xhtml (finding #11)
+    "titlepage",
+    "dedication",
+    "acknowledgments",
+    "backmatter",
+    "bibliography",
+    "index",
+    "copyright-page",
+}
+AE1_RECOVERY_SECTIONS = 3  # same workout title for swim, bike and run
+
 # Figures (finding #3)
 FIGURES = 64
 FIGURES_CAPTIONED_FIGURE = 39

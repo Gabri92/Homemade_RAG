@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 
 from tests.book import expectations as expected
-from tricoach.ingest import clean, load_epub
-from tricoach.models import Block
+from tricoach.ingest import clean, load_epub, structure
+from tricoach.models import Block, Book
 
 _HERE = Path(__file__).parent
 
@@ -32,3 +32,9 @@ def blocks() -> list[Block]:
 def cleaned(blocks: list[Block]) -> list[Block]:
     """Output after the Cleaner."""
     return clean(blocks)
+
+
+@pytest.fixture(scope="session")
+def book(cleaned: list[Block]) -> Book:
+    """Output after the Structurer."""
+    return structure(cleaned, source=expected.BOOK_PATH.name)

@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 
 from tests.book import expectations as expected
 from tricoach.ingest import attach_intro_to_untitled_tables, remove_pull_quotes
-from tricoach.models import Block
+from tricoach.models import Block, Book
 
 
 def tables(blocks: list[Block]) -> list[Block]:
@@ -153,3 +153,56 @@ def test_book_glossary_keeps_every_definition(blocks: list[Block]) -> None:
 
     assert len(terms) == expected.GLOSSARY_TERMS
     assert all(": " in t.text for t in terms)
+
+
+# --- Structurer (findings #5, #11 and edge cases) --------------------------------
+
+
+def test_book_has_its_chapters(book: Book) -> None:
+    chapters = [s for s in book.sections if s.level == 2 and s.title.split()[0].isdigit()]
+
+    assert len(chapters) == expected.CHAPTERS
+
+
+def test_book_section_ids_are_unique(book: Book) -> None:
+    ids = [s.id for s in book.sections]
+
+    assert len(ids) == len(set(ids))
+
+
+def test_book_table_11_1_is_cited_with_its_section_and_pages(book: Book) -> None:
+    section = next(
+        s
+        for s in book.sections
+        if any(b.text.startswith(expected.TABLE_11_1_TITLE) for b in s.blocks)
+    )
+
+    assert section.id == expected.MORNING_WARNINGS_ID
+    assert section.first_page is not None
+    assert section.last_page == expected.TABLE_11_1_PAGE
+
+
+def test_book_excludes_only_non_content_parts(book: Book) -> None:
+    excluded = {s.role for s in book.sections if not s.include}
+
+    assert excluded == expected.EXCLUDED_ROLES
+
+
+def test_book_glossary_and_appendices_are_included(book: Book) -> None:
+    glossary = [s for s in book.sections if s.role == "glossary"]
+    appendices = [s for s in book.sections if s.path[0].startswith("APPENDIX")]
+
+    assert glossary
+    assert all(s.include for s in glossary)
+    assert appendices
+    assert all(s.include for s in appendices)
+
+
+def test_book_same_workout_for_different_sports_has_distinct_sections(book: Book) -> None:
+    recovery = [s.id for s in book.sections if s.id.endswith("/ae1-recovery")]
+
+    assert len(set(recovery)) == expected.AE1_RECOVERY_SECTIONS
+
+
+def test_book_every_included_section_has_pages(book: Book) -> None:
+    assert [s.id for s in book.sections if s.include and not s.first_page] == []

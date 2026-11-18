@@ -5,12 +5,14 @@ Principio: **KISS**. Un modulo per concetto, funzioni prima di classi, nessuno s
 ## Layout
 ```
 src/tricoach/
-  models.py      # dataclass: Block, Section, Chunk, RetrievedChunk, Answer, Citation
+  models.py      # dataclass: Block, Section, Book, Chunk, RetrievedChunk, Answer, Citation
   config.py      # settings (.env) + config esperimento (YAML -> pydantic)
   ingest/        # sorgente -> blocchi -> pulizia -> sezioni -> data/processed/book.json (ADR 0002)
     __init__.py  #   API pubblica: da fuori si importa solo da `tricoach.ingest`
     epub.py      #   Loader ePub (un file per formato: domani pdf.py)
-    cleaning.py  #   Cleaner: regole strutturali su list[Block] (in arrivo)
+    cleaning.py  #   Cleaner: regole strutturali su list[Block]
+    structure.py #   Structurer: list[Block] -> Book (sezioni, id, ruoli, inclusione, pagine)
+    book_file.py #   save_book / load_book di book.json, con SCHEMA_VERSION
     dump.py      #   format_blocks per l'ispezione
   chunking.py    # strategie di chunking (funzioni) + registro CHUNKERS
   index.py       # embedding, indice numpy, BM25, salvataggio/caricamento

@@ -18,6 +18,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 - `Block.role` (landmark type of the block's file, default `body`) and `Block.page` (printed-page label where the block starts, from EPUB page markers); both shown in the dump.
 
+- Structurer (`ingest/structure.py`): sections from headings across files, stable path-based ids, roles with front-matter inference (#11), `include` policy, page ranges; `Book`/`Section` models.
+- `book.json` with `schema_version` (`save_book`/`load_book`) and the `tricoach ingest` command.
+
 ### Fixed
 - Glossary definitions (`<dl>`/`<dt>`/`<dd>`) were dropped: each term is now a "term: definition" paragraph.
 - Table titles in `<caption>` were dropped: they are now the first line of the table block.
