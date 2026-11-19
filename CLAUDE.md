@@ -9,7 +9,7 @@ Read and follow the steering files:
 @docs/steering/structure.md
 @docs/steering/conventions.md
 
-References (read them when you touch the related area): `docs/architecture.md`, `docs/roadmap.md`, `docs/adr/`, `docs/ingestion-findings.md` (book defects and their status: update it when you fix or find an ingestion problem), `docs/working-with-claude-code.md` (how this repo is set up for Claude Code). The user's personal notes live in `notes/` (gitignored): never commit them or quote them in repository docs.
+References (read them when you touch the related area): `docs/architecture.md`, `docs/roadmap.md`, `docs/adr/`, `docs/ingestion-findings.md` (book defects and their status: update it when you fix or find an ingestion problem), `docs/working-with-claude-code.md` (how this repo is set up for Claude Code), `docs/commands.md` (command cheat sheet: update it when commands change). The user's personal notes live in `notes/` (gitignored): never commit them or quote them in repository docs.
 
 ## Rules that always apply
 

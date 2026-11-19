@@ -36,7 +36,7 @@ uv run tricoach ask "question"            # single Q&A
 uv run tricoach eval run --config configs/experiments/<name>.yaml
 uv run tricoach eval compare <run_a> <run_b>
 ```
-> Available now: `dump`, `ingest`, `inspect`, `eval check`. `ask`, `eval run` and `eval compare` arrive in Phase 3. `uv run tricoach --help` lists the existing commands.
+> Available now: `dump`, `ingest`, `inspect`, `eval check`. `ask`, `eval run` and `eval compare` arrive in Phase 3. `uv run tricoach --help` lists the existing commands. Task-oriented cheat sheet of what is available now: `docs/commands.md` (keep it aligned when commands change).
 
 ## Secrets and configuration
 - `ANTHROPIC_API_KEY` and the like only in `.env` (gitignored), read through `pydantic-settings`.
