@@ -30,9 +30,9 @@ Each phase has a concrete deliverable and a learning goal.
 
 ---
 
-## Phase 2 — Golden dataset (before retrieval!) 🚧
+## Phase 2 — Golden dataset (before retrieval!) ✅ (v0.3.0)
 
-> Status: format, validation and `tricoach eval check` done (ADR 0003: references are section ids). First golden set written by hand: 40 questions (multi_hop 4, conceptual 6, follow_up 3, factual 8, table 5, out_of_scope 4, non_english 10).
+> Status at closing: format, validation and `tricoach eval check` done (ADR 0003: references are section ids). First golden set written by hand: 40 questions (multi_hop 4, conceptual 6, follow_up 3, factual 8, table 5, out_of_scope 4, non_english 10).
 
 1. Write **30 initial questions** by hand covering every category (`factual`, `table`, `conceptual`, `multi_hop`, `out_of_scope`, `follow_up`).
 2. For each one: a reference answer + the book section/span that supports it.

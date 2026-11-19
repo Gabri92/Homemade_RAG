@@ -1,6 +1,6 @@
 [project]
 name = "tricoach"
-version = "0.2.1"
+version = "0.3.0"
 description = "Q&A assistant over The Triathlete's Training Bible: a hands-on RAG learning project."
 requires-python = ">=3.12"
 dependencies = [

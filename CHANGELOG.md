@@ -5,6 +5,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-19
+
+Phase 2 — golden dataset: format, validation against the book and the first 40 hand-written questions.
+
 ### Added
 - Golden dataset format: `GoldenQuestion` schema and `load_golden` (`eval/dataset.py`), with per-category rules; synthetic `eval/datasets/example.jsonl`.
 - `check_references`: golden-set section ids must exist in the book and be indexed; enforced by `tests/book/test_golden.py` (ADR 0003).
