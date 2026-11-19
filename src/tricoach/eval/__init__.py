@@ -1,1 +1,1 @@
-"""Evaluation harness (placeholder, Phase 3): golden dataset, metrics, judge, runs."""
+"""Evaluation harness: golden dataset (Phase 2); metrics, judge and runs arrive in Phase 3."""

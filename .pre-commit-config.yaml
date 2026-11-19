@@ -25,9 +25,10 @@ repos:
         types: [python]
         pass_filenames: false
       # Full suite (unit + real book + corpus, ~15 s): nothing enters the history with broken tests.
+      # Golden-set files too: tests/book/test_golden.py checks their section ids against the book.
       - id: pytest
         name: pytest (full suite)
         entry: uv run pytest -q
         language: system
-        files: '\.py$|^pyproject\.toml$|^uv\.lock$'
+        files: '\.py$|^pyproject\.toml$|^uv\.lock$|^eval/datasets/.*\.jsonl$'
         pass_filenames: false

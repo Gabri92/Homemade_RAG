@@ -14,7 +14,7 @@ from tricoach.ingest.cleaning import (
     merge_continued_tables,
     remove_pull_quotes,
 )
-from tricoach.ingest.dump import format_blocks
+from tricoach.ingest.dump import format_blocks, format_sections
 from tricoach.ingest.epub import epub_text, html_to_blocks, load_epub
 from tricoach.ingest.quality import Check, format_report, quality_report
 from tricoach.ingest.structure import mark_front_matter, structure
@@ -41,6 +41,7 @@ __all__ = [
     "epub_text",
     "format_blocks",
     "format_report",
+    "format_sections",
     "html_to_blocks",
     "ingest_epub",
     "inspect_epub",

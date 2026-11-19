@@ -11,7 +11,7 @@ This project is developed with [Claude Code](https://claude.com/claude-code) as 
 | Reference docs | `docs/architecture.md`, `docs/roadmap.md`, `docs/adr/`, `docs/ingestion-findings.md` | On demand, when the related area is touched | Detail that would waste context if it were always loaded |
 | Book-file guard | `.pre-commit-config.yaml`, hook `forbid-book-files` | On every commit | Refuses `data/`, `eval/runs/`, `*.epub`, `*.pdf` even after `git add -f`: copyright protection that does not depend on anyone remembering a rule |
 | Fast definition of done | `.claude/settings.json` (`Stop` hook) → `.claude/hooks/check_done.py` | When Claude is about to end a turn, if `.py` files have uncommitted changes | Ruff, format, mypy and unit tests (~3 s). On failure the error goes back to Claude, which keeps working instead of declaring the task done. One retry only, so it never loops |
-| Full test suite | `.pre-commit-config.yaml`, hook `pytest` | On every commit that touches Python files, `pyproject.toml` or `uv.lock` | Unit + real book + corpus (~15 s): nothing enters the history with broken tests, whoever makes the commit |
+| Full test suite | `.pre-commit-config.yaml`, hook `pytest` | On every commit that touches Python files, `pyproject.toml`, `uv.lock` or `eval/datasets/*.jsonl` | Unit + real book + corpus (~15 s): nothing enters the history with broken tests, whoever makes the commit |
 
 ### Two levels of checks
 

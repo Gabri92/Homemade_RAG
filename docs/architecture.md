@@ -25,7 +25,15 @@ For now, in pure Q&A, handling them well during chunking is enough — and it is
 
 ## 2. Overview
 
-Two separate pipelines, connected only by the index.
+Three pipelines, connected only by two artifacts on disk: `book.json` and the index.
+
+| Pipeline | Steps | Produces | Re-run when | Phase |
+|---|---|---|---|---|
+| **Ingestion** (offline) | Loader → Cleaner → Structurer | `data/processed/book.json` | a book defect is fixed (rarely) | 1 ✅ |
+| **Indexing** (offline) | Chunker → Enricher → Embedder → Index | `data/index/` | every experiment that changes chunking or embeddings | 3–4 |
+| **Query** (online) | Language gate → Retriever → Reranker → Generator | answer + citations | every question | 3–5 |
+
+The split follows how often each part changes: experiments start from the same `book.json` and never re-run ingestion. The golden set cites section ids from `book.json`, not chunks, so it survives every indexing experiment (ADR 0003).
 
 ```mermaid
 flowchart LR
@@ -33,45 +41,67 @@ flowchart LR
     A[PDF / ePub] --> B[Loader]
     B --> C[Cleaner]
     C --> D[Structurer<br/>chapters, sections, tables]
-    D --> E[Chunker]
-    E --> F[Enricher<br/>metadata, context]
+  end
+
+  BJ[(book.json<br/>sections with stable ids)]
+
+  subgraph Indexing [Indexing - offline, per experiment]
+    E[Chunker] --> F[Enricher<br/>metadata, context]
     F --> G[Embedder]
     G --> H[(Index<br/>vector + BM25)]
   end
 
   subgraph Query [Query - online]
-    Q[User question] --> L{Language gate<br/>is it English?}
-    L -- no --> N[Notice: English only<br/>no query]
-    L -- yes --> S[Retriever<br/>dense + BM25]
-    H --> S
+    Q[User question] --> S[Retriever<br/>dense + BM25]
     S --> T[Reranker]
     T --> U[Context builder]
     U --> V[Generator LLM]
     V --> W[Answer + citations]
   end
 
-  subgraph Eval [Evaluation - offline]
-    X[(Golden dataset)] --> Y[Runner]
-    Y --> Query
-    Y --> Z[Metrics + report]
+  subgraph Eval [Evaluation - offline, per experiment]
+    X[(Golden dataset)] --> Y[Runner<br/>asks each question]
+    Y --> M[Scoring<br/>retrieval + answers]
+    M --> Z[Report<br/>per category]
   end
+
+  %% Links between pipelines, kept outside the subgraphs so each node stays in its own box.
+  D --> BJ
+  BJ --> E
+  H --> S
+  Y -- question --> Q
+  S -. retrieved sections .-> Y
+  W -. answer .-> Y
+  X -. expected sections + answers .-> M
+  BJ -. section ids checked .-> X
 ```
+
+The evaluation pipeline acts as a fake user: the runner sends each golden question into the query pipeline, which runs unchanged, and collects what it retrieved and what it answered. Retrieval is scored against `relevant_section_ids` without any model; the answer is scored by the judge against `reference_answer`. Real users never go through evaluation: it runs only when an experiment is launched.
 
 ---
 
-## 3. Ingestion pipeline
+## 3. Ingestion and indexing pipelines
+
+### 3.1 Ingestion (`tricoach.ingest`, `tricoach ingest`)
 
 | Step | Responsibility | Practical notes |
 |---|---|---|
 | **Loader** | Extracts raw text from PDF/ePub | ePub is much cleaner than PDF (the HTML structure is already there). For PDF: `pymupdf`. |
 | **Cleaner** | Removes headers/footers, page numbers, hyphenation, artifacts | Always inspect the output by hand: this is where half of the quality problems start. |
-| **Structurer** | Rebuilds the hierarchy: part → chapter → section; isolates tables and sidebars | Produces a structured `Book`, saved as JSON in `data/processed/`. |
-| **Chunker** | Splits into `Chunk`s | Interchangeable strategies (see §5). |
+| **Structurer** | Rebuilds the hierarchy: part → chapter → section; isolates tables and sidebars | Produces a structured `Book`, saved as `data/processed/book.json` (with `schema_version`). |
+
+### 3.2 Indexing (`chunking.py`, `index.py`; from Phase 3)
+
+Starts from `book.json` and is re-run for every experiment config.
+
+| Step | Responsibility | Practical notes |
+|---|---|---|
+| **Chunker** | Splits sections into `Chunk`s; each chunk keeps the id of its section | Interchangeable strategies (see §5). The section id is what links retrieval metrics to the golden set. |
 | **Enricher** | Adds metadata and, optionally, generated context | `chapter`, `section`, `page`, `content_type` (prose/table/workout), `sport`. |
 | **Embedder** | Computes vectors | Interchangeable model (see §6). |
 | **Index** | Persists vectors + lexical index | For one book (~1–3k chunks) an in-memory / on-file index is enough. |
 
-Each step produces an artifact on disk → it can be inspected, versioned (locally) and only the changed step re-run.
+Each pipeline ends in an artifact on disk (`book.json`, the index) → it can be inspected, versioned (locally) and only the changed pipeline re-run.
 
 ---
 
@@ -149,18 +179,28 @@ Evaluation is the heart of the project: **every change to the pipeline is a meas
 
 ### 7.1 Golden dataset
 
-File `eval/datasets/golden.jsonl`, one line per question:
+File `eval/datasets/golden.jsonl`, one line per question (format: `GoldenQuestion` in `eval/dataset.py`; synthetic examples in `eval/datasets/example.jsonl`):
 
 ```json
 {
   "id": "q-042",
   "question": "How long does the Base period typically last and how is it divided?",
   "category": "factual",
-  "reference_answer": "…hand-written answer…",
-  "relevant_chunk_ids": ["ch07-s02-c01", "ch07-s02-c02"],
+  "reference_answer": "…hand-written paraphrase…",
+  "relevant_section_ids": ["<Section.id from book.json>"],
   "language": "en"
 }
 ```
+
+| Field | Rule |
+|---|---|
+| `id` | `q-` + at least 3 digits, unique in the file |
+| `reference_answer` | Hand-written **paraphrase**, never a quote (the file is committed). Required, except for `non_english` where it is absent |
+| `relevant_section_ids` | `Section.id` values from `book.json` (ADR 0003). At least 1; at least 2 for `multi_hop`; none for `out_of_scope` and `non_english` |
+| `previous_id` | Only and always for `follow_up`: the id of an earlier question in the file |
+| `language` | ISO 639-1, default `en`. It is the expected gate outcome: `en` passes, anything else is blocked. Only `non_english` has a language other than `en` |
+
+`uv run tricoach eval check` validates the file and checks that every cited section exists in `book.json` and is indexed; `tests/book/test_golden.py` runs the same check on every full test run.
 
 - **50–100 questions** written by hand (time well spent: you read them and understand the book).
 - **Categories** (to see *where* the pipeline fails):
@@ -169,10 +209,11 @@ File `eval/datasets/golden.jsonl`, one line per question:
   - `conceptual` — explanation of a concept;
   - `multi_hop` — needs several sections;
   - `out_of_scope` — not in the book → the correct answer is to say so;
-  - `follow_up` — second question of a conversation.
+  - `follow_up` — second question of a conversation;
+  - `non_english` — a message the language gate must block.
 - **Synthetic** questions generated by the LLM from the chunks help increase volume, but must be **reviewed by hand**.
-- All questions in **English**, plus a `non_english` category (~10 messages in IT/ES/FR, plus a few edge cases: short messages, English with a foreign term) to test the language gate. For these the expected answer is the notice, with zero chunks retrieved.
-- `relevant_chunk_ids` depend on the chunking: they are also stored as **text/section spans**, so they are remapped automatically when the chunking strategy changes.
+- All questions in **English**, plus a `non_english` category (~10 messages in IT/ES/FR) to test the language gate. For these the expected answer is the notice, with zero chunks retrieved. Edge cases that must **pass** the gate (short messages, English with a foreign term) are ordinary questions with `language: "en"`.
+- References are **section ids**, not chunk ids, so they do not depend on the chunking strategy: a retrieved chunk is relevant when it comes from a cited section (ADR 0003).
 
 ### 7.2 Retrieval metrics (deterministic, cheap)
 
@@ -240,4 +281,4 @@ An experiment = a new config, not a code change. `index` and `llm` are passed as
 ## 9. Data and copyright
 
 - The book (`data/raw/`) and all its derivatives (`data/processed/`, `data/index/`) **must never be committed** (they are in `.gitignore`, and a pre-commit hook refuses them).
-- Strictly personal use with a legally owned copy. Public distribution would require revisiting the approach (licence or reworded content).
+- Strictly personal use with a legally owned copy. Public distribution would require revisiting the approach (licence or reworded content). The planned shared demo (`docs/steering/product.md`, "Shared demo") counts as distribution: this must be settled before its link goes out.

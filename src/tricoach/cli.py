@@ -1,24 +1,31 @@
 """Command-line entry point. No logic here: parse arguments, call a module, report."""
 
 import logging
+from collections import Counter
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
+from tricoach.eval.dataset import check_references, load_golden
 from tricoach.ingest import (
     clean,
     format_blocks,
     format_report,
+    format_sections,
     ingest_epub,
     inspect_epub,
+    load_book,
     load_epub,
     save_book,
 )
 
 app = typer.Typer(help="Q&A assistant over The Triathlete's Training Bible.", no_args_is_help=True)
+eval_app = typer.Typer(help="Golden dataset and evaluation.", no_args_is_help=True)
+app.add_typer(eval_app, name="eval")
 
 PROCESSED = Path("data/processed")
+GOLDEN = Path("eval/datasets/golden.jsonl")
 
 
 @app.callback()
@@ -68,3 +75,42 @@ def dump(
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(format_blocks(blocks), encoding="utf-8")
     typer.echo(f"{len(blocks)} blocks written to {output}")
+
+
+@app.command()
+def sections(
+    book: Annotated[
+        Path, typer.Option(exists=True, dir_okay=False, help="book.json from `tricoach ingest`.")
+    ] = PROCESSED / "book.json",
+    output: Annotated[Path, typer.Option(help="Where to write the list.")] = PROCESSED
+    / "sections.txt",
+) -> None:
+    """List section ids, pages and excluded flags (no book text): the ids the golden set cites."""
+    structured = load_book(book)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(format_sections(structured), encoding="utf-8")
+    typer.echo(f"{len(structured.sections)} sections written to {output}")
+
+
+@eval_app.command("check")
+def eval_check(
+    golden: Annotated[
+        Path, typer.Argument(exists=True, dir_okay=False, help="Golden-set JSONL file.")
+    ] = GOLDEN,
+    book: Annotated[
+        Path, typer.Option(exists=True, dir_okay=False, help="book.json from `tricoach ingest`.")
+    ] = PROCESSED / "book.json",
+) -> None:
+    """Validate the golden set and check that every cited section is in the book index."""
+    try:
+        questions = load_golden(golden)
+        problems = check_references(questions, load_book(book))
+    except ValueError as error:
+        typer.echo(f"ERROR {error}")
+        raise typer.Exit(code=1) from error
+    counts = Counter(question.category for question in questions)
+    typer.echo(f"{len(questions)} questions: " + ", ".join(f"{c} {n}" for c, n in counts.items()))
+    for problem in problems:
+        typer.echo(f"ERROR {problem}")
+    if problems:
+        raise typer.Exit(code=1)

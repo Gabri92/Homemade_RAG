@@ -31,11 +31,13 @@ uv run tricoach dump data/raw/<book>.epub --clean  # after the Cleaner -> data/p
 git diff --no-index data/processed/blocks_raw.txt data/processed/blocks_clean.txt  # what the Cleaner changed
 uv run tricoach ingest data/raw/<book>.epub  # load + clean + structure -> data/processed/book.json
 uv run tricoach inspect data/raw/<book>.epub # quality report (numbers only); exit code 1 on warnings
+uv run tricoach sections                  # section ids, pages, excluded flags -> data/processed/sections.txt
+uv run tricoach eval check                # validate eval/datasets/golden.jsonl against data/processed/book.json
 uv run tricoach ask "question"            # single Q&A
 uv run tricoach eval run --config configs/experiments/<name>.yaml
 uv run tricoach eval compare <run_a> <run_b>
 ```
-> Available now: `dump`, `ingest`, `inspect`. `ask` and `eval` arrive in Phase 3. `uv run tricoach --help` lists the existing commands.
+> Available now: `dump`, `ingest`, `inspect`, `sections`, `eval check`. `ask`, `eval run` and `eval compare` arrive in Phase 3. `uv run tricoach --help` lists the existing commands. Task-oriented cheat sheet of what is available now: `docs/commands.md` (keep it aligned when commands change).
 
 ## Secrets and configuration
 - `ANTHROPIC_API_KEY` and the like only in `.env` (gitignored), read through `pydantic-settings`.

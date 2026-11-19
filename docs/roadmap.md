@@ -30,7 +30,9 @@ Each phase has a concrete deliverable and a learning goal.
 
 ---
 
-## Phase 2 — Golden dataset (before retrieval!)
+## Phase 2 — Golden dataset (before retrieval!) ✅ (v0.3.0)
+
+> Status at closing: format, validation and `tricoach eval check` done (ADR 0003: references are section ids). First golden set written by hand: 40 questions (multi_hop 4, conceptual 6, follow_up 3, factual 8, table 5, out_of_scope 4, non_english 10).
 
 1. Write **30 initial questions** by hand covering every category (`factual`, `table`, `conceptual`, `multi_hop`, `out_of_scope`, `follow_up`).
 2. For each one: a reference answer + the book section/span that supports it.
@@ -110,6 +112,8 @@ Each row is an experiment with its own config; it is always compared with the pr
 ---
 
 ## Later (out of scope for now)
+
+- **Shared demo (build in public)**: part of the product reachable through a link, no accounts (see `docs/steering/product.md`, "Shared demo"). Before it goes out: settle the copyright question and add a usage limit.
 
 - **User-added sources** (NotebookLM style): the Loader and Cleaner rules are already generic (they work on HTML semantics and on `Block`), but thresholds and expected values are tuned on a single book. To generalize:
   1. **ingestion corpus**: a few copyright-free ePubs/PDFs from different publishers (e.g. Project Gutenberg, Standard Ebooks, open-access articles), each with its own expected values, run as regression tests;
