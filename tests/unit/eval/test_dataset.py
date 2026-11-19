@@ -2,12 +2,12 @@
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, get_args
 
 import pytest
 from pydantic import ValidationError
 
-from tricoach.eval.dataset import GoldenQuestion, check_references, load_golden
+from tricoach.eval.dataset import Category, GoldenQuestion, check_references, load_golden
 from tricoach.models import Book, Section
 
 EXAMPLE = Path(__file__).parents[3] / "eval" / "datasets" / "example.jsonl"
@@ -114,10 +114,10 @@ def test_follow_up_must_point_to_an_earlier_question(tmp_path: Path, previous_id
         load_golden(path)
 
 
-def test_example_file_is_valid() -> None:
+def test_example_file_is_valid_and_shows_every_category() -> None:
     questions = load_golden(EXAMPLE)
 
-    assert {q.category for q in questions} == {"factual", "follow_up", "non_english"}
+    assert {q.category for q in questions} == set(get_args(Category))
 
 
 def _book(*sections: tuple[str, bool]) -> Book:
