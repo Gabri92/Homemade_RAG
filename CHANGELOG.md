@@ -9,6 +9,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Golden dataset format: `GoldenQuestion` schema and `load_golden` (`eval/dataset.py`), with per-category rules; synthetic `eval/datasets/example.jsonl`.
 - `check_references`: golden-set section ids must exist in the book and be indexed; enforced by `tests/book/test_golden.py` (ADR 0003).
 - `tricoach eval check`: validates the golden set against `book.json`.
+- `tricoach sections`: lists section ids, pages and excluded flags (no book text) in `data/processed/sections.txt`, to find the ids the golden set cites.
 - The pre-commit `pytest` hook also runs on changes to `eval/datasets/*.jsonl`, so golden-set references are checked before every commit.
 - Pre-commit hook `forbid-book-files`: refuses `data/`, `eval/runs/`, `*.epub` and `*.pdf` even after `git add -f`.
 - Pre-commit hook `pytest`: the full test suite runs on every commit that touches Python files, `pyproject.toml` or `uv.lock`.

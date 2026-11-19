@@ -25,21 +25,14 @@ Everything under `data/` is gitignored: outputs written there never reach the re
 
 | Command | What it does |
 |---|---|
+| `uv run tricoach sections` | List section ids, page ranges and `[EXCLUDED]` flags (no book text) → `data/processed/sections.txt`: the ids to cite. `--book` / `--output` for other paths. Re-run after every `ingest`; cite only sections without `[EXCLUDED]` |
 | `uv run tricoach eval check` | Validate `eval/datasets/golden.jsonl` and check that every cited section exists in `data/processed/book.json` and is indexed. Exit code 1 on any problem |
 | `uv run tricoach eval check <file.jsonl> --book <book.json>` | Same, on another file or book |
 | `uv run tricoach eval check eval/datasets/example.jsonl` | Try the format on the synthetic example (its section ids are made up, so they are reported) |
 
-Section ids to cite (id, pages, excluded flag; no book text) → `data/processed/sections.txt`:
-
-```bash
-uv run python -c "import json; s=json.load(open('data/processed/book.json',encoding='utf-8'))['sections']; open('data/processed/sections.txt','w',encoding='utf-8').write(''.join(f\"{x['id']}  p.{x['first_page']}-{x['last_page']}{'' if x['include'] else '  [EXCLUDED]'}\n\" for x in s))"
-```
-
-Regenerate it after every `tricoach ingest`. Cite only sections without `[EXCLUDED]`.
-
 Typical loop while writing questions:
 1. `uv run tricoach ingest data/raw/<book>.epub` (only if `book.json` is missing or ingestion changed);
-2. regenerate `sections.txt`, find the section, copy its id;
+2. `uv run tricoach sections`, then find the section in `data/processed/sections.txt` and copy its id;
 3. write the line in `golden.jsonl` (format: `docs/architecture.md` §7.1);
 4. `uv run tricoach eval check`;
 5. commit: the pre-commit hook re-runs the check against the current ingestion.

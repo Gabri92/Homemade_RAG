@@ -15,7 +15,7 @@ src/tricoach/
     structure.py #   Structurer: list[Block] -> Book (sections, ids, roles, inclusion, pages)
     book_file.py #   save_book / load_book for book.json, with SCHEMA_VERSION
     quality.py   #   generic quality report (no expected values): `tricoach inspect`
-    dump.py      #   format_blocks for inspection
+    dump.py      #   format_blocks, format_sections for inspection
   chunking.py    # (placeholder) chunking strategies (functions) + CHUNKERS registry
   index.py       # (placeholder) embeddings, numpy index, BM25, save/load
   retrieval.py   # (placeholder) dense, bm25, RRF fusion, rerank
@@ -28,7 +28,7 @@ src/tricoach/
     metrics.py   #   (placeholder) metrics (pure functions)
     judge.py     #   (placeholder) LLM-as-judge
     run.py       #   (placeholder) runs an experiment, saves and compares runs
-  cli.py         # typer commands: dump, ingest, inspect, eval check (then ask, eval run/compare)
+  cli.py         # typer commands: dump, ingest, inspect, sections, eval check (then ask, eval run/compare)
 .claude/               # Claude Code project settings: settings.json (hooks) + hooks/ scripts
 configs/experiments/   # one YAML per experiment (from Phase 3)
 eval/datasets/         # golden.jsonl (committed, hand-written) + example.jsonl (synthetic format example)

@@ -64,6 +64,35 @@ def test_inspect_exits_1_when_there_are_warnings(make_epub: MakeEpub) -> None:
     assert "WARNING" in result.output
 
 
+def test_sections_lists_ids_without_book_text(make_epub: MakeEpub, tmp_path: Path) -> None:
+    book = tmp_path / "book.json"
+    runner.invoke(
+        app,
+        [
+            "ingest",
+            str(make_epub([("ch01.xhtml", "<h1>Chapter One</h1><p>First.</p>")])),
+            "--output",
+            str(book),
+        ],
+    )
+    output = tmp_path / "sections.txt"
+
+    result = runner.invoke(app, ["sections", "--book", str(book), "--output", str(output)])
+
+    assert result.exit_code == 0, result.output
+    assert "1 sections written" in result.output
+    listing = output.read_text(encoding="utf-8")
+    assert listing.startswith("chapter-one")
+    assert "First." not in listing
+
+
+def test_sections_rejects_missing_book(tmp_path: Path) -> None:
+    result = runner.invoke(app, ["sections", "--book", str(tmp_path / "missing.json")])
+
+    assert result.exit_code != 0
+    assert "does not exist" in result.output
+
+
 def _golden_and_book(make_epub: MakeEpub, tmp_path: Path, section_id: str) -> list[str]:
     book = tmp_path / "book.json"
     epub = make_epub([("ch01.xhtml", "<h1>Chapter One</h1><p>First.</p>")])

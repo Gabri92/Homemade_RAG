@@ -12,6 +12,7 @@ from tricoach.ingest import (
     clean,
     format_blocks,
     format_report,
+    format_sections,
     ingest_epub,
     inspect_epub,
     load_book,
@@ -74,6 +75,21 @@ def dump(
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(format_blocks(blocks), encoding="utf-8")
     typer.echo(f"{len(blocks)} blocks written to {output}")
+
+
+@app.command()
+def sections(
+    book: Annotated[
+        Path, typer.Option(exists=True, dir_okay=False, help="book.json from `tricoach ingest`.")
+    ] = PROCESSED / "book.json",
+    output: Annotated[Path, typer.Option(help="Where to write the list.")] = PROCESSED
+    / "sections.txt",
+) -> None:
+    """List section ids, pages and excluded flags (no book text): the ids the golden set cites."""
+    structured = load_book(book)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(format_sections(structured), encoding="utf-8")
+    typer.echo(f"{len(structured.sections)} sections written to {output}")
 
 
 @eval_app.command("check")
