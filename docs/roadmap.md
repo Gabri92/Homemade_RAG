@@ -86,17 +86,22 @@ Each row is an experiment with its own config; it is always compared with the pr
 3. Multi-turn: condensing the follow-up into a standalone question before retrieval.
 3b. *Gate accuracy* metric (deterministic) on the `non_english` category.
 4. **Judge calibration**: label ~30 answers by hand, measure judge/human agreement, fix the rubric.
+5. **Experiment: our citations vs the Claude API's native citations.** Pass the retrieved chunks as document/content blocks with citations enabled, so the API returns the cited text and its location; we keep our own metadata (chapter, section, printed page) to show the reader. Same golden set and judge: compare citation accuracy, faithfulness and prompt complexity against our prompt-based citation format. Answers whether citation handling is worth building ourselves.
 
 **Deliverable:** faithfulness and refusal correctness measured and reliable.
 
 ---
 
-## Phase 6 — Comparison with a long-context baseline
+## Phase 6 — Comparison with external baselines
 
-- A generator that receives the whole book in context with prompt caching.
-- Same golden set: compare quality, cost and latency with the best RAG config.
+Both baselines answer the same build-versus-buy question: how much does our own pipeline add over an approach that needs little or no pipeline at all?
 
-**Learning:** understand concretely the RAG vs long-context trade-offs.
+1. **Long context**: a generator that receives the whole book in context with prompt caching.
+2. **Managed "all-in-one" RAG**: the book uploaded to a hosted retrieval service (candidates to evaluate before the experiment: an LLM provider's file search, Bedrock Knowledge Bases, Vertex AI RAG Engine, Azure AI Search), with default settings. Like experiment 4.8, it stays **only** a point of comparison (ADR 0001). Copyright check first: uploading the book to a third-party service must be allowed for personal use and the data must not be shared or retained beyond the experiment.
+
+Same golden set and judge for both: compare quality per question category, citation precision, cost and latency with the best RAG config.
+
+**Learning:** understand concretely the trade-offs of RAG vs long context, and of a custom pipeline vs a managed one.
 **Deliverable:** comparison table + conclusions in `docs/adr/`.
 
 ---
