@@ -1,5 +1,7 @@
 # Homemade RAG
 
+[![CI](https://github.com/Gabri92/Homemade_RAG/actions/workflows/ci.yml/badge.svg)](https://github.com/Gabri92/Homemade_RAG/actions/workflows/ci.yml)
+
 A question-answering assistant over a triathlon training book, built from scratch to learn **retrieval-augmented generation (RAG)** component by component and to **measure** every choice with a golden dataset (eval-driven development).
 
 The reference book is Joe Friel's *The Triathlete's Training Bible*. The assistant answers in English and cites the chapter and section behind every claim.
@@ -61,7 +63,7 @@ All commands: [`docs/commands.md`](docs/commands.md). Definition of done:
 uv run ruff check . && uv run ruff format --check . && uv run mypy src && uv run pytest
 ```
 
-Tests on the real book are skipped automatically when the book is not in `data/raw/`.
+Tests on the real book are skipped automatically when the book is not in `data/raw/`; CI runs every other check on each pull request.
 
 ## Documentation
 

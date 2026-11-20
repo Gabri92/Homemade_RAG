@@ -55,3 +55,15 @@ All green before calling something done:
 ```bash
 uv run ruff check . && uv run ruff format --check . && uv run mypy src && uv run pytest
 ```
+
+## Branches and pull requests
+
+Every change reaches `main` through a pull request (rules: `docs/steering/conventions.md`, "Git").
+
+| Command | What it does |
+|---|---|
+| `git switch main && git pull` | Start from an up-to-date `main` |
+| `git switch -c <type>/<name>` | New branch: `feat/phase-3-…`, `exp/<name>`, `fix/…`, `docs/…`, `chore/…` |
+| `git push -u origin <type>/<name>` | Publish the branch; the output prints the link to open the pull request |
+| `git switch main && git pull && git branch -d <type>/<name>` | After the merge on GitHub: update `main` and delete the local branch |
+| `git tag -a vX.Y.Z -m "…" && git push origin vX.Y.Z` | Phase release: annotated tag on the merge commit in `main` |
