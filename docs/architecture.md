@@ -195,7 +195,7 @@ File `eval/datasets/golden.jsonl`, one line per question (format: `GoldenQuestio
 | Field | Rule |
 |---|---|
 | `id` | `q-` + at least 3 digits, unique in the file |
-| `reference_answer` | Hand-written **paraphrase**, never a quote (the file is committed). Required, except for `non_english` where it is absent |
+| `reference_answer` | Hand-written **paraphrase**, never a quote. The file is gitignored and kept local (ADR 0004), but written as if it could be shared. Required, except for `non_english` where it is absent |
 | `relevant_section_ids` | `Section.id` values from `book.json` (ADR 0003). At least 1; at least 2 for `multi_hop`; none for `out_of_scope` and `non_english` |
 | `previous_id` | Only and always for `follow_up`: the id of an earlier question in the file |
 | `language` | ISO 639-1, default `en`. It is the expected gate outcome: `en` passes, anything else is blocked. Only `non_english` has a language other than `en` |

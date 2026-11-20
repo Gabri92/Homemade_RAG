@@ -35,7 +35,7 @@ Typical loop while writing questions:
 2. `uv run tricoach sections`, then find the section in `data/processed/sections.txt` and copy its id;
 3. write the line in `golden.jsonl` (format: `docs/architecture.md` §7.1);
 4. `uv run tricoach eval check`;
-5. commit: the pre-commit hook re-runs the check against the current ingestion.
+5. `golden.jsonl` is gitignored (ADR 0004): keep a backup of your own. Every commit that touches code still re-runs the check against the current ingestion.
 
 ## Quality (definition of done)
 
