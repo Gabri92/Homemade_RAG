@@ -31,7 +31,7 @@ src/tricoach/
   cli.py         # typer commands: dump, ingest, inspect, sections, eval check (then ask, eval run/compare)
 .claude/               # Claude Code project settings: settings.json (hooks) + hooks/ scripts
 configs/experiments/   # one YAML per experiment (from Phase 3)
-eval/datasets/         # golden.jsonl (committed, hand-written) + example.jsonl (synthetic format example)
+eval/datasets/         # golden.jsonl (hand-written, gitignored: kept local, ADR 0004) + example.jsonl (synthetic, committed)
 eval/runs/             # run outputs (gitignored)
 data/                  # raw/, processed/, index/ (gitignored)
 notes/                 # personal notes: prompting, building in public (gitignored)

@@ -4,10 +4,10 @@ repos:
     hooks:
       # The book is copyrighted: refuse its files and derivatives even after `git add -f`.
       - id: forbid-book-files
-        name: forbid book files (data/, eval/runs/, *.epub, *.pdf)
+        name: forbid book files (data/, eval/runs/, golden.jsonl, *.epub, *.pdf)
         entry: "Book files and derivatives must never be committed (copyright). Unstage them:"
         language: fail
-        files: '^(data/|eval/runs/)|\.(epub|pdf)$'
+        files: '^(data/|eval/runs/|eval/datasets/golden\.jsonl$)|\.(epub|pdf)$'
       - id: ruff-check
         name: ruff check
         entry: uv run ruff check --fix

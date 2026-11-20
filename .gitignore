@@ -1,6 +1,8 @@
 # Book content and derivatives — never commit (copyright)
 data/
 eval/runs/
+# Golden set: hand-written answers paraphrase the book, kept local (ADR 0004)
+eval/datasets/golden.jsonl
 *.epub
 *.pdf
 

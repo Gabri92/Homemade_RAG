@@ -102,12 +102,15 @@ def test_paragraph_from_another_file_is_not_attached() -> None:
 
 # --- #4 remove_pull_quotes -------------------------------------------------------
 
+# Synthetic text: never sentences from the real book.
 ORIGINAL = (
-    "Recovery is where fitness is built. Only experience will tell you how many warning "
-    "signs you can tolerate, but two or more warnings on waking may be enough for you to "
-    "decide to take it easy that day and skip the hard session you had planned."
+    "Sleep is the quiet half of every plan. Your own logbook will show how much travel "
+    "and work stress you can absorb, but a short night before a key day is a good reason "
+    "to swap the hard session for an easy spin and move it to the weekend."
 )
-PULL_QUOTE = "Two or more warnings on waking may be enough to decide to take it easy that day."
+PULL_QUOTE = (
+    "A short night before a key day is a good reason to swap the hard session for an easy spin."
+)
 
 
 def test_pull_quote_before_its_original_is_removed() -> None:
@@ -134,8 +137,8 @@ def test_similar_paragraphs_of_similar_length_are_both_kept() -> None:
 
 
 def test_short_label_referenced_by_a_paragraph_is_kept() -> None:
-    label = "SIDEBAR 1.1 Evaluating Mental Toughness"
-    text = f"How patient are you? {label}, at the end of this chapter, will help you decide."
+    label = "SIDEBAR 1.1 Rating Your Sleep Habits"
+    text = f"How well do you sleep? {label}, at the end of this chapter, will help you decide."
 
     assert remove_pull_quotes([para(label), para(text)]) == [para(label), para(text)]
 

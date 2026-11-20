@@ -13,7 +13,7 @@ References (read them when you touch the related area): `docs/architecture.md`, 
 
 ## Rules that always apply
 
-1. **Never commit the book or anything derived from it** (`data/`, `eval/runs/`). Do not print long verbatim excerpts of the book in output, logs or tests: use synthetic fixtures.
+1. **Never commit the book or anything derived from it** (`data/`, `eval/runs/`, `eval/datasets/golden.jsonl`). Do not print long verbatim excerpts of the book in output, logs or tests: use synthetic fixtures.
 2. **Every change to the RAG pipeline is an experiment**: new config in `configs/experiments/`, eval before and after, delta reported.
 3. **KISS now, modularity when needed.** No new modules, classes or abstractions if a function will do. Structure grows only in response to the concrete signals listed in `structure.md` ("When to grow the structure"), one step at a time. If a change seems to need more structure, propose it before making it.
 4. **New dependencies**: justify them and ask before adding them.
