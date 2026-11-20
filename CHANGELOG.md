@@ -5,6 +5,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+- `README.md`: project overview, unofficial-project notice, how the book and the golden set stay out of the repository.
+- ADR 0004: the golden set is kept local.
+
+### Changed
+- `eval/datasets/golden.jsonl` is gitignored and refused by the `forbid-book-files` hook; `example.jsonl` stays the committed format example.
+- The pull-quote test fixture is fully synthetic.
+
 ## [0.3.0] - 2026-11-19
 
 Phase 2 — golden dataset: format, validation against the book and the first 40 hand-written questions.
