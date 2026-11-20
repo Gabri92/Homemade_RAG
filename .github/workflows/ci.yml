@@ -1,0 +1,34 @@
+# Server-side safety net: the same checks as the local git hooks, on every pull request
+# and on every push to main, wherever the commit comes from.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --locked
+      # Single source of truth for the checks: .pre-commit-config.yaml. With --all-files,
+      # forbid-book-files scans every tracked file, not only the changed ones.
+      # tests/book and tests/corpus are skipped: the book is never available here.
+      - name: Run every pre-commit hook on all files
+        run: uv run pre-commit run --all-files --show-diff-on-failure
