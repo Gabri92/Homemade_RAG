@@ -1,8 +1,9 @@
-# Architecture — RAG Q&A on "The Triathlete's Training Bible"
+# Architecture — Homemade RAG
 
-> Current scope: **Q&A about the book only**. Primary goal: understand RAG in practice and **measure its quality**.
+> A NotebookLM-style Q&A assistant over source documents. Reference document: *The Triathlete's Training Bible* (called "the book" below).
+> Primary goal: understand RAG in practice and **measure its quality**.
 > Language: **English only** for questions and answers.
-> Out of scope (for now): multilingual, plan generation, zone calculation, athlete profile, Strava/Garmin data integration.
+> Out of scope (for now): multilingual, and anything beyond answering questions about the source documents.
 
 ---
 
@@ -18,8 +19,7 @@ The book holds several kinds of content, which behave very differently in a RAG 
 | **Figures and image tables** | charts, illustrations, some tables published as images | They are pixels: a text RAG cannot see their content. Image tables are the most critical (numbers) | **Now:** a `figure` block with just the caption, so we know a figure was there. **Future:** transcription/description with Claude's multimodality (see roadmap, "Later") |
 
 **Golden rule:** when an answer depends on a number, that number must come *literally* from a retrieved, cited chunk.
-In the future ("coach" phase) these rules will become **deterministic code** (tools), and RAG will remain to explain the *why*.
-For now, in pure Q&A, handling them well during chunking is enough — and it is an excellent test bed for evaluation.
+Handling these contents well during chunking is what makes Q&A reliable — and it is an excellent test bed for evaluation.
 
 ---
 
@@ -132,7 +132,7 @@ The gate is a single function (`is_english` in `language.py`), called at the sta
 ### Conversation design (Q&A)
 
 - **Language:** English only; messages in other languages get the language gate notice.
-- **Persona:** an expert, concise coach who cites sources ("Friel, ch. 7 — Base period").
+- **Persona:** an expert, concise assistant who cites sources ("Friel, ch. 7 — Base period").
 - **Grounding:** no claim without a citation; if the context is not enough it says so explicitly instead of using general knowledge.
 - **Guardrails:** no medical diagnoses; on pain/injuries it refers to a professional.
 - **Copyright:** summarizes and paraphrases, does not reproduce long passages verbatim.

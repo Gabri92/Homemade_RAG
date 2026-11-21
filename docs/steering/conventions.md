@@ -2,7 +2,7 @@
 
 ## Principles, in priority order
 1. **KISS** — the simplest solution that works. Functions before classes; a class only if it holds state (e.g. an index loaded in memory).
-2. **YAGNI** — no abstractions "for the future" (multilingual, coach, tools, athlete profile) until they are in the current roadmap phase.
+2. **YAGNI** — no abstractions "for the future" (e.g. multilingual support) until they are in the current roadmap phase.
 3. **DRY** — a single source of truth for everything:
    - LLM calls only through `llm.py` (retries, cache, cost logging in one place);
    - parameters (models, k, chunk sizes) only in the config, never repeated in code;
