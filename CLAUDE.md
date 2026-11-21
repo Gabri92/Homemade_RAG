@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Q&A assistant built on *The Triathlete's Training Bible* (Joe Friel). A learning project: RAG in practice plus rigorous evaluation.
+Homemade clone of NotebookLM (now Gemini Notebook), specialized on sports documents: Q&A with citations over source documents. Reference document: *The Triathlete's Training Bible* (Joe Friel). A learning project: RAG in practice plus rigorous evaluation. The public repository describes only this clone, never other products built on it (see `docs/steering/product.md`).
 
 Read and follow the steering files:
 

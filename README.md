@@ -1,8 +1,8 @@
 # Homemade RAG
 
-A question-answering assistant over a triathlon training book, built from scratch to learn **retrieval-augmented generation (RAG)** component by component and to **measure** every choice with a golden dataset (eval-driven development).
+A homemade clone of NotebookLM (now Gemini Notebook), specialized on sports documents: an assistant that answers questions about the documents you give it and cites its sources. Built from scratch to learn **retrieval-augmented generation (RAG)** component by component and to **measure** every choice with a golden dataset (eval-driven development).
 
-The reference book is Joe Friel's *The Triathlete's Training Bible*. The assistant answers in English and cites the chapter and section behind every claim.
+The reference document used to build and evaluate it is Joe Friel's *The Triathlete's Training Bible*. The assistant answers in English and cites the chapter and section behind every claim.
 
 > **Unofficial project.** Not affiliated with, endorsed by or connected to the author or the publisher of the book.
 

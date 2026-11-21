@@ -1,7 +1,7 @@
 [project]
 name = "tricoach"
 version = "0.3.0"
-description = "Q&A assistant over The Triathlete's Training Bible: a hands-on RAG learning project."
+description = "Homemade NotebookLM-style Q&A assistant over sports documents: a hands-on RAG learning project."
 requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4>=4.15.0",

@@ -1,7 +1,7 @@
 # Product
 
 ## What we are building
-A conversational assistant that answers questions about the training method described in Joe Friel's *The Triathlete's Training Bible*, always citing its sources in the book.
+A homemade clone of NotebookLM (now Gemini Notebook), specialized on sports documents: a conversational assistant that answers questions about its source documents, always citing where each answer comes from. The reference document, used to build and evaluate every component, is Joe Friel's *The Triathlete's Training Bible*.
 
 ## Goals (in priority order)
 1. **Learning**: understand RAG component by component, with readable implementations instead of opaque frameworks.
@@ -9,7 +9,7 @@ A conversational assistant that answers questions about the training method desc
 3. **Answer quality**: correct, grounded in the book, with verifiable citations, in English.
 
 ## User
-The project's author: a triathlete who uses the book as a reference. The book is in English and, for now, questions and answers are English only.
+The project's author, who uses sports books as a reference. The book is in English and, for now, questions and answers are English only.
 
 Later, during a build-in-public phase, other people can try part of the product (see "Shared demo").
 
@@ -20,8 +20,8 @@ Later, during a build-in-public phase, other people can try part of the product 
 
 ## Non-goals (for now)
 - Multilingual support (questions or answers in languages other than English).
-- Generating training plans, computing zones, athlete profile.
-- Integration with Strava/Garmin or other activity data.
+- Anything beyond question answering over the source documents: the project is a homemade, NotebookLM-style RAG.
+- Products built on top of it: if the clone is reused, that happens in a separate project and is not described in this repository.
 - Accounts, authentication, per-user data: the shared demo is reached through a link, with no sign-in.
 - Using "batteries-included" RAG frameworks (LangChain, LlamaIndex) for the main pipeline: they would hide exactly what we want to learn.
 

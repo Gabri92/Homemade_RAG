@@ -73,7 +73,7 @@ Simplicity and modularity are a **trade-off that changes over time**: start flat
 | The same group of parameters travels through many functions | Group them in a dataclass (e.g. `Resources(index, llm)`) |
 | A test needs `monkeypatch` or complicated setup | The dependency must be passed as a parameter |
 | The same knowledge appears in three places | Extract it into a single place (DRY) |
-| A new product area arrives (e.g. coach, tools, multilingual) | A new dedicated module/package, without touching the existing structure |
+| A new product area arrives (e.g. multilingual support) | A new dedicated module/package, without touching the existing structure |
 
 Rules for the step:
 - one signal → one step; do not anticipate the next ones;
