@@ -1,6 +1,6 @@
 # Command cheat sheet
 
-Commands available now, grouped by task. The full list, including the ones planned for Phase 3 (`ask`, `eval run`, `eval compare`), is in `docs/steering/tech.md`. `uv run homerag --help` (or `<command> --help`) prints the live options.
+Commands available now, grouped by task. The full list, including the ones planned for Phase 3a/3b (`eval run`, `ask`, `eval compare`), is in `docs/steering/tech.md`. `uv run homerag --help` (or `<command> --help`) prints the live options.
 
 Everything under `data/` is gitignored: outputs written there never reach the repository.
 
@@ -21,7 +21,7 @@ Everything under `data/` is gitignored: outputs written there never reach the re
 | `uv run homerag dump data/raw/<book>.epub --clean` | Blocks after the Cleaner → `data/processed/blocks_clean.txt` |
 | `git diff --no-index data/processed/blocks_raw.txt data/processed/blocks_clean.txt` | What the Cleaner changed |
 
-## Index and search (Phase 3)
+## Index and search (Phase 3a)
 
 | Command | What it does |
 |---|---|

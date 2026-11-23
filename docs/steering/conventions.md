@@ -36,7 +36,7 @@
   | `tests/book/` | Ingestion on the real book against the values in `expectations.py` | With `uv run pytest`; skipped if the book is missing |
   | `tests/corpus/` | Generalization: the same ingestion on ePubs from other publishers (`data/corpus/`) | With `uv run pytest`; each missing book is skipped |
   | `tests/integration/` | Components with real APIs/models (e.g. the bge-m3 tokenizer, downloaded on first run) | Only with `uv run pytest -m integration` |
-  | `tests/e2e/` | (Phase 3) question → cited answer | To be decided in Phase 3 |
+  | `tests/e2e/` | (Phase 3b) question → cited answer | To be decided in Phase 3b |
 
   Markers and skips are applied **per folder** in its `conftest.py`, not file by file. The `integration/` and `e2e/` folders are created when their first test arrives.
 - One `test_<module>.py` file per module; tests of pure functions without mocks.

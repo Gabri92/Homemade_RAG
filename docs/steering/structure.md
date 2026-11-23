@@ -44,7 +44,7 @@ tests/                 # one kind of test = one folder (see conventions.md, "Tes
   corpus/              #   generalization on ePubs from other publishers in data/corpus/ (`corpus` marker)
     expectations.py    #     expected values and where to download each ePub
   integration/         #   real APIs and models: `integration` marker set in integration/conftest.py
-  e2e/                 #   (from Phase 3) question -> cited answer on the real book
+  e2e/                 #   (from Phase 3b) question -> cited answer on the real book
 ```
 
 ## Rules

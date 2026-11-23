@@ -46,18 +46,28 @@ Each phase has a concrete deliverable and a learning goal.
 
 ## Phase 3 — "Naive RAG" baseline + evaluation harness
 
-1. Fixed-size chunker (e.g. 500 tokens, overlap 50).
-2. `bge-m3` embedder, in-memory `numpy` index, dense top-5 retrieval.
-3. Language gate with `lingua-py`: non-English message → notice, no query.
-3b. Claude generator with a simple prompt + citations, answers in English.
-4. **Eval runner**: runs the golden set, computes retrieval metrics (hit rate, recall@k, MRR) and generation metrics (judge), saves the run.
-5. CLI: `ask "question"` and `eval run --config configs/experiments/baseline.yaml`.
-6. Development tooling, once `eval run` exists: the `/experiment` skill and the `eval-analyst` subagent (see `docs/working-with-claude-code.md`, "Planned").
+The largest phase: it builds the whole pipeline end to end, plus the way to measure it. It is split in two, so that the first number arrives before any LLM cost and each half reaches `main` through its own pull request. Order of work: retrieval first, then its metrics on the golden set (deterministic and free), then the gate, the generator and the judge.
 
-Order of work: retrieval first, then its metrics on the golden set (deterministic and free, the first number before any LLM cost), then the gate, the generator and the judge. `homerag search` shows what retrieval returns for one question.
+### Phase 3a — Retrieval baseline (v0.4.0)
 
-**Learning:** have a starting number. It will probably be mediocre: that's fine.
-**Deliverable:** first run in `eval/runs/` with metrics per category.
+1. Dependencies, experiment config (YAML → pydantic), pipeline data types, device choice. ✅
+2. Fixed-size chunker (500 tokens, overlap 50) over the running text of the book (ADR 0005). ✅
+3. `bge-m3` embedder with an on-disk cache, in-memory `numpy` index per document and index key; `homerag index`. ✅
+4. Dense top-5 retrieval; `homerag search` shows what retrieval returns for one question. ✅
+5. **Retrieval metrics** (hit rate, recall@k, MRR) per question category on the golden set; `homerag eval run` saves a retrieval-only run.
+
+**Learning:** have a starting number, at zero API cost. It will probably be mediocre: that's fine.
+**Deliverable:** first run in `eval/runs/` with retrieval metrics per category.
+
+### Phase 3b — Generation and judge (v0.5.0)
+
+6. Language gate with `lingua-py`: non-English message → notice, no query.
+7. Claude generator: `llm.py` (retries, cache, cost), prompt `answer_v1` with citations, answers in English, `qa.answer`; `homerag ask "question"`.
+8. **LLM judge** (correctness, faithfulness, refusal on `out_of_scope`) + the full `eval run` (retrieval + generation, cost and latency per question) + `eval compare`.
+9. Development tooling, once `eval run` exists: the `/experiment` skill and the `eval-analyst` subagent (see `docs/working-with-claude-code.md`, "Planned").
+
+**Learning:** what a complete RAG answer costs, and how far a simple prompt gets.
+**Deliverable:** first full run in `eval/runs/` with judged answers per category.
 
 ---
 
