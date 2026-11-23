@@ -73,9 +73,15 @@ Each row is an experiment with its own config; it is always compared with the pr
 | 4.6 | Contextual chunking | Improves ambiguous chunks |
 | 4.7 | Parent-child | Improves `multi_hop` / `conceptual` |
 | 4.8 | **Generic pipeline baseline**: ingestion and chunking with a public tool versus our ingestion, with the same retrieval, LLM and golden set. **Tool to be evaluated** before the experiment (candidates: LlamaIndex, Unstructured, Docling, pandoc + a simple chunker), based on ePub support, output quality and dependencies | Measures how much the data work is worth (tables, glossary, repeated pull quotes, roles) and on which question categories. The baseline remains **only** a point of comparison (ADR 0001: no framework in the main pipeline) |
+| 4.9 | Semantic chunking (cut where consecutive sentences stop being similar) | Helps documents with little structure; probably no gain on the reference book, so it is also measured on the corpus |
+
+How to run them:
+- **Before starting**, review this list as a cost/complexity versus expected-gain trade-off, using the baseline run: implementation effort, cost per run (LLM calls for contextual chunking and query rewriting), latency, and which question categories the baseline fails. The order of the experiments follows from that review, not from the numbering.
+- **One lever at a time**, always against the previous best run; a lever is kept only if it improves the metric and the question category it was meant for.
+- The chunking levers lie on three axes (`architecture.md` §5): where to cut, what to add to a chunk, what to give the LLM. Combinations across axes are tried last, starting from the levers that won.
 
 **Learning:** understand *which lever moves which metric* and in which question category.
-**Deliverable:** comparison report between runs + a reasoned choice of the best config (recorded in an ADR).
+**Deliverable:** comparison report between runs + a reasoned choice of the best config, including its cost and complexity (recorded in an ADR).
 
 ---
 
