@@ -96,6 +96,16 @@ def test_duplicate_paths_get_a_numeric_suffix() -> None:
     assert [s.id for s in structure(blocks, "b").sections] == ["ch", "ch/summary", "ch/summary-2"]
 
 
+def test_suffix_never_collides_with_a_title_that_ends_in_a_number() -> None:
+    # Any uploaded book may have "Workout", "Workout", "Workout 2": ids must stay unique,
+    # because chunk ids and golden-set references are built on them.
+    blocks = [heading("Workout", 1), heading("Workout", 1), heading("Workout 2", 1)]
+
+    ids = [s.id for s in structure(blocks, "b").sections]
+
+    assert len(set(ids)) == len(ids)
+
+
 # --- roles, files without headings, inclusion ------------------------------------
 
 

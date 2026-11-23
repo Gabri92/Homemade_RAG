@@ -5,6 +5,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+- Section ids are always unique: the suffix for repeated title paths no longer collides with a title ending in a number (ingestion finding #16).
+
 ### Added
 - Phase 3 dependencies: `anthropic`, `numpy`, `sentence-transformers` + `torch` (CUDA build on Windows, CPU build on Linux CI), `lingua-language-detector`, `pyyaml`; `types-pyyaml` for mypy.
 - `README.md`: project overview, unofficial-project notice, how the book and the golden set stay out of the repository.
