@@ -1,5 +1,5 @@
-from tricoach.ingest import format_report, quality_report, structure
-from tricoach.models import Block
+from homerag.ingest import format_report, quality_report, structure
+from homerag.models import Block
 
 
 def heading(text: str, **kw: str) -> Block:

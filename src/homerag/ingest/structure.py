@@ -10,7 +10,7 @@ import unicodedata
 from dataclasses import dataclass, field, replace
 from itertools import groupby
 
-from tricoach.models import Block, Book, Section
+from homerag.models import Block, Book, Section
 
 logger = logging.getLogger(__name__)
 

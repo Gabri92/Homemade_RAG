@@ -1,6 +1,6 @@
 import pytest
 
-from tricoach.models import Block
+from homerag.models import Block
 
 
 def test_heading_requires_level() -> None:

@@ -5,16 +5,16 @@ Principle: **KISS**. One module per concept, functions before classes, no extra 
 ## Layout
 Modules marked *(placeholder)* contain only a docstring describing their purpose: they are filled in from Phase 3 onwards.
 ```
-src/tricoach/
+src/homerag/
   models.py      # dataclasses: Block, Section, Book (then Chunk, RetrievedChunk, Answer, Citation)
   config.py      # settings (.env) + experiment config (YAML -> pydantic)
   ingest/        # source -> blocks -> cleaning -> sections -> data/processed/book.json (ADR 0002)
-    __init__.py  #   public API: from outside, import only from `tricoach.ingest`
+    __init__.py  #   public API: from outside, import only from `homerag.ingest`
     epub.py      #   ePub Loader (one file per format: pdf.py tomorrow)
     cleaning.py  #   Cleaner: structural rules on list[Block]
     structure.py #   Structurer: list[Block] -> Book (sections, ids, roles, inclusion, pages)
     book_file.py #   save_book / load_book for book.json, with SCHEMA_VERSION
-    quality.py   #   generic quality report (no expected values): `tricoach inspect`
+    quality.py   #   generic quality report (no expected values): `homerag inspect`
     dump.py      #   format_blocks, format_sections for inspection
   chunking.py    # (placeholder) chunking strategies (functions) + CHUNKERS registry
   index.py       # (placeholder) embeddings, numpy index, BM25, save/load
@@ -37,7 +37,7 @@ data/                  # raw/, processed/, index/ (gitignored)
 notes/                 # personal notes: prompting, building in public (gitignored)
 tests/                 # one kind of test = one folder (see conventions.md, "Tests")
   conftest.py          #   shared fixtures (make_epub: synthetic mini-ePub)
-  unit/                #   fast, offline; mirrors src/tricoach/ (unit/ingest/test_cleaning.py, unit/eval/test_dataset.py, ...)
+  unit/                #   fast, offline; mirrors src/homerag/ (unit/ingest/test_cleaning.py, unit/eval/test_dataset.py, ...)
   book/                #   on the real book: `book` marker and automatic skip in book/conftest.py
     expectations.py    #     expected values for the book (numbers and short titles only)
     test_golden.py     #     golden-set section ids exist in the current ingestion (skipped until golden.jsonl exists)
@@ -84,7 +84,7 @@ Rules for the step:
 
 To be introduced at the start of chunking, not before (YAGNI). They are for **experimenting and learning** (how chunkers cut, what retrieval returns, BM25 vs dense), not for building the product.
 - `notebooks/` folder; `jupyter`/`ipykernel` dependencies in the dev group only.
-- Notebooks **import** `tricoach` functions, they do not rewrite them (DRY). Whatever works moves into the package, with its tests.
+- Notebooks **import** `homerag` functions, they do not rewrite them (DRY). Whatever works moves into the package, with its tests.
 - They are committed **without outputs** (outputs contain book text): automatic stripping before commit.
 
 ## Where to put what

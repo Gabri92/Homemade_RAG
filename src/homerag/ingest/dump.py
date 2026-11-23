@@ -1,6 +1,6 @@
 """Human-readable dumps of blocks and sections, for inspecting what the pipeline sees."""
 
-from tricoach.models import Block, Book, Section
+from homerag.models import Block, Book, Section
 
 
 def format_blocks(blocks: list[Block]) -> str:

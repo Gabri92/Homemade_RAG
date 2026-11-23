@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from tricoach.eval.dataset import check_references, load_golden
-from tricoach.models import Book
+from homerag.eval.dataset import check_references, load_golden
+from homerag.models import Book
 
 GOLDEN = Path(__file__).parents[2] / "eval" / "datasets" / "golden.jsonl"
 

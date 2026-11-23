@@ -49,10 +49,10 @@ Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 ```bash
 uv sync
 uv run pre-commit install
-uv run tricoach ingest data/raw/<book>.epub     # -> data/processed/book.json
-uv run tricoach inspect data/raw/<book>.epub    # quality report, numbers only
-uv run tricoach sections                        # section ids to cite in the golden set
-uv run tricoach eval check                      # validate eval/datasets/golden.jsonl
+uv run homerag ingest data/raw/<book>.epub     # -> data/processed/book.json
+uv run homerag inspect data/raw/<book>.epub    # quality report, numbers only
+uv run homerag sections                        # section ids to cite in the golden set
+uv run homerag eval check                      # validate eval/datasets/golden.jsonl
 ```
 
 All commands: [`docs/commands.md`](docs/commands.md). Definition of done:

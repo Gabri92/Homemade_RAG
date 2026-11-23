@@ -10,7 +10,7 @@ from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
-from tricoach.models import Book
+from homerag.models import Book
 
 Category = Literal[
     "factual", "table", "conceptual", "multi_hop", "out_of_scope", "follow_up", "non_english"

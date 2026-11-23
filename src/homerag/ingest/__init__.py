@@ -1,24 +1,24 @@
 """Ingestion: source file -> blocks -> cleaning -> sections (Book) -> book.json.
 
-Callers import from `tricoach.ingest`, never from the submodules: the split into
+Callers import from `homerag.ingest`, never from the submodules: the split into
 files is an internal detail that can change.
 """
 
 from pathlib import Path
 
-from tricoach.ingest.book_file import SCHEMA_VERSION, load_book, save_book
-from tricoach.ingest.cleaning import (
+from homerag.ingest.book_file import SCHEMA_VERSION, load_book, save_book
+from homerag.ingest.cleaning import (
     CLEANING_STEPS,
     attach_intro_to_untitled_tables,
     clean,
     merge_continued_tables,
     remove_pull_quotes,
 )
-from tricoach.ingest.dump import format_blocks, format_sections
-from tricoach.ingest.epub import epub_text, html_to_blocks, load_epub
-from tricoach.ingest.quality import Check, format_report, quality_report
-from tricoach.ingest.structure import mark_front_matter, structure
-from tricoach.models import Book
+from homerag.ingest.dump import format_blocks, format_sections
+from homerag.ingest.epub import epub_text, html_to_blocks, load_epub
+from homerag.ingest.quality import Check, format_report, quality_report
+from homerag.ingest.structure import mark_front_matter, structure
+from homerag.models import Book
 
 
 def ingest_epub(path: Path) -> Book:

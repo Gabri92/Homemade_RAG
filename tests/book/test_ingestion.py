@@ -7,14 +7,14 @@ import zipfile
 
 from bs4 import BeautifulSoup
 
-from tests.book import expectations as expected
-from tricoach.ingest import (
+from homerag.ingest import (
     attach_intro_to_untitled_tables,
     epub_text,
     quality_report,
     remove_pull_quotes,
 )
-from tricoach.models import Block, Book
+from homerag.models import Block, Book
+from tests.book import expectations as expected
 
 
 def tables(blocks: list[Block]) -> list[Block]:
@@ -213,7 +213,7 @@ def test_book_every_included_section_has_pages(book: Book) -> None:
     assert [s.id for s in book.sections if s.include and not s.first_page] == []
 
 
-# --- generic quality report (tricoach inspect) -------------------------------------
+# --- generic quality report (homerag inspect) -------------------------------------
 
 
 def test_book_quality_report_has_no_warnings(blocks: list[Block], book: Book) -> None:
