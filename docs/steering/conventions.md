@@ -55,7 +55,9 @@
 ## Git
 - Small commits, messages in English in Conventional Commits style (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `exp:` for experiments).
 - One experiment = one commit with the config + a summary of the metrics in the message.
-- **Branches:** `main` holds only finished work (definition of done green). Work happens on a branch per roadmap phase (`feat/phase-1-ingestion`) or per experiment (`exp/<name>`), with one commit per module or step. At the end of a phase: merge into `main` with `--no-ff`, so the phase stays visible in the history.
+- **Branches:** `main` holds only finished work (definition of done green). Work happens on a branch per roadmap phase (`feat/phase-1-ingestion`), per experiment (`exp/<name>`) or per small change (`fix/…`, `docs/…`, `chore/…`), with one commit per module or step.
+- **Pull requests:** every branch reaches `main` through a pull request on GitHub (template in `.github/pull_request_template.md`). Merge only when the `CI` check is green and the definition of done was run locally **with the book** (CI cannot run `tests/book/`). Merge with **"Create a merge commit"**, the equivalent of `--no-ff`, so each phase or change stays visible in the history; then delete the branch. Never push directly to `main`.
+- **CI** (`.github/workflows/ci.yml`): on every pull request and push to `main`, runs `pre-commit run --all-files`, the same hooks as locally. It is the safety net for commits made without the local hooks (new clone, web editor).
 - Pre-commit hooks: ruff, mypy, the **full test suite** (on commits touching Python, `pyproject.toml`, `uv.lock` or the golden-set files in `eval/datasets/`), and `forbid-book-files`, which refuses book files (`data/`, `eval/runs/`, `eval/datasets/golden.jsonl`, `*.epub`, `*.pdf`) even when they were added with `git add -f`. Never skip them with `--no-verify`.
 - While Claude Code works, a `Stop` hook runs the fast part of the definition of done (lint, types, unit tests) before each turn ends (see `docs/working-with-claude-code.md`).
 

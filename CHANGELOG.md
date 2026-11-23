@@ -8,8 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 ### Added
 - `README.md`: project overview, unofficial-project notice, how the book and the golden set stay out of the repository.
 - ADR 0004: the golden set is kept local.
+- CI on GitHub Actions: every pull request and push to `main` runs all pre-commit hooks on all files.
+- Pull request template with the definition-of-done, experiment, docs and copyright checklist.
 
 ### Changed
+- Changes reach `main` through pull requests merged with a merge commit (`docs/steering/conventions.md`, "Git").
 - `eval/datasets/golden.jsonl` is gitignored and refused by the `forbid-book-files` hook; `example.jsonl` stays the committed format example.
 - The pull-quote test fixture is fully synthetic.
 

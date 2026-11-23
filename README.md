@@ -61,7 +61,7 @@ All commands: [`docs/commands.md`](docs/commands.md). Definition of done:
 uv run ruff check . && uv run ruff format --check . && uv run mypy src && uv run pytest
 ```
 
-Tests on the real book are skipped automatically when the book is not in `data/raw/`.
+Tests on the real book are skipped automatically when the book is not in `data/raw/`; CI runs every other check on each pull request.
 
 ## Documentation
 

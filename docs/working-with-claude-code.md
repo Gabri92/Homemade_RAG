@@ -12,15 +12,17 @@ This project is developed with [Claude Code](https://claude.com/claude-code) as 
 | Book-file guard | `.pre-commit-config.yaml`, hook `forbid-book-files` | On every commit | Refuses `data/`, `eval/runs/`, `eval/datasets/golden.jsonl`, `*.epub`, `*.pdf` even after `git add -f`: copyright protection that does not depend on anyone remembering a rule |
 | Fast definition of done | `.claude/settings.json` (`Stop` hook) → `.claude/hooks/check_done.py` | When Claude is about to end a turn, if `.py` files have uncommitted changes | Ruff, format, mypy and unit tests (~3 s). On failure the error goes back to Claude, which keeps working instead of declaring the task done. One retry only, so it never loops |
 | Full test suite | `.pre-commit-config.yaml`, hook `pytest` | On every commit that touches Python files, `pyproject.toml`, `uv.lock` or `eval/datasets/*.jsonl` | Unit + real book + corpus (~15 s): nothing enters the history with broken tests, whoever makes the commit |
+| CI | `.github/workflows/ci.yml` | Every pull request and push to `main`, on GitHub | `pre-commit run --all-files`: the same hooks on the server, for commits that skipped the local ones. Real-book tests are skipped there (the book is never uploaded) |
 
-### Two levels of checks
+### Three levels of checks
 
-The definition of done is enforced at two moments, each with the right cost:
+The definition of done is enforced at three moments, each with the right cost:
 
 | Moment | What runs | Cost | Why there |
 |---|---|---|---|
 | End of each Claude turn with code changes | fast checks + `pytest tests/unit` | ~3 s | Immediate feedback while working, without slowing every answer |
 | Every commit | `pytest` (full suite) | ~15 s | Commits are much rarer than turns, and that is where the guarantee matters |
+| Every pull request and push to `main` | all hooks on all files, on GitHub (no book) | ~1–2 min | Independent of anyone's local setup: the last line before `main` |
 
 ### Each rule in the right mechanism
 
