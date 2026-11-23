@@ -18,7 +18,7 @@ src/homerag/
     dump.py      #   format_blocks, format_sections for inspection
   chunking.py    # chunking strategies (functions) + CHUNKERS registry: fixed
   index.py       # device choice, tokenizer offsets, EMBEDDERS + on-disk cache, vector index save/load (BM25 with 4.3)
-  retrieval.py   # (placeholder) dense, bm25, RRF fusion, rerank
+  retrieval.py   # RETRIEVERS: dense (then bm25, RRF fusion, rerank in Phase 4); search, format_results
   language.py    # (placeholder) language gate: is_english(text)
   llm.py         # (placeholder) the single access point to the Anthropic API
   qa.py          # (placeholder) answer(question) -> Answer: gate -> retrieve -> generate
@@ -28,7 +28,7 @@ src/homerag/
     metrics.py   #   (placeholder) metrics (pure functions)
     judge.py     #   (placeholder) LLM-as-judge
     run.py       #   (placeholder) runs an experiment, saves and compares runs
-  cli.py         # typer commands: dump, ingest, inspect, sections, index, eval check (then ask, eval run/compare)
+  cli.py         # typer commands: dump, ingest, inspect, sections, index, search, eval check (then ask, eval run/compare)
 .claude/               # Claude Code project settings: settings.json (hooks) + hooks/ scripts
 configs/experiments/   # one YAML per experiment: baseline.yaml is the Phase 3 starting point
 eval/datasets/         # golden.jsonl (hand-written, gitignored: kept local, ADR 0004) + example.jsonl (synthetic, committed)

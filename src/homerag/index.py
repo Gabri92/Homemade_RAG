@@ -109,7 +109,11 @@ def load_local_embedder(cfg: EmbeddingConfig) -> Embed:
 
     def embed(texts: list[str]) -> Vectors:
         vectors = model.encode(
-            texts, batch_size=cfg.batch_size, normalize_embeddings=True, convert_to_numpy=True
+            texts,
+            batch_size=cfg.batch_size,
+            normalize_embeddings=True,
+            convert_to_numpy=True,
+            show_progress_bar=len(texts) > cfg.batch_size,  # a bar for indexing, not for a question
         )
         return np.asarray(vectors, dtype=np.float32).reshape(len(texts), -1)
 
@@ -262,8 +266,7 @@ def ensure_index(
     except StaleIndexError as reason:
         logger.info("building index: %s", reason)
     start = time.perf_counter()
-    loader = load_embedder or EMBEDDERS[cfg.embedding.strategy]
-    embed = cached(loader(cfg.embedding), cfg.embedding.model, cache_dir)
+    embed = load_embedder_for(cfg.embedding, cache_dir, load_embedder)
     index = build_index(book, cfg, embed, spans or token_spans_for(cfg.embedding.model))
     seconds = time.perf_counter() - start
     meta = {
@@ -276,6 +279,21 @@ def ensure_index(
     }
     save_index(index, folder, meta)
     return IndexReport(folder, len(index.chunks), built=True, seconds=seconds)
+
+
+def open_index(cfg: ExperimentConfig, root: Path = INDEX_ROOT) -> VectorIndex:
+    """The up-to-date index for this document and config; StaleIndexError if there is none."""
+    return load_index(index_dir(load_book(cfg.document), cfg, root), fingerprint(cfg.document))
+
+
+def load_embedder_for(
+    cfg: EmbeddingConfig,
+    cache_dir: Path = CACHE_ROOT,
+    load_embedder: Callable[[EmbeddingConfig], Embed] | None = None,
+) -> Embed:
+    """The configured embedder wrapped in the cache: the same one for chunks and questions."""
+    loader = load_embedder or EMBEDDERS[cfg.strategy]
+    return cached(loader(cfg), cfg.model, cache_dir)
 
 
 def _slug(text: str) -> str:

@@ -54,6 +54,8 @@ Each phase has a concrete deliverable and a learning goal.
 5. CLI: `ask "question"` and `eval run --config configs/experiments/baseline.yaml`.
 6. Development tooling, once `eval run` exists: the `/experiment` skill and the `eval-analyst` subagent (see `docs/working-with-claude-code.md`, "Planned").
 
+Order of work: retrieval first, then its metrics on the golden set (deterministic and free, the first number before any LLM cost), then the gate, the generator and the judge. `homerag search` shows what retrieval returns for one question.
+
 **Learning:** have a starting number. It will probably be mediocre: that's fine.
 **Deliverable:** first run in `eval/runs/` with metrics per category.
 

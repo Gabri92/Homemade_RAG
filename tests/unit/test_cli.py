@@ -148,3 +148,17 @@ def test_index_exits_1_on_invalid_config(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "ERROR" in result.output
+
+
+def test_search_exits_1_when_the_index_is_missing(tmp_path: Path) -> None:
+    config = tmp_path / "exp.yaml"
+    baseline = Path("configs/experiments/baseline.yaml").read_text(encoding="utf-8")
+    config.write_text(
+        baseline.replace("data/processed/book.json", (tmp_path / "none.json").as_posix()),
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(app, ["search", "How long is the base period?", "--config", str(config)])
+
+    assert result.exit_code == 1
+    assert "ERROR" in result.output

@@ -9,6 +9,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Section ids are always unique: the suffix for repeated title paths no longer collides with a title ending in a number (ingestion finding #16).
 
 ### Added
+- Dense retrieval (`retrieval.dense_search`, registry `RETRIEVERS`): cosine similarity on normalized vectors, stable ranking on ties, refuses a question vector from another model; `homerag search "question" [--text]` prints the ranking.
 - `homerag index`: chunk + embed a document into `data/index/<document>/<strategy>-<hash>/`; the folder key hashes only the chunking and embedding settings, so experiments that change retrieval or generation share one index. An index built from another `book.json` (fingerprint in `meta.json`) or in another format is refused and rebuilt.
 - Embedders registry `EMBEDDERS` (`local`: sentence-transformers, fp16 on GPU) and an on-disk embedding cache (one `.npy` per model + text, atomic writes).
 - Fixed-size chunker (`chunking.fixed_size_chunks`, registry `CHUNKERS`): token windows with overlap over the running text, counted with the bge-m3 tokenizer (`index.token_spans_for`).

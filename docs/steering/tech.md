@@ -35,11 +35,12 @@ uv run homerag inspect data/raw/<book>.epub # quality report (numbers only); exi
 uv run homerag sections                  # section ids, pages, excluded flags -> data/processed/sections.txt
 uv run homerag eval check                # validate eval/datasets/golden.jsonl against data/processed/book.json
 uv run homerag index [--config configs/experiments/<name>.yaml]  # chunk + embed -> data/index/ (reused if up to date)
+uv run homerag search "question" [--text]  # retrieval only: ranked chunks, no LLM
 uv run homerag ask "question"            # single Q&A
 uv run homerag eval run --config configs/experiments/<name>.yaml
 uv run homerag eval compare <run_a> <run_b>
 ```
-> Available now: `dump`, `ingest`, `inspect`, `sections`, `eval check`, `index`. `ask`, `eval run` and `eval compare` arrive in Phase 3. `uv run homerag --help` lists the existing commands. Task-oriented cheat sheet of what is available now: `docs/commands.md` (keep it aligned when commands change).
+> Available now: `dump`, `ingest`, `inspect`, `sections`, `eval check`, `index`, `search`. `ask`, `eval run` and `eval compare` arrive in Phase 3. `uv run homerag --help` lists the existing commands. Task-oriented cheat sheet of what is available now: `docs/commands.md` (keep it aligned when commands change).
 
 ## Secrets and configuration
 - `ANTHROPIC_API_KEY` and the like only in `.env` (gitignored), read through `pydantic-settings`.
