@@ -17,7 +17,7 @@ src/homerag/
     quality.py   #   generic quality report (no expected values): `homerag inspect`
     dump.py      #   format_blocks, format_sections for inspection
   chunking.py    # chunking strategies (functions) + CHUNKERS registry: fixed
-  index.py       # (in progress) device choice, tokenizer offsets; then embeddings, numpy index, BM25, save/load
+  index.py       # device choice, tokenizer offsets, EMBEDDERS + on-disk cache, vector index save/load (BM25 with 4.3)
   retrieval.py   # (placeholder) dense, bm25, RRF fusion, rerank
   language.py    # (placeholder) language gate: is_english(text)
   llm.py         # (placeholder) the single access point to the Anthropic API
@@ -28,12 +28,12 @@ src/homerag/
     metrics.py   #   (placeholder) metrics (pure functions)
     judge.py     #   (placeholder) LLM-as-judge
     run.py       #   (placeholder) runs an experiment, saves and compares runs
-  cli.py         # typer commands: dump, ingest, inspect, sections, eval check (then ask, eval run/compare)
+  cli.py         # typer commands: dump, ingest, inspect, sections, index, eval check (then ask, eval run/compare)
 .claude/               # Claude Code project settings: settings.json (hooks) + hooks/ scripts
 configs/experiments/   # one YAML per experiment: baseline.yaml is the Phase 3 starting point
 eval/datasets/         # golden.jsonl (hand-written, gitignored: kept local, ADR 0004) + example.jsonl (synthetic, committed)
 eval/runs/             # run outputs (gitignored)
-data/                  # raw/, processed/, index/ (gitignored)
+data/                  # raw/, processed/, index/, cache/ (gitignored)
 notes/                 # personal notes: prompting, building in public (gitignored)
 tests/                 # one kind of test = one folder (see conventions.md, "Tests")
   conftest.py          #   shared fixtures (make_epub: synthetic mini-ePub)

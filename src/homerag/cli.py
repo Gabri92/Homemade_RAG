@@ -7,7 +7,9 @@ from typing import Annotated
 
 import typer
 
+from homerag.config import load_experiment
 from homerag.eval.dataset import check_references, load_golden
+from homerag.index import ensure_index
 from homerag.ingest import (
     clean,
     format_blocks,
@@ -28,12 +30,15 @@ app.add_typer(eval_app, name="eval")
 
 PROCESSED = Path("data/processed")
 GOLDEN = Path("eval/datasets/golden.jsonl")
+BASELINE = Path("configs/experiments/baseline.yaml")
 
 
 @app.callback()
 def main() -> None:
     """Keep subcommands explicit (`homerag dump ...`)."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
+    # One line per model-hub request is noise next to our own progress messages.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 @app.command()
@@ -92,6 +97,22 @@ def sections(
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(format_sections(structured), encoding="utf-8")
     typer.echo(f"{len(structured.sections)} sections written to {output}")
+
+
+@app.command()
+def index(
+    config: Annotated[
+        Path, typer.Option(exists=True, dir_okay=False, help="Experiment YAML.")
+    ] = BASELINE,
+) -> None:
+    """Chunk and embed the document of an experiment, or reuse its index if up to date."""
+    try:
+        report = ensure_index(load_experiment(config))
+    except ValueError as error:
+        typer.echo(f"ERROR {error}")
+        raise typer.Exit(code=1) from error
+    action = f"built in {report.seconds:.1f}s" if report.built else "up to date, reused"
+    typer.echo(f"{report.chunks} chunks, {action}: {report.folder}")
 
 
 @eval_app.command("check")

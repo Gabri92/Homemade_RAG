@@ -138,3 +138,13 @@ def test_dump_rejects_missing_book(tmp_path: Path) -> None:
 
     assert result.exit_code != 0
     assert "does not exist" in result.output
+
+
+def test_index_exits_1_on_invalid_config(tmp_path: Path) -> None:
+    config = tmp_path / "bad.yaml"
+    config.write_text("name: bad\n", encoding="utf-8")
+
+    result = runner.invoke(app, ["index", "--config", str(config)])
+
+    assert result.exit_code == 1
+    assert "ERROR" in result.output

@@ -21,6 +21,15 @@ Everything under `data/` is gitignored: outputs written there never reach the re
 | `uv run homerag dump data/raw/<book>.epub --clean` | Blocks after the Cleaner → `data/processed/blocks_clean.txt` |
 | `git diff --no-index data/processed/blocks_raw.txt data/processed/blocks_clean.txt` | What the Cleaner changed |
 
+## Index (Phase 3)
+
+| Command | What it does |
+|---|---|
+| `uv run homerag index` | Chunk + embed the document of `configs/experiments/baseline.yaml` → `data/index/<document>/<strategy>-<hash>/` (`vectors.npy`, `chunks.json`, `meta.json`). Reuses the index when it is up to date; rebuilds it when `book.json` or the chunking/embedding settings changed. First run downloads bge-m3 (~2.2 GB) into the Hugging Face cache |
+| `uv run homerag index --config configs/experiments/<name>.yaml` | Same, for another experiment. Experiments that change only retrieval, generation or judge settings share the same index |
+
+Embeddings are cached in `data/cache/embeddings/` (one `.npy` per model + text): deleting the folder only costs recomputation.
+
 ## Golden set
 
 | Command | What it does |
