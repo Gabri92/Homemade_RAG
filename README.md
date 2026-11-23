@@ -1,16 +1,14 @@
 # Homemade RAG
 
-[![CI](https://github.com/Gabri92/Homemade_RAG/actions/workflows/ci.yml/badge.svg)](https://github.com/Gabri92/Homemade_RAG/actions/workflows/ci.yml)
+A homemade clone of NotebookLM (now Gemini Notebook), specialized on sports documents: an assistant that answers questions about the documents you give it and cites its sources. Built from scratch to learn **retrieval-augmented generation (RAG)** component by component and to **measure** every choice with a golden dataset (eval-driven development).
 
-A question-answering assistant over a triathlon training book, built from scratch to learn **retrieval-augmented generation (RAG)** component by component and to **measure** every choice with a golden dataset (eval-driven development).
-
-The reference book is Joe Friel's *The Triathlete's Training Bible*. The assistant answers in English and cites the chapter and section behind every claim.
+The reference document used to build and evaluate it is Joe Friel's *The Triathlete's Training Bible*. The assistant answers in English and cites the chapter and section behind every claim.
 
 > **Unofficial project.** Not affiliated with, endorsed by or connected to the author or the publisher of the book.
 
 ## The book is not included
 
-The book is copyrighted and is **not** part of this repository, nor is anything derived from it (extracted text, `book.json`, indexes, evaluation runs). To run the pipeline you need your own legally obtained copy, placed in `data/raw/`. The whole `data/` folder is gitignored, and a pre-commit hook refuses book files even when they are added with `git add -f`.
+The book is copyrighted and is **not** part of this repository, nor is anything derived from it (extracted text, `book.json`, indexes, evaluation runs). To run the pipeline you need your own legally obtained copy, placed in `data/raw/`. Only **ePub** input is supported for now; a PDF loader is planned. The whole `data/` folder is gitignored, and a pre-commit hook refuses book files even when they are added with `git add -f`.
 
 The hand-written **golden dataset** (`eval/datasets/golden.jsonl`) is kept local too: its answers paraphrase the book. `eval/datasets/example.jsonl` shows the format with synthetic questions about an invented training plan.
 

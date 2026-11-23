@@ -128,6 +128,3 @@ Same golden set and judge for both: compare quality per question category, citat
 - **Figures with Claude's multimodality**: during ingestion, images (first tables published as images, then charts and illustrations) are passed to Claude, which transcribes tables to Markdown and describes figures. The generated text replaces the caption-only `figure` block and is cached, so each image is paid for once. Measured as an experiment: golden set questions that depend on figures, before and after.
 
 - Multilingual: the language gate is replaced by an LLM query processor (answer language + query translated into English for retrieval) and the golden set is extended with the same questions in more languages.
-- The book's rules as deterministic code (zone calculation, ATP) exposed as tools.
-- Athlete profile and onboarding.
-- Integration with real training data (Strava/Garmin).
