@@ -59,23 +59,35 @@ class Book:
 
 
 @dataclass(frozen=True, slots=True)
-class Chunk:
-    """A piece of one section: the unit that is embedded, retrieved and cited.
+class SectionRef:
+    """The part of a section a chunk needs: its id (for the golden set) and title path (for
+    citations)."""
 
-    `id` is `<section_id>#<n>`, unique in a document because section ids are unique and
-    never contain "#". `section_id` links retrieval to the golden set (ADR 0003);
-    `section_path` and `page` are what a citation shows to the reader.
+    id: str
+    path: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class Chunk:
+    """A piece of the document: the unit that is embedded, retrieved and cited.
+
+    `sections` are the sections the chunk covers, in reading order: one for most chunks,
+    more when a strategy cuts across section boundaries (ADR 0005). `id` is
+    `<first section id>#<n>`, unique in a document because section ids are unique and never
+    contain "#". `page` is the printed page where the chunk starts, if known.
     """
 
     id: str
-    section_id: str
-    section_path: tuple[str, ...]
+    sections: tuple[SectionRef, ...]
     text: str
     page: str | None = None
 
     def __post_init__(self) -> None:
-        if not self.id.startswith(f"{self.section_id}#"):
-            raise ValueError(f"chunk id {self.id!r} must start with {self.section_id + '#'!r}")
+        if not self.sections:
+            raise ValueError(f"chunk {self.id!r} covers no section")
+        prefix = f"{self.sections[0].id}#"
+        if not self.id.startswith(prefix):
+            raise ValueError(f"chunk id {self.id!r} must start with {prefix!r}")
         if not self.text.strip():
             raise ValueError(f"chunk {self.id!r} has no text")
 

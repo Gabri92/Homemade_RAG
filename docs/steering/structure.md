@@ -6,7 +6,7 @@ Principle: **KISS**. One module per concept, functions before classes, no extra 
 Modules marked *(placeholder)* contain only a docstring describing their purpose: they are filled in from Phase 3 onwards.
 ```
 src/tricoach/
-  models.py      # dataclasses: Block, Section, Book, Chunk, RetrievedChunk, Citation, Answer
+  models.py      # dataclasses: Block, Section, Book, SectionRef, Chunk, RetrievedChunk, Citation, Answer
   config.py      # settings (.env) + experiment config (YAML -> pydantic, frozen, unknown fields rejected)
   ingest/        # source -> blocks -> cleaning -> sections -> data/processed/book.json (ADR 0002)
     __init__.py  #   public API: from outside, import only from `tricoach.ingest`
@@ -16,8 +16,8 @@ src/tricoach/
     book_file.py #   save_book / load_book for book.json, with SCHEMA_VERSION
     quality.py   #   generic quality report (no expected values): `tricoach inspect`
     dump.py      #   format_blocks, format_sections for inspection
-  chunking.py    # (placeholder) chunking strategies (functions) + CHUNKERS registry
-  index.py       # (in progress) device choice; then embeddings, numpy index, BM25, save/load
+  chunking.py    # chunking strategies (functions) + CHUNKERS registry: fixed
+  index.py       # (in progress) device choice, tokenizer offsets; then embeddings, numpy index, BM25, save/load
   retrieval.py   # (placeholder) dense, bm25, RRF fusion, rerank
   language.py    # (placeholder) language gate: is_english(text)
   llm.py         # (placeholder) the single access point to the Anthropic API
@@ -43,16 +43,16 @@ tests/                 # one kind of test = one folder (see conventions.md, "Tes
     test_golden.py     #     golden-set section ids exist in the current ingestion (skipped until golden.jsonl exists)
   corpus/              #   generalization on ePubs from other publishers in data/corpus/ (`corpus` marker)
     expectations.py    #     expected values and where to download each ePub
-  integration/         #   (from Phase 3) real APIs and models, `integration` marker
+  integration/         #   real APIs and models: `integration` marker set in integration/conftest.py
   e2e/                 #   (from Phase 3) question -> cited answer on the real book
 ```
 
 ## Rules
 - **Dependencies flow one way:** `cli` → `qa` / `eval` → the rest. `models.py` imports no other project module.
-- **One external library, one module:** `anthropic` only in `llm.py`, `sentence_transformers` and `torch` only in `index.py` / `retrieval.py`, `lingua` only in `language.py`. Replacing a technology then touches one file.
+- **One external library, one module:** `anthropic` only in `llm.py`, `sentence_transformers`, `transformers` and `torch` only in `index.py` / `retrieval.py`, `lingua` only in `language.py`. Replacing a technology then touches one file.
 - **Interchangeable strategies = functions with the same signature in a dictionary.** Example:
   ```python
-  CHUNKERS: dict[str, Callable[[list[Section], ChunkingConfig], list[Chunk]]] = {
+  CHUNKERS: dict[str, Callable[[Book, ChunkingConfig, TokenSpans], list[Chunk]]] = {
       "fixed": fixed_size_chunks,
       "sections": section_chunks,
   }

@@ -1,7 +1,7 @@
 # ADR 0003 — The golden set references book sections, not chunks
 
 - **Date:** 2026-11-18
-- **Status:** accepted
+- **Status:** accepted (relevance of chunks covering several sections: ADR 0005)
 
 ## Context
 Each golden-set question must say where its answer is in the book, so that retrieval metrics (hit rate, recall@k, MRR) can be computed. The original plan in `architecture.md` §7.1 stored `relevant_chunk_ids` plus text spans used to remap them whenever the chunking changes. But chunks do not exist yet, they change with every chunking experiment, and spans would put book text in a committed file.

@@ -9,8 +9,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Section ids are always unique: the suffix for repeated title paths no longer collides with a title ending in a number (ingestion finding #16).
 
 ### Added
+- Fixed-size chunker (`chunking.fixed_size_chunks`, registry `CHUNKERS`): token windows with overlap over the running text, counted with the bge-m3 tokenizer (`index.token_spans_for`).
+- ADR 0005: a chunk may cover several sections; it is relevant when at least one of them is cited.
+- `tests/integration/` with the `integration` marker applied per folder.
 - Experiment configs: `configs/experiments/baseline.yaml`, validated by `load_experiment` (frozen, unknown fields and invalid values rejected with the file name).
-- Data types `Chunk`, `RetrievedChunk`, `Citation`, `Answer`.
+- Data types `SectionRef`, `Chunk`, `RetrievedChunk`, `Citation`, `Answer`.
 - `resolve_device`: `device: auto` uses CUDA only if a test computation succeeds, otherwise CPU with a warning.
 - Phase 3 dependencies: `anthropic`, `numpy`, `sentence-transformers` + `torch` (CUDA build on Windows, CPU build on Linux CI), `lingua-language-detector`, `pyyaml`; `types-pyyaml` for mypy.
 - `README.md`: project overview, unofficial-project notice, how the book and the golden set stay out of the repository.

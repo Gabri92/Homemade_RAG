@@ -42,3 +42,24 @@ def _cuda_works() -> bool:
         return bool((probe @ probe).item() == 8)  # noqa: PLR2004
     except RuntimeError:
         return False
+
+
+def token_spans_for(model_name: str) -> Callable[[str], list[tuple[int, int]]]:
+    """The embedding model's tokenizer as a `chunking.TokenSpans` function.
+
+    Only the tokenizer is loaded (a few MB), not the model. Offsets point into the original
+    text, so chunkers cut the text itself instead of rebuilding it from tokens.
+    """
+    from transformers import AutoTokenizer  # noqa: PLC0415 (slow import, see _cuda_works)
+
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    def spans(text: str) -> list[tuple[int, int]]:
+        # The whole document is tokenized at once: longer than the model's limit, but these
+        # tokens are only counted, never fed to the model (hence verbose=False).
+        encoded = tokenizer(
+            text, add_special_tokens=False, return_offsets_mapping=True, verbose=False
+        )
+        return [(start, end) for start, end in encoded["offset_mapping"] if end > start]
+
+    return spans

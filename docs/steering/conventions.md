@@ -35,7 +35,7 @@
   | `tests/unit/` | One function with synthetic data; mirrors `src/tricoach/` (`src/tricoach/ingest/cleaning.py` → `tests/unit/ingest/test_cleaning.py`) | Always; `uv run pytest tests/unit` during development (< 1 s) |
   | `tests/book/` | Ingestion on the real book against the values in `expectations.py` | With `uv run pytest`; skipped if the book is missing |
   | `tests/corpus/` | Generalization: the same ingestion on ePubs from other publishers (`data/corpus/`) | With `uv run pytest`; each missing book is skipped |
-  | `tests/integration/` | (Phase 3) components with real APIs/models | Only with `-m integration` |
+  | `tests/integration/` | Components with real APIs/models (e.g. the bge-m3 tokenizer, downloaded on first run) | Only with `uv run pytest -m integration` |
   | `tests/e2e/` | (Phase 3) question → cited answer | To be decided in Phase 3 |
 
   Markers and skips are applied **per folder** in its `conftest.py`, not file by file. The `integration/` and `e2e/` folders are created when their first test arrives.
@@ -44,7 +44,7 @@
 - External dependencies (LLM, embedding model) are replaced by passing a fake as a parameter, not with scattered `monkeypatch`.
 - The strategies in a registry are tested with a single test parametrized over all entries.
 - `cli.py`: one smoke test per command with typer's `CliRunner` (startup, error on invalid input, expected output). Logic is tested in the modules, not through the CLI.
-- Standard tests are deterministic and offline; those calling real APIs or models are `@pytest.mark.integration`.
+- Standard tests are deterministic and offline; those calling real APIs or models go in `tests/integration/`, where the `integration` marker is applied by the folder conftest.
 - Fixtures: a **synthetic mini-book** written by us, never text from the real book.
 - Bug found → first a test that reproduces it, then the fix.
 
