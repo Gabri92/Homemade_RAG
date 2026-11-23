@@ -11,8 +11,8 @@ from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from tricoach.config import ChunkingConfig
-from tricoach.models import Book, Chunk, SectionRef
+from homerag.config import ChunkingConfig
+from homerag.models import Book, Chunk, SectionRef
 
 TokenSpans = Callable[[str], list[tuple[int, int]]]
 """Maps a text to the (start, end) character offsets of each of its tokens."""

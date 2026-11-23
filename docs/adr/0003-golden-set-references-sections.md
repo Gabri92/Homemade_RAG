@@ -13,7 +13,7 @@ Phase 1 already gives every section a stable, path-based id (`Section.id` in `bo
 - Retrieval metrics will map a retrieved chunk to its section (each chunk records the section it comes from).
 - `check_references` (`eval/dataset.py`) lists cited ids that are missing from the book or excluded from the index. It runs:
   - in `tests/book/test_golden.py`, so the full suite (and the pre-commit hook) fails as soon as an ingestion change orphans a reference;
-  - in `tricoach eval check`, while the user writes questions.
+  - in `homerag eval check`, while the user writes questions.
 - Follow-up questions point at the previous question with `previous_id` instead of copying its text.
 
 ## Alternatives considered

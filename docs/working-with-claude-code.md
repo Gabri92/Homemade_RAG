@@ -39,15 +39,15 @@ A rule written in a prompt is a *request*: the model usually follows it, but not
 
 ## Planned
 
-Introduced only when they have something to work on (YAGNI): both depend on `tricoach eval`, which arrives in Phase 3.
+Introduced only when they have something to work on (YAGNI): both depend on `homerag eval`, which arrives in Phase 3.
 
 ### Skill: `/experiment`
 
 A **skill** is a Markdown file (`.claude/skills/experiment/SKILL.md`) that describes a procedure step by step. It is run by typing `/experiment <name>`, and Claude can also pick it up on its own when a request matches its description. It turns a rule that today must be *remembered* (CLAUDE.md rule 2: "every change to the RAG pipeline is an experiment") into a procedure that is *executed* the same way every time:
 
 1. create `configs/experiments/<name>.yaml` starting from the current best config, changing only the variable under test;
-2. run `tricoach eval run` on the baseline and on the new config (or reuse the cached baseline run);
-3. run `tricoach eval compare` and summarize the deltas per metric and per question category, plus the questions that got worse;
+2. run `homerag eval run` on the baseline and on the new config (or reuse the cached baseline run);
+3. run `homerag eval compare` and summarize the deltas per metric and per question category, plus the questions that got worse;
 4. propose the `exp:` commit message with the metric summary;
 5. if the config wins, draft the ADR.
 

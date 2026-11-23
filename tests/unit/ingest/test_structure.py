@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from tricoach.ingest import load_book, mark_front_matter, save_book, structure
-from tricoach.models import Block, Book
+from homerag.ingest import load_book, mark_front_matter, save_book, structure
+from homerag.models import Block, Book
 
 
 def heading(text: str, level: int, source: str = "ch01.xhtml", **kw: str) -> Block:

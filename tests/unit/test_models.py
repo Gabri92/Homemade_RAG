@@ -1,6 +1,6 @@
 import pytest
 
-from tricoach.models import Answer, Block, Chunk, SectionRef
+from homerag.models import Answer, Block, Chunk, SectionRef
 
 BASE = SectionRef("base-period", ("Base Period",))
 

@@ -4,7 +4,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from tricoach.config import Settings, load_experiment
+from homerag.config import Settings, load_experiment
 
 
 def test_reads_api_key_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:

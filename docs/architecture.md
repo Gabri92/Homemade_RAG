@@ -82,7 +82,7 @@ The evaluation pipeline acts as a fake user: the runner sends each golden questi
 
 ## 3. Ingestion and indexing pipelines
 
-### 3.1 Ingestion (`tricoach.ingest`, `tricoach ingest`)
+### 3.1 Ingestion (`homerag.ingest`, `homerag ingest`)
 
 | Step | Responsibility | Practical notes |
 |---|---|---|
@@ -211,7 +211,7 @@ File `eval/datasets/golden.jsonl`, one line per question (format: `GoldenQuestio
 | `previous_id` | Only and always for `follow_up`: the id of an earlier question in the file |
 | `language` | ISO 639-1, default `en`. It is the expected gate outcome: `en` passes, anything else is blocked. Only `non_english` has a language other than `en` |
 
-`uv run tricoach eval check` validates the file and checks that every cited section exists in `book.json` and is indexed; `tests/book/test_golden.py` runs the same check on every full test run.
+`uv run homerag eval check` validates the file and checks that every cited section exists in `book.json` and is indexed; `tests/book/test_golden.py` runs the same check on every full test run.
 
 - **50–100 questions** written by hand (time well spent: you read them and understand the book).
 - **Categories** (to see *where* the pipeline fails):

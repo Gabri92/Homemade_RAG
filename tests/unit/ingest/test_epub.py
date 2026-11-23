@@ -1,9 +1,9 @@
 import pytest
 
+from homerag.ingest import html_to_blocks, load_epub
+from homerag.ingest.epub import landmark_types, role_from_types
+from homerag.models import Block
 from tests.conftest import MakeEpub
-from tricoach.ingest import html_to_blocks, load_epub
-from tricoach.ingest.epub import landmark_types, role_from_types
-from tricoach.models import Block
 
 SOURCE = "ch01.xhtml"
 

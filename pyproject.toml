@@ -1,5 +1,5 @@
 [project]
-name = "tricoach"
+name = "homerag"
 version = "0.3.0"
 description = "Homemade NotebookLM-style Q&A assistant over sports documents: a hands-on RAG learning project."
 requires-python = ">=3.12"
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-tricoach = "tricoach.cli:app"
+homerag = "homerag.cli:app"
 
 [dependency-groups]
 dev = [

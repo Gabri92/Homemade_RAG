@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup, Tag
 from bs4.element import PageElement
 from ebooklib import epub
 
-from tricoach.models import Block
+from homerag.models import Block
 
 _HEADING_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6")
 _BLOCK_TAGS = (*_HEADING_TAGS, "p", "li", "table", "img", "dt")

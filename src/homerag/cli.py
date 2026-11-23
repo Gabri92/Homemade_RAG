@@ -7,8 +7,8 @@ from typing import Annotated
 
 import typer
 
-from tricoach.eval.dataset import check_references, load_golden
-from tricoach.ingest import (
+from homerag.eval.dataset import check_references, load_golden
+from homerag.ingest import (
     clean,
     format_blocks,
     format_report,
@@ -20,7 +20,9 @@ from tricoach.ingest import (
     save_book,
 )
 
-app = typer.Typer(help="Q&A assistant over The Triathlete's Training Bible.", no_args_is_help=True)
+app = typer.Typer(
+    help="NotebookLM-style Q&A with citations over your documents.", no_args_is_help=True
+)
 eval_app = typer.Typer(help="Golden dataset and evaluation.", no_args_is_help=True)
 app.add_typer(eval_app, name="eval")
 
@@ -30,7 +32,7 @@ GOLDEN = Path("eval/datasets/golden.jsonl")
 
 @app.callback()
 def main() -> None:
-    """Keep subcommands explicit (`tricoach dump ...`)."""
+    """Keep subcommands explicit (`homerag dump ...`)."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
@@ -80,7 +82,7 @@ def dump(
 @app.command()
 def sections(
     book: Annotated[
-        Path, typer.Option(exists=True, dir_okay=False, help="book.json from `tricoach ingest`.")
+        Path, typer.Option(exists=True, dir_okay=False, help="book.json from `homerag ingest`.")
     ] = PROCESSED / "book.json",
     output: Annotated[Path, typer.Option(help="Where to write the list.")] = PROCESSED
     / "sections.txt",
@@ -98,7 +100,7 @@ def eval_check(
         Path, typer.Argument(exists=True, dir_okay=False, help="Golden-set JSONL file.")
     ] = GOLDEN,
     book: Annotated[
-        Path, typer.Option(exists=True, dir_okay=False, help="book.json from `tricoach ingest`.")
+        Path, typer.Option(exists=True, dir_okay=False, help="book.json from `homerag ingest`.")
     ] = PROCESSED / "book.json",
 ) -> None:
     """Validate the golden set and check that every cited section is in the book index."""

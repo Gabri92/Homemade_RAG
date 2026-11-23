@@ -3,9 +3,9 @@ from typing import get_args
 
 import pytest
 
-from tricoach.chunking import BLOCK_SEPARATOR, CHUNKERS, fixed_size_chunks
-from tricoach.config import ChunkingConfig
-from tricoach.models import Block, Book, Section
+from homerag.chunking import BLOCK_SEPARATOR, CHUNKERS, fixed_size_chunks
+from homerag.config import ChunkingConfig
+from homerag.models import Block, Book, Section
 
 
 def word_spans(text: str) -> list[tuple[int, int]]:

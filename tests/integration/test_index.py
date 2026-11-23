@@ -1,4 +1,4 @@
-from tricoach.index import token_spans_for
+from homerag.index import token_spans_for
 
 
 def test_bge_m3_offsets_point_into_the_original_text() -> None:

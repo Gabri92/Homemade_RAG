@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-from tricoach.index import resolve_device
+from homerag.index import resolve_device
 
 
 def test_explicit_device_is_kept_without_probing() -> None:
