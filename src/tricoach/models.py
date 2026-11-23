@@ -56,3 +56,59 @@ class Book:
 
     source: str
     sections: tuple[Section, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class Chunk:
+    """A piece of one section: the unit that is embedded, retrieved and cited.
+
+    `id` is `<section_id>#<n>`, unique in a document because section ids are unique and
+    never contain "#". `section_id` links retrieval to the golden set (ADR 0003);
+    `section_path` and `page` are what a citation shows to the reader.
+    """
+
+    id: str
+    section_id: str
+    section_path: tuple[str, ...]
+    text: str
+    page: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.id.startswith(f"{self.section_id}#"):
+            raise ValueError(f"chunk id {self.id!r} must start with {self.section_id + '#'!r}")
+        if not self.text.strip():
+            raise ValueError(f"chunk {self.id!r} has no text")
+
+
+@dataclass(frozen=True, slots=True)
+class RetrievedChunk:
+    """A chunk as returned by a retriever: `rank` starts at 1, higher `score` is better."""
+
+    chunk: Chunk
+    score: float
+    rank: int
+
+
+@dataclass(frozen=True, slots=True)
+class Citation:
+    """Where a claim comes from, built from the chunk's metadata, never from model text."""
+
+    chunk_id: str
+    section_id: str
+    section_path: tuple[str, ...]
+    page: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Answer:
+    """Everything one question produced: what the reader sees and what the eval scores.
+
+    `blocked_by_gate` is True when the language gate stopped the question: then `retrieved`
+    and `citations` are empty and `text` is the notice.
+    """
+
+    question: str
+    text: str
+    citations: tuple[Citation, ...] = ()
+    retrieved: tuple[RetrievedChunk, ...] = ()
+    blocked_by_gate: bool = False

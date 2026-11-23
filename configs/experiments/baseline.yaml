@@ -1,0 +1,30 @@
+# Phase 3 baseline: the simplest pipeline, to get a first measured number.
+# Every later experiment is compared with the previous best run (roadmap, Phase 4).
+name: baseline
+document: data/processed/book.json
+
+chunking:
+  strategy: fixed        # N tokens with overlap; tables may be split on purpose (see 4.1)
+  size_tokens: 500
+  overlap_tokens: 50
+
+embedding:
+  strategy: local        # sentence-transformers on this machine
+  model: BAAI/bge-m3
+  device: auto           # cuda if a test computation works, otherwise cpu (with a warning)
+  batch_size: 16
+
+retrieval:
+  strategy: dense        # cosine similarity, top k
+  top_k: 5
+
+generation:
+  model: claude-sonnet-5-5
+  effort: low
+  max_tokens: 1024
+  prompt: answer_v1
+
+judge:
+  model: claude-opus-5-5
+  effort: medium
+  prompt: judge_v1

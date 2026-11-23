@@ -6,8 +6,8 @@ Principle: **KISS**. One module per concept, functions before classes, no extra 
 Modules marked *(placeholder)* contain only a docstring describing their purpose: they are filled in from Phase 3 onwards.
 ```
 src/tricoach/
-  models.py      # dataclasses: Block, Section, Book (then Chunk, RetrievedChunk, Answer, Citation)
-  config.py      # settings (.env) + experiment config (YAML -> pydantic)
+  models.py      # dataclasses: Block, Section, Book, Chunk, RetrievedChunk, Citation, Answer
+  config.py      # settings (.env) + experiment config (YAML -> pydantic, frozen, unknown fields rejected)
   ingest/        # source -> blocks -> cleaning -> sections -> data/processed/book.json (ADR 0002)
     __init__.py  #   public API: from outside, import only from `tricoach.ingest`
     epub.py      #   ePub Loader (one file per format: pdf.py tomorrow)
@@ -17,7 +17,7 @@ src/tricoach/
     quality.py   #   generic quality report (no expected values): `tricoach inspect`
     dump.py      #   format_blocks, format_sections for inspection
   chunking.py    # (placeholder) chunking strategies (functions) + CHUNKERS registry
-  index.py       # (placeholder) embeddings, numpy index, BM25, save/load
+  index.py       # (in progress) device choice; then embeddings, numpy index, BM25, save/load
   retrieval.py   # (placeholder) dense, bm25, RRF fusion, rerank
   language.py    # (placeholder) language gate: is_english(text)
   llm.py         # (placeholder) the single access point to the Anthropic API
@@ -30,7 +30,7 @@ src/tricoach/
     run.py       #   (placeholder) runs an experiment, saves and compares runs
   cli.py         # typer commands: dump, ingest, inspect, sections, eval check (then ask, eval run/compare)
 .claude/               # Claude Code project settings: settings.json (hooks) + hooks/ scripts
-configs/experiments/   # one YAML per experiment (from Phase 3)
+configs/experiments/   # one YAML per experiment: baseline.yaml is the Phase 3 starting point
 eval/datasets/         # golden.jsonl (hand-written, gitignored: kept local, ADR 0004) + example.jsonl (synthetic, committed)
 eval/runs/             # run outputs (gitignored)
 data/                  # raw/, processed/, index/ (gitignored)
@@ -49,7 +49,7 @@ tests/                 # one kind of test = one folder (see conventions.md, "Tes
 
 ## Rules
 - **Dependencies flow one way:** `cli` → `qa` / `eval` → the rest. `models.py` imports no other project module.
-- **One external library, one module:** `anthropic` only in `llm.py`, `sentence_transformers` only in `index.py` / `retrieval.py`, `lingua` only in `language.py`. Replacing a technology then touches one file.
+- **One external library, one module:** `anthropic` only in `llm.py`, `sentence_transformers` and `torch` only in `index.py` / `retrieval.py`, `lingua` only in `language.py`. Replacing a technology then touches one file.
 - **Interchangeable strategies = functions with the same signature in a dictionary.** Example:
   ```python
   CHUNKERS: dict[str, Callable[[list[Section], ChunkingConfig], list[Chunk]]] = {
