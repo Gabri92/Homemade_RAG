@@ -281,4 +281,7 @@ An experiment = a new config, not a code change. `index` and `llm` are passed as
 ## 9. Data and copyright
 
 - The book (`data/raw/`) and all its derivatives (`data/processed/`, `data/index/`) **must never be committed** (they are in `.gitignore`, and a pre-commit hook refuses them).
-- Strictly personal use with a legally owned copy. Public distribution would require revisiting the approach (licence or reworded content). The planned shared demo (`docs/steering/product.md`, "Shared demo") counts as distribution: this must be settled before its link goes out.
+- Strictly personal use with a legally owned copy. The book is never distributed: the planned shared demo (`docs/steering/product.md`, "Shared demo") serves only the documents each visitor uploads, not the reference book.
+- Uploaded documents are third-party data: they stay in the visitor's session, are never shared between visitors and are deleted with their indexes. Terms of use and deletion must be settled before the demo link goes out.
+- DRM-protected files are not supported: the loader rejects them with a clear message, and the project never removes DRM.
+- Indexes are kept per document (`data/index/<document>/...`), with no global state in the query pipeline: the same code serves the reference book locally and one uploaded document per visitor.

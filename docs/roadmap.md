@@ -118,12 +118,12 @@ Same golden set and judge for both: compare quality per question category, citat
 
 ## Later (out of scope for now)
 
-- **Shared demo (build in public)**: part of the product reachable through a link, no accounts (see `docs/steering/product.md`, "Shared demo"). Before it goes out: settle the copyright question and add a usage limit.
+- **Shared demo (build in public)**: the product reachable through a link, no accounts. Visitors upload their own documents and ask questions about them (see `docs/steering/product.md`, "Shared demo"). Before it goes out: terms of use and deletion for uploaded documents, rejection of DRM-protected files, a usage limit, and indexing time measured (local embedding model vs an embedding API) as an experiment.
 
-- **User-added sources** (NotebookLM style): the Loader and Cleaner rules are already generic (they work on HTML semantics and on `Block`), but thresholds and expected values are tuned on a single book. To generalize:
+- **User-added sources** (NotebookLM style; it is what the shared demo serves): the Loader and Cleaner rules are already generic (they work on HTML semantics and on `Block`), but thresholds and expected values are tuned on a single book. To generalize:
   1. **ingestion corpus**: a few copyright-free ePubs/PDFs from different publishers (e.g. Project Gutenberg, Standard Ebooks, open-access articles), each with its own expected values, run as regression tests;
   2. **automatic quality report** computed on every uploaded file, with no expected values: generic invariants (coverage of the source text, heading structure, untitled tables, figures without captions, duplicate rate, anomalous blocks) → warnings to the user when a document is extracted badly;
-  3. **downstream evaluation**: a small golden set of questions for each corpus document, because ingestion quality is ultimately measured by the answers.
+  3. **downstream evaluation**: a small golden set of questions for each corpus document, because ingestion quality is ultimately measured by the answers. The corpus favours sports and technical documents (manuals, guides, papers): the kind of document the product is evaluated on.
 
 - **Figures with Claude's multimodality**: during ingestion, images (first tables published as images, then charts and illustrations) are passed to Claude, which transcribes tables to Markdown and describes figures. The generated text replaces the caption-only `figure` block and is cached, so each image is paid for once. Measured as an experiment: golden set questions that depend on figures, before and after.
 
