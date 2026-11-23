@@ -6,6 +6,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 ## [Unreleased]
 
 ### Added
+- Phase 3 dependencies: `anthropic`, `numpy`, `sentence-transformers` + `torch` (CUDA build on Windows, CPU build on Linux CI), `lingua-language-detector`, `pyyaml`; `types-pyyaml` for mypy.
 - `README.md`: project overview, unofficial-project notice, how the book and the golden set stay out of the repository.
 - ADR 0004: the golden set is kept local.
 - CI on GitHub Actions: every pull request and push to `main` runs all pre-commit hooks on all files.

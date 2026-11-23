@@ -8,6 +8,7 @@
 | Data and config validation | `pydantic` v2, `pydantic-settings`, YAML config |
 | LLM | `anthropic` SDK; generation `claude-sonnet-5-5`, judge `claude-opus-5-5` (configurable) |
 | Embedding / reranker | `sentence-transformers` with `BAAI/bge-m3` and `BAAI/bge-reranker-v2-m3` |
+| Torch | CUDA 12.6 build on Windows (local GPU), CPU build on Linux (CI), set in `[tool.uv.sources]`; the device is chosen at runtime from the experiment config |
 | Index | in-memory `numpy` (persisted to file); `rank-bm25` for lexical search |
 | Language detection | `lingua-py` (language gate: English only) |
 | Extraction | `ebooklib` + `beautifulsoup4` (ePub), `pymupdf` (PDF) |
