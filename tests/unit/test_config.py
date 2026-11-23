@@ -77,3 +77,17 @@ def test_top_level_must_be_a_mapping(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="mapping"):
         load_experiment(path)
+
+
+def test_evaluation_ks_must_be_increasing(tmp_path: Path) -> None:
+    path = write_config(tmp_path, evaluation={"ks": [3, 1]})
+
+    with pytest.raises(ValueError, match="increasing"):
+        load_experiment(path)
+
+
+def test_evaluation_ks_cannot_exceed_top_k(tmp_path: Path) -> None:
+    path = write_config(tmp_path, evaluation={"ks": [1, 10]})
+
+    with pytest.raises(ValueError, match="top_k"):
+        load_experiment(path)

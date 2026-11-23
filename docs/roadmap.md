@@ -50,11 +50,13 @@ The largest phase: it builds the whole pipeline end to end, plus the way to meas
 
 ### Phase 3a — Retrieval baseline (v0.4.0)
 
+> First baseline run (26 questions citing sections, top-5 dense retrieval, fixed 500/50 chunks): hit@5 0.77, recall@5 0.73, MRR 0.61. Weakest categories: `table` (hit@5 0.40) and `follow_up` (0.33, retrieved without rewriting); `multi_hop` always hits but finds 75% of the cited sections. 60% of the chunks cover two or more sections (ADR 0005). With 3–8 questions per category, one question moves a category by 0.12–0.33: differences are read per question, not only as means.
+
 1. Dependencies, experiment config (YAML → pydantic), pipeline data types, device choice. ✅
 2. Fixed-size chunker (500 tokens, overlap 50) over the running text of the book (ADR 0005). ✅
 3. `bge-m3` embedder with an on-disk cache, in-memory `numpy` index per document and index key; `homerag index`. ✅
 4. Dense top-5 retrieval; `homerag search` shows what retrieval returns for one question. ✅
-5. **Retrieval metrics** (hit rate, recall@k, MRR) per question category on the golden set; `homerag eval run` saves a retrieval-only run.
+5. **Retrieval metrics** (hit rate, recall@k, MRR) per question category on the golden set; `homerag eval run` saves a retrieval-only run. ✅
 
 **Learning:** have a starting number, at zero API cost. It will probably be mediocre: that's fine.
 **Deliverable:** first run in `eval/runs/` with retrieval metrics per category.

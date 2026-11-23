@@ -9,6 +9,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Section ids are always unique: the suffix for repeated title paths no longer collides with a title ending in a number (ingestion finding #16).
 
 ### Added
+- Retrieval evaluation: `eval/metrics.py` (hit@k, recall@k, reciprocal rank, means per category), `homerag eval run` saving `config.yaml`, `results.jsonl`, `metrics.json`, `meta.json` to `eval/runs/`; `evaluation.ks` in the experiment config. First baseline: hit@5 0.77, recall@5 0.73, MRR 0.61 over 26 questions.
 - Dense retrieval (`retrieval.dense_search`, registry `RETRIEVERS`): cosine similarity on normalized vectors, stable ranking on ties, refuses a question vector from another model; `homerag search "question" [--text]` prints the ranking.
 - `homerag index`: chunk + embed a document into `data/index/<document>/<strategy>-<hash>/`; the folder key hashes only the chunking and embedding settings, so experiments that change retrieval or generation share one index. An index built from another `book.json` (fingerprint in `meta.json`) or in another format is refused and rebuilt.
 - Embedders registry `EMBEDDERS` (`local`: sentence-transformers, fp16 on GPU) and an on-disk embedding cache (one `.npy` per model + text, atomic writes).

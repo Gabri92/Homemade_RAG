@@ -144,7 +144,10 @@ def cached(embed: Embed, model: str, cache_dir: Path = CACHE_ROOT) -> Embed:
                 temporary = paths[i].with_suffix(".tmp.npy")
                 np.save(temporary, vector)
                 os.replace(temporary, paths[i])
-        logger.info("embeddings: %d cached, %d computed", len(texts) - len(missing), len(missing))
+        # INFO only when something was computed: a cached question per search is just noise.
+        level = logging.INFO if missing else logging.DEBUG
+        cached_count = len(texts) - len(missing)
+        logger.log(level, "embeddings: %d cached, %d computed", cached_count, len(missing))
         if not paths:
             return np.zeros((0, 0), dtype=np.float32)
         return np.stack([np.load(path) for path in paths])

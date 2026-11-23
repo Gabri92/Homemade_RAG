@@ -1,6 +1,6 @@
 # Command cheat sheet
 
-Commands available now, grouped by task. The full list, including the ones planned for Phase 3a/3b (`eval run`, `ask`, `eval compare`), is in `docs/steering/tech.md`. `uv run homerag --help` (or `<command> --help`) prints the live options.
+Commands available now, grouped by task. The full list, including the ones planned for Phase 3b (`ask`, `eval compare`), is in `docs/steering/tech.md`. `uv run homerag --help` (or `<command> --help`) prints the live options.
 
 Everything under `data/` is gitignored: outputs written there never reach the repository.
 
@@ -41,6 +41,8 @@ Embeddings are cached in `data/cache/embeddings/` (one `.npy` per model + text):
 | `uv run homerag eval check` | Validate `eval/datasets/golden.jsonl` and check that every cited section exists in `data/processed/book.json` and is indexed. Exit code 1 on any problem |
 | `uv run homerag eval check <file.jsonl> --book <book.json>` | Same, on another file or book |
 | `uv run homerag eval check eval/datasets/example.jsonl` | Try the format on the synthetic example (its section ids are made up, so they are reported) |
+| `uv run homerag eval run` | Run `configs/experiments/baseline.yaml` on the golden set: builds or reuses the index, scores retrieval (hit@k, recall@k, MRR per category; `out_of_scope` and `non_english` wait for Phase 3b) and saves `eval/runs/<date-time>-<name>/` (`config.yaml`, `results.jsonl`, `metrics.json`, `meta.json`). No API cost |
+| `uv run homerag eval run --config configs/experiments/<name>.yaml` | Same, for another experiment; `--golden <file>` for another golden set |
 
 Typical loop while writing questions:
 1. `uv run homerag ingest data/raw/<book>.epub` (only if `book.json` is missing or ingestion changed);

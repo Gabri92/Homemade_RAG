@@ -70,6 +70,17 @@ class JudgeConfig(_Section):
     prompt: str
 
 
+class EvaluationConfig(_Section):
+    # Cut-offs for hit rate and recall: all computed from the same top_k ranking.
+    ks: tuple[int, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _sorted_positive_unique(self) -> Self:
+        if any(k <= 0 for k in self.ks) or list(self.ks) != sorted(set(self.ks)):
+            raise ValueError("ks must be positive, increasing and without repeats")
+        return self
+
+
 class ExperimentConfig(_Section):
     """One experiment: which document, and how to chunk, embed, retrieve, generate, judge."""
 
@@ -80,6 +91,16 @@ class ExperimentConfig(_Section):
     retrieval: RetrievalConfig
     generation: GenerationConfig
     judge: JudgeConfig
+    evaluation: EvaluationConfig
+
+    @model_validator(mode="after")
+    def _ks_within_top_k(self) -> Self:
+        if self.evaluation.ks[-1] > self.retrieval.top_k:
+            raise ValueError(
+                f"evaluation.ks goes up to {self.evaluation.ks[-1]}, "
+                f"but retrieval.top_k is {self.retrieval.top_k}"
+            )
+        return self
 
 
 def load_experiment(path: Path) -> ExperimentConfig:

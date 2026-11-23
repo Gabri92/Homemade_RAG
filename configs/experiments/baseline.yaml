@@ -28,3 +28,6 @@ judge:
   model: claude-opus-5-5
   effort: medium
   prompt: judge_v1
+
+evaluation:
+  ks: [1, 3, 5]          # hit rate and recall at each cut-off, from the same top-5 ranking

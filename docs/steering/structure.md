@@ -25,10 +25,10 @@ src/homerag/
   prompts/       # (placeholder) prompts as versioned .md files
   eval/          # evaluation harness
     dataset.py   #   golden set: GoldenQuestion schema, load_golden, check_references
-    metrics.py   #   (placeholder) metrics (pure functions)
+    metrics.py   #   retrieval metrics (hit@k, recall@k, reciprocal rank) + aggregate per category
     judge.py     #   (placeholder) LLM-as-judge
-    run.py       #   (placeholder) runs an experiment, saves and compares runs
-  cli.py         # typer commands: dump, ingest, inspect, sections, index, search, eval check (then ask, eval run/compare)
+    run.py       #   runs an experiment on the golden set (retrieval only in 3a) and saves it (compare in 3b)
+  cli.py         # typer commands: dump, ingest, inspect, sections, index, search, eval check, eval run (then ask, eval compare)
 .claude/               # Claude Code project settings: settings.json (hooks) + hooks/ scripts
 configs/experiments/   # one YAML per experiment: baseline.yaml is the Phase 3 starting point
 eval/datasets/         # golden.jsonl (hand-written, gitignored: kept local, ADR 0004) + example.jsonl (synthetic, committed)
