@@ -1,6 +1,6 @@
 # Ingestion — problems found and fixes
 
-Development document: it collects the defects found by inspecting the pipeline output (`tricoach dump`, `tricoach inspect`) and the ePubs' HTML, with the rule chosen for each and the test that keeps it from coming back.
+Development document: it collects the defects found by inspecting the pipeline output (`homerag dump`, `homerag inspect`) and the ePubs' HTML, with the rule chosen for each and the test that keeps it from coming back.
 
 - **Reference book:** *The Triathlete's Training Bible*, 5th ed., ePub (54 XHTML documents).
 - **Generalization corpus:** three Standard Ebooks ePubs (see "Generalization tests").
@@ -52,7 +52,7 @@ Result on the book: **372 sections, 325 included**, 14 chapters, all IDs unique,
 
 Effect of duplicate headings on RAG: the three "AE1: Recovery" sections can be told apart **only** by their path (the sport). The path will therefore have to travel with the chunks, otherwise retrieval cannot know which sport a workout is for.
 
-## Generic quality report (`tricoach inspect`)
+## Generic quality report (`homerag inspect`)
 
 Checks without expected values, so valid for any source (the basis for future automatic checks on user sources). On the reference book: no warnings.
 
@@ -97,7 +97,7 @@ Three **Standard Ebooks** ePubs in `data/corpus/` (local; where to download them
 - Slocum, *Sailing Alone Around the World* (2.5 MB);
 - Engels, *The Condition of the Working Class in England* (0.7 MB, 142 note references).
 
-**First run** (`tricoach inspect` only, no code changes):
+**First run** (`homerag inspect` only, no code changes):
 
 | Check | Engels | Slocum | Whymper | Reading |
 |---|---|---|---|---|

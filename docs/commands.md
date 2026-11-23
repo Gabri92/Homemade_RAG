@@ -1,6 +1,6 @@
 # Command cheat sheet
 
-Commands available now, grouped by task. The full list, including the ones planned for Phase 3 (`ask`, `eval run`, `eval compare`), is in `docs/steering/tech.md`. `uv run tricoach --help` (or `<command> --help`) prints the live options.
+Commands available now, grouped by task. The full list, including the ones planned for Phase 3 (`ask`, `eval run`, `eval compare`), is in `docs/steering/tech.md`. `uv run homerag --help` (or `<command> --help`) prints the live options.
 
 Everything under `data/` is gitignored: outputs written there never reach the repository.
 
@@ -15,26 +15,26 @@ Everything under `data/` is gitignored: outputs written there never reach the re
 
 | Command | What it does |
 |---|---|
-| `uv run tricoach ingest data/raw/<book>.epub` | Load + clean + structure → `data/processed/book.json`. `--output <path>` to write elsewhere |
-| `uv run tricoach inspect data/raw/<book>.epub` | Quality report (numbers only, no book text). Exit code 1 on warnings |
-| `uv run tricoach dump data/raw/<book>.epub` | Raw loader blocks → `data/processed/blocks_raw.txt` |
-| `uv run tricoach dump data/raw/<book>.epub --clean` | Blocks after the Cleaner → `data/processed/blocks_clean.txt` |
+| `uv run homerag ingest data/raw/<book>.epub` | Load + clean + structure → `data/processed/book.json`. `--output <path>` to write elsewhere |
+| `uv run homerag inspect data/raw/<book>.epub` | Quality report (numbers only, no book text). Exit code 1 on warnings |
+| `uv run homerag dump data/raw/<book>.epub` | Raw loader blocks → `data/processed/blocks_raw.txt` |
+| `uv run homerag dump data/raw/<book>.epub --clean` | Blocks after the Cleaner → `data/processed/blocks_clean.txt` |
 | `git diff --no-index data/processed/blocks_raw.txt data/processed/blocks_clean.txt` | What the Cleaner changed |
 
 ## Golden set
 
 | Command | What it does |
 |---|---|
-| `uv run tricoach sections` | List section ids, page ranges and `[EXCLUDED]` flags (no book text) → `data/processed/sections.txt`: the ids to cite. `--book` / `--output` for other paths. Re-run after every `ingest`; cite only sections without `[EXCLUDED]` |
-| `uv run tricoach eval check` | Validate `eval/datasets/golden.jsonl` and check that every cited section exists in `data/processed/book.json` and is indexed. Exit code 1 on any problem |
-| `uv run tricoach eval check <file.jsonl> --book <book.json>` | Same, on another file or book |
-| `uv run tricoach eval check eval/datasets/example.jsonl` | Try the format on the synthetic example (its section ids are made up, so they are reported) |
+| `uv run homerag sections` | List section ids, page ranges and `[EXCLUDED]` flags (no book text) → `data/processed/sections.txt`: the ids to cite. `--book` / `--output` for other paths. Re-run after every `ingest`; cite only sections without `[EXCLUDED]` |
+| `uv run homerag eval check` | Validate `eval/datasets/golden.jsonl` and check that every cited section exists in `data/processed/book.json` and is indexed. Exit code 1 on any problem |
+| `uv run homerag eval check <file.jsonl> --book <book.json>` | Same, on another file or book |
+| `uv run homerag eval check eval/datasets/example.jsonl` | Try the format on the synthetic example (its section ids are made up, so they are reported) |
 
 Typical loop while writing questions:
-1. `uv run tricoach ingest data/raw/<book>.epub` (only if `book.json` is missing or ingestion changed);
-2. `uv run tricoach sections`, then find the section in `data/processed/sections.txt` and copy its id;
+1. `uv run homerag ingest data/raw/<book>.epub` (only if `book.json` is missing or ingestion changed);
+2. `uv run homerag sections`, then find the section in `data/processed/sections.txt` and copy its id;
 3. write the line in `golden.jsonl` (format: `docs/architecture.md` §7.1);
-4. `uv run tricoach eval check`;
+4. `uv run homerag eval check`;
 5. `golden.jsonl` is gitignored (ADR 0004): keep a backup of your own. Every commit that touches code still re-runs the check against the current ingestion.
 
 ## Quality (definition of done)

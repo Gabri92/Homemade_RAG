@@ -5,8 +5,8 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
+from homerag.cli import app
 from tests.conftest import MakeEpub
-from tricoach.cli import app
 
 runner = CliRunner()
 
@@ -42,7 +42,7 @@ def test_ingest_writes_book_json(make_epub: MakeEpub, tmp_path: Path) -> None:
 
     assert result.exit_code == 0, result.output
     assert "1 sections (1 included)" in result.output
-    assert '"schema_version": 1' in output.read_text(encoding="utf-8")
+    assert '"schema_version": 2' in output.read_text(encoding="utf-8")
 
 
 def test_inspect_prints_the_report_and_exits_0_without_warnings(make_epub: MakeEpub) -> None:

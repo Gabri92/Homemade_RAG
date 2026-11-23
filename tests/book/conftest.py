@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
+from homerag.ingest import clean, load_epub, structure
+from homerag.models import Block, Book
 from tests.book import expectations as expected
-from tricoach.ingest import clean, load_epub, structure
-from tricoach.models import Block, Book
 
 _HERE = Path(__file__).parent
 

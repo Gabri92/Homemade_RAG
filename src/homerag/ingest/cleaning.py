@@ -10,7 +10,7 @@ import re
 from collections.abc import Callable
 from dataclasses import replace
 
-from tricoach.models import Block
+from homerag.models import Block
 
 logger = logging.getLogger(__name__)
 

@@ -7,8 +7,8 @@ from typing import Any, get_args
 import pytest
 from pydantic import ValidationError
 
-from tricoach.eval.dataset import Category, GoldenQuestion, check_references, load_golden
-from tricoach.models import Book, Section
+from homerag.eval.dataset import Category, GoldenQuestion, check_references, load_golden
+from homerag.models import Book, Section
 
 EXAMPLE = Path(__file__).parents[3] / "eval" / "datasets" / "example.jsonl"
 

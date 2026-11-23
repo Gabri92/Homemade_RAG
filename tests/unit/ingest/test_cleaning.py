@@ -1,10 +1,10 @@
-from tricoach.ingest import (
+from homerag.ingest import (
     attach_intro_to_untitled_tables,
     clean,
     merge_continued_tables,
     remove_pull_quotes,
 )
-from tricoach.models import Block
+from homerag.models import Block
 
 CH1, CH2 = "ch01.xhtml", "ch02.xhtml"
 

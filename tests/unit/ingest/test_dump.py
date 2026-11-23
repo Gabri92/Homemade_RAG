@@ -1,5 +1,5 @@
-from tricoach.ingest import format_blocks, format_sections
-from tricoach.models import Block, Book, Section
+from homerag.ingest import format_blocks, format_sections
+from homerag.models import Block, Book, Section
 
 
 def test_format_blocks_tags_each_block_and_indents_multiline_text() -> None:

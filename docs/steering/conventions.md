@@ -32,7 +32,7 @@
 
   | Folder | What | When it runs |
   |---|---|---|
-  | `tests/unit/` | One function with synthetic data; mirrors `src/tricoach/` (`src/tricoach/ingest/cleaning.py` → `tests/unit/ingest/test_cleaning.py`) | Always; `uv run pytest tests/unit` during development (< 1 s) |
+  | `tests/unit/` | One function with synthetic data; mirrors `src/homerag/` (`src/homerag/ingest/cleaning.py` → `tests/unit/ingest/test_cleaning.py`) | Always; `uv run pytest tests/unit` during development (< 1 s) |
   | `tests/book/` | Ingestion on the real book against the values in `expectations.py` | With `uv run pytest`; skipped if the book is missing |
   | `tests/corpus/` | Generalization: the same ingestion on ePubs from other publishers (`data/corpus/`) | With `uv run pytest`; each missing book is skipped |
   | `tests/integration/` | (Phase 3) components with real APIs/models | Only with `-m integration` |
@@ -49,7 +49,7 @@
 - Bug found → first a test that reproduces it, then the fix.
 
 ## Prompts
-- One file per prompt in `src/tricoach/prompts/`, with the version in the name (`answer_v2.md`).
+- One file per prompt in `src/homerag/prompts/`, with the version in the name (`answer_v2.md`).
 - A prompt used in an eval run is never modified: create a new version instead.
 
 ## Git
@@ -67,4 +67,4 @@
   - *patch* (`0.2.1`) for fixes on `main`.
 - **Annotated tag** `vX.Y.Z` on the merge commit into `main`.
 - **`CHANGELOG.md`** (Keep a Changelog format): every `feat:`/`fix:` commit adds a line under `[Unreleased]`; at release time the section gets a number and a date.
-- **Data artifacts:** `book.json` (constant `SCHEMA_VERSION` in `ingest/book_file.py`) and the indexes carry a `schema_version` (integer, bumped on every format change) and the `tricoach` version that produced them. An artifact with a schema other than the expected one must be regenerated, not read.
+- **Data artifacts:** `book.json` (constant `SCHEMA_VERSION` in `ingest/book_file.py`) and the indexes carry a `schema_version` (integer, bumped on every format change) and the `homerag` version that produced them. An artifact with a schema other than the expected one must be regenerated, not read.

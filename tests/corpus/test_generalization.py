@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
+from homerag.ingest import ingest_epub, inspect_epub
 from tests.corpus import expectations as expected
-from tricoach.ingest import ingest_epub, inspect_epub
 
 Corpus = tuple[str, Path]
 

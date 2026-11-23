@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from tricoach.config import Settings
+from homerag.config import Settings
 
 
 def test_reads_api_key_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:

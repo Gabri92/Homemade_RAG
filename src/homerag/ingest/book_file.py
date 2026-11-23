@@ -6,16 +6,16 @@ from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
-from tricoach.models import Block, Book, Section
+from homerag.models import Block, Book, Section
 
 # Bump whenever the shape of Book/Section/Block changes: old files must be regenerated.
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 def save_book(book: Book, path: Path) -> None:
     payload = {
         "schema_version": SCHEMA_VERSION,
-        "tricoach_version": version("tricoach"),
+        "homerag_version": version("homerag"),
         "source": book.source,
         "sections": [asdict(section) for section in book.sections],
     }
@@ -29,7 +29,7 @@ def load_book(path: Path) -> Book:
     if found != SCHEMA_VERSION:
         raise ValueError(
             f"{path}: schema_version {found}, expected {SCHEMA_VERSION}. "
-            "Regenerate it with `tricoach ingest`."
+            "Regenerate it with `homerag ingest`."
         )
     sections = tuple(_section(data) for data in payload["sections"])
     return Book(source=payload["source"], sections=sections)

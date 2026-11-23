@@ -14,7 +14,7 @@ ingest/
   epub.py       # ePub Loader
   dump.py       # format_blocks
 ```
-The Cleaner will arrive as `ingest/cleaning.py`, a PDF loader (if any) as `ingest/pdf.py`. Callers import only from `tricoach.ingest`: the existing tests pass unchanged, which proves the refactoring does not change behaviour.
+The Cleaner will arrive as `ingest/cleaning.py`, a PDF loader (if any) as `ingest/pdf.py`. Callers import only from `homerag.ingest`: the existing tests pass unchanged, which proves the refactoring does not change behaviour.
 
 ## Alternatives considered
 - **Stay in a single file** — simple for a little longer, but it mixes three reasons to change.

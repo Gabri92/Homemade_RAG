@@ -1,6 +1,6 @@
 """Quality report: generic checks that need no expected values, so they work on any source.
 
-Used by `tricoach inspect` today; meant to become the automatic check on user-added
+Used by `homerag inspect` today; meant to become the automatic check on user-added
 sources. Only counts and section ids are reported, never book text.
 """
 
@@ -8,7 +8,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass
 
-from tricoach.models import Block, Book, Section
+from homerag.models import Block, Book, Section
 
 MIN_TEXT_COVERAGE = 0.98  # below this, the loader is silently dropping content
 MIN_PAGE_SHARE = 0.95
