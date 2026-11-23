@@ -8,7 +8,7 @@ The reference document used to build and evaluate it is Joe Friel's *The Triathl
 
 ## The book is not included
 
-The book is copyrighted and is **not** part of this repository, nor is anything derived from it (extracted text, `book.json`, indexes, evaluation runs). To run the pipeline you need your own legally obtained copy, placed in `data/raw/`. The whole `data/` folder is gitignored, and a pre-commit hook refuses book files even when they are added with `git add -f`.
+The book is copyrighted and is **not** part of this repository, nor is anything derived from it (extracted text, `book.json`, indexes, evaluation runs). To run the pipeline you need your own legally obtained copy, placed in `data/raw/`. Only **ePub** input is supported for now; a PDF loader is planned. The whole `data/` folder is gitignored, and a pre-commit hook refuses book files even when they are added with `git add -f`.
 
 The hand-written **golden dataset** (`eval/datasets/golden.jsonl`) is kept local too: its answers paraphrase the book. `eval/datasets/example.jsonl` shows the format with synthetic questions about an invented training plan.
 
