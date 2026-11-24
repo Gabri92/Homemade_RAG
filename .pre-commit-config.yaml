@@ -8,6 +8,13 @@ repos:
         entry: "Book files and derivatives must never be committed (copyright). Unstage them:"
         language: fail
         files: '^(data/|eval/runs/|eval/datasets/golden\.jsonl$)|\.(epub|pdf)$'
+      # The repo is public: refuse secrets and personal files even after `git add -f`.
+      - id: forbid-secrets
+        name: forbid secrets and personal files (.env*, CLAUDE.local.md, notes/, settings.local.json)
+        entry: "Secrets and personal files must never be committed (public repo). Unstage them:"
+        language: fail
+        files: '(^|/)(\.env(\.[^/]*)?|CLAUDE\.local\.md)$|^notes/|^\.claude/settings\.local\.json$'
+        exclude: '(^|/)\.env\.example$'
       - id: ruff-check
         name: ruff check
         entry: uv run ruff check --fix

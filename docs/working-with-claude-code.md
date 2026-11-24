@@ -11,6 +11,7 @@ This project is developed with [Claude Code](https://claude.com/claude-code) as 
 | Steering files | `docs/steering/*.md` | Every session (imported by `CLAUDE.md` with `@`) | Product, tech, structure and conventions: the *principles* Claude should apply without being told |
 | Reference docs | `docs/architecture.md`, `docs/roadmap.md`, `docs/adr/`, `docs/ingestion-findings.md` | On demand, when the related area is touched | Detail that would waste context if it were always loaded |
 | Book-file guard | `.pre-commit-config.yaml`, hook `forbid-book-files` | On every commit | Refuses `data/`, `eval/runs/`, `eval/datasets/golden.jsonl`, `*.epub`, `*.pdf` even after `git add -f`: copyright protection that does not depend on anyone remembering a rule |
+| Secrets guard (commits) | `.pre-commit-config.yaml`, hook `forbid-secrets` | On every commit | Refuses `.env` and its variants (`.env.example` excepted), `CLAUDE.local.md`, `notes/` and `.claude/settings.local.json` even after `git add -f`: the repository is public, and `.gitignore` alone can be bypassed |
 | Secrets guard | `.claude/settings.json` (`permissions.deny`: `Read(./.env)`, `Read(./.env.*)`) | Every session | Claude Code's file reading tool cannot open `.env`, so the API key never enters a conversation by mistake. The code still reads it; a shell command could too, so the rule is a guard against accidents, not a sandbox |
 | Fast definition of done | `.claude/settings.json` (`Stop` hook) → `.claude/hooks/check_done.py` | When Claude is about to end a turn, if `.py` files have uncommitted changes | Ruff, format, mypy and unit tests (~3 s). On failure the error goes back to Claude, which keeps working instead of declaring the task done. One retry only, so it never loops |
 | Full test suite | `.pre-commit-config.yaml`, hook `pytest` | On every commit that touches Python files, `pyproject.toml`, `uv.lock` or `eval/datasets/*.jsonl` | Unit + real book + corpus (~15 s): nothing enters the history with broken tests, whoever makes the commit |
@@ -32,7 +33,7 @@ A rule written in a prompt is a *request*: the model usually follows it, but not
 
 | Kind of rule | Best mechanism | Example here |
 |---|---|---|
-| Must *never* happen | A hard check (pre-commit hook, permission `deny` rule) | Never commit the book → `forbid-book-files` |
+| Must *never* happen | A hard check (pre-commit hook, permission `deny` rule) | Never commit the book → `forbid-book-files`; never commit secrets or personal files → `forbid-secrets` |
 | Must *always* happen at a given moment | A Claude Code hook (`.claude/settings.json`) or a pre-commit hook | Definition of done before ending a turn and before every commit |
 | A multi-step procedure | A skill (slash command) | `/experiment` |
 | A focused job that benefits from its own context | A subagent | `eval-analyst`; `conventions-reviewer` (planned) |
