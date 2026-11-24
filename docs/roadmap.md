@@ -142,6 +142,7 @@ How to run them:
 2. Handling `out_of_scope`: explicit refusal.
 3. Multi-turn: condensing the follow-up into a standalone question before retrieval.
 4. **Judge calibration**: label ~30 answers by hand, measure judge/human agreement, fix the rubric.
+4b. **Numeric match check** (code-based, free): the numbers in the reference answer must appear in the answer; aimed at `table` and `factual`, and a cross-check on the judge (architecture §7.3).
 5. **Experiment: our citations vs the Claude API's native citations.** Pass the retrieved chunks as document/content blocks with citations enabled, so the API returns the cited text and its location; we keep our own metadata (chapter, section, printed page) to show the reader. Same golden set and judge: compare citation accuracy, faithfulness and prompt complexity against our prompt-based citation format. Answers whether citation handling is worth building ourselves.
 
 **Deliverable:** faithfulness and refusal correctness measured and reliable.
