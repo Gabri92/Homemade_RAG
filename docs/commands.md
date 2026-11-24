@@ -27,7 +27,6 @@ Everything under `data/` is gitignored: outputs written there never reach the re
 |---|---|
 | `uv run homerag index` | Chunk + embed the document of `configs/experiments/baseline.yaml` → `data/index/<document>/<strategy>-<hash>/` (`vectors.npy`, `chunks.json`, `meta.json`). Reuses the index when it is up to date; rebuilds it when `book.json` or the chunking/embedding settings changed. First run downloads bge-m3 (~2.2 GB) into the Hugging Face cache |
 | `uv run homerag index --config configs/experiments/<name>.yaml` | Same, for another experiment. Experiments that change only retrieval, generation or judge settings share the same index |
-
 | `uv run homerag search "How long is the base period?"` | Retrieval only, no LLM: rank, score, chunk id, section path, page of the top-k chunks. Needs the index (`homerag index`) |
 | `uv run homerag search "..." --text` | Same, plus a short snippet of each chunk, for your own terminal only (never paste it into issues, posts or logs) |
 
