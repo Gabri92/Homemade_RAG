@@ -1,6 +1,6 @@
 [project]
 name = "homerag"
-version = "0.3.0"
+version = "0.4.0"
 description = "Homemade NotebookLM-style Q&A assistant over sports documents: a hands-on RAG learning project."
 requires-python = ">=3.12"
 dependencies = [

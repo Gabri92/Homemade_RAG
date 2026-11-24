@@ -5,6 +5,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-24
+
+Phase 3a: retrieval baseline. First measured number at zero API cost.
+
 ### Fixed
 - Section ids are always unique: the suffix for repeated title paths no longer collides with a title ending in a number (ingestion finding #16).
 
@@ -26,6 +30,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Pull request template with the definition-of-done, experiment, docs and copyright checklist.
 
 ### Changed
+- Roadmap: Phase 3 split into 3a (retrieval baseline) and 3b (generation and judge); the minimal chat moves to Phase 4, right after the first complete pipeline; optimization and comparison phases become 5–8.
 - Changes reach `main` through pull requests merged with a merge commit (`docs/steering/conventions.md`, "Git").
 - `eval/datasets/golden.jsonl` is gitignored and refused by the `forbid-book-files` hook; `example.jsonl` stays the committed format example.
 - The pull-quote test fixture is fully synthetic.

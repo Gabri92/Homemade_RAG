@@ -48,7 +48,7 @@ Each phase has a concrete deliverable and a learning goal.
 
 The largest phase: it builds the whole pipeline end to end, plus the way to measure it. It is split in two, so that the first number arrives before any LLM cost and each half reaches `main` through its own pull request. Order of work: retrieval first, then its metrics on the golden set (deterministic and free), then the gate, the generator and the judge.
 
-### Phase 3a — Retrieval baseline (v0.4.0)
+### Phase 3a — Retrieval baseline ✅ (v0.4.0)
 
 > First baseline run (26 questions citing sections, top-5 dense retrieval, fixed 500/50 chunks): hit@5 0.77, recall@5 0.73, MRR 0.61. Weakest categories: `table` (hit@5 0.40) and `follow_up` (0.33, retrieved without rewriting); `multi_hop` always hits but finds 75% of the cited sections. 60% of the chunks cover two or more sections (ADR 0005). With 3–8 questions per category, one question moves a category by 0.12–0.33: differences are read per question, not only as means.
 
