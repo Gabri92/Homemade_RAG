@@ -77,26 +77,42 @@ The largest phase: it builds the whole pipeline end to end, plus the way to meas
 
 Right after the first complete pipeline, before the optimizations: a web page reachable through a link, with no installation and no sign-in, where a visitor uploads a document and chats with it. The build-in-public posts can then show the product working and people can try it; Phases 5–6 improve a product that is already online. Product rules: `docs/steering/product.md`, "Shared demo".
 
+It is split in two, because opening the link to anyone brings risks (security, costs, other people's data) that a private demo does not have. 4a builds the product and measures indexing time and cost per question with real use; 4b is planned in detail along the way, from those numbers.
+
+### Phase 4a — Private demo
+
+A link that is not advertised, used by the author and a few trusted people.
+
 Order of work (each step works on its own before the next):
 1. **Web chat** (Streamlit or Gradio, chosen at the start of the phase) calling the same `qa.answer()`: no logic in the UI. Expandable citations (chapter/section + short excerpt). First on this machine, on the reference book.
 2. **Upload and indexing**: the visitor uploads an ePub; ingestion and indexing run while the page shows progress. Indexing time is measured first (embedding model on the host's CPU, on a GPU, or an embedding API); changing the embedding model is an experiment on the golden set.
 3. **Checks on uploaded documents, with clear messages** that say what happened and what to do next:
-   - DRM-protected, corrupt or unsupported file → rejected;
+   - DRM-protected, corrupt or unsupported file → rejected (DRM detection does not exist yet in the loader);
    - document not in English → rejected (same detection as the language gate, on a sample of the text);
-   - file too large → rejected (limit chosen with the indexing-time measurement);
+   - file too large, or too large once decompressed (an ePub is a zip) → rejected; a time limit on processing;
    - extraction problems found by the generic quality report (`homerag inspect`) → a warning in plain words; the document can still be used.
    Every check is tested with synthetic files, messages included.
-4. **Isolation and deletion**: a document and its index belong to the visitor's session only; they are deleted when the session ends or after a time limit, and the visitor can delete them at any time.
-5. **Cost and abuse limits**: per-visitor limits (uploads, questions) and a global daily budget; when one is reached, a clear message.
-6. **Terms of use** shown before the first upload: upload only documents you have the right to use; uploads serve only to answer their owner and are deleted afterwards.
-7. **Hosting**: a public URL (platform chosen at the start of the phase); secrets only in the platform's secret store; the reference book is never deployed.
+4. **Isolation and deletion**: a document and its index belong to the visitor's session only; they are deleted when the session ends or after a time limit, and the visitor can delete them at any time. Tested: one session never reads another's files.
+5. **Hosting** of the private link (platform chosen at the start of the phase); secrets only in the platform's secret store; the reference book is never deployed; a spending limit set on the API key in the Anthropic console.
 
-In local use (the author, on the reference book) a 👍/👎 button saves the interaction as material for new golden set questions. The public demo keeps nothing from visitors beyond what answering needs.
+In local use (the author, on the reference book) a 👍/👎 button saves the interaction as material for new golden set questions. The demo keeps nothing from visitors beyond what answering needs.
 
-Decisions recorded as ADRs at the start of the phase: UI framework, hosting platform, how documents are embedded at upload time, limit values. Screenshots and videos for posts show short paraphrased answers, never long excerpts of the book.
+Decisions recorded as ADRs at the start of the phase: UI framework, hosting platform, how documents are embedded at upload time.
 
-**Learning:** what it takes to put a RAG in front of other people: indexing time, cost control, untrusted input, clear errors.
-**Deliverable:** a public link where anyone can upload an English ePub and chat with it, with a clear message for every rejected or badly extracted document.
+**Learning:** what it takes to put a RAG in front of other people: indexing time, untrusted input, clear errors.
+**Deliverable:** a private link where an English ePub can be uploaded and queried, with a clear message for every rejected or badly extracted document; indexing time and cost per question measured.
+
+### Phase 4b — Public opening (planned along the way)
+
+What must be true before the link is shared publicly. The list is a starting point, to be reviewed with the numbers from 4a.
+- **Cost and abuse limits**: a global daily budget (the real ceiling: without accounts, per-visitor limits can be bypassed), per-visitor limits on uploads and questions, a clear message when one is reached.
+- **Terms of use and privacy notice** shown before the first upload: upload only documents you have the right to use; uploads serve only to answer their owner and are deleted afterwards; how long data is kept.
+- **Security checks on untrusted files**: zip bombs, XML external entities in the ePub parser, session isolation under concurrent use.
+- **Final hosting**, sized for the measured indexing time and expected traffic.
+
+Screenshots and videos for posts show short paraphrased answers, never long excerpts of the book.
+
+**Deliverable:** a public link, with limits, terms and security checks in place.
 
 ---
 
