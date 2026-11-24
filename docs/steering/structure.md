@@ -17,8 +17,8 @@ src/homerag/
     quality.py   #   generic quality report (no expected values): `homerag inspect`
     dump.py      #   format_blocks, format_sections for inspection
   chunking.py    # chunking strategies (functions) + CHUNKERS registry: fixed
-  index.py       # device choice, tokenizer offsets, EMBEDDERS + on-disk cache, vector index save/load (BM25 with 4.3)
-  retrieval.py   # RETRIEVERS: dense (then bm25, RRF fusion, rerank in Phase 4); search, format_results
+  index.py       # device choice, tokenizer offsets, EMBEDDERS + on-disk cache, vector index save/load (BM25 with 5.3)
+  retrieval.py   # RETRIEVERS: dense (then bm25, RRF fusion, rerank in Phase 5); search, format_results
   language.py    # (placeholder) language gate: is_english(text)
   llm.py         # (placeholder) the single access point to the Anthropic API
   qa.py          # (placeholder) answer(question) -> Answer: gate -> retrieve -> generate

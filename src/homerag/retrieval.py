@@ -2,7 +2,7 @@
 
 Each strategy is a function with the same signature, registered by name in `RETRIEVERS` so an
 experiment config can pick it. Today: dense search (cosine similarity between normalized
-embeddings). BM25, hybrid fusion (RRF) and reranking arrive with Phase 4; BM25 needs another
+embeddings). BM25, hybrid fusion (RRF) and reranking arrive with Phase 5; BM25 needs another
 index, which will be the signal to revisit the signature (structure.md, "When to grow").
 """
 

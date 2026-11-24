@@ -1,10 +1,10 @@
 # Phase 3 baseline: the simplest pipeline, to get a first measured number.
-# Every later experiment is compared with the previous best run (roadmap, Phase 4).
+# Every later experiment is compared with the previous best run (roadmap, Phase 5).
 name: baseline
 document: data/processed/book.json
 
 chunking:
-  strategy: fixed        # N tokens with overlap; tables may be split on purpose (see 4.1)
+  strategy: fixed        # N tokens with overlap; tables may be split on purpose (see 5.1)
   size_tokens: 500
   overlap_tokens: 50
 

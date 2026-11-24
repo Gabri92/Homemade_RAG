@@ -18,7 +18,7 @@ Phase 1 already gives every section a stable, path-based id (`Section.id` in `bo
 
 ## Alternatives considered
 - **Chunk ids + spans** (the original plan): more precise, but it depends on the chunker, needs remapping code, and puts book text in the repository.
-- **Section ids + spans**: finer recall, but more manual work and still book text in the repository. To reconsider in Phase 4 only if sections turn out too coarse for the metrics.
+- **Section ids + spans**: finer recall, but more manual work and still book text in the repository. To reconsider in Phase 5 only if sections turn out too coarse for the metrics.
 
 ## Consequences
 - Changing the chunking never touches the golden set.

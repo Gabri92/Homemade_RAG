@@ -8,7 +8,7 @@ The pieces, in the order the pipeline uses them:
   document and per index key, refused when built from another book.json.
 
 The only module, with `retrieval.py`, that imports `sentence_transformers`, `transformers`
-and `torch`. BM25 arrives with experiment 4.3.
+and `torch`. BM25 arrives with experiment 5.3.
 """
 
 import hashlib

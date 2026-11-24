@@ -73,21 +73,34 @@ The largest phase: it builds the whole pipeline end to end, plus the way to meas
 
 ---
 
-## Phase 4 — Optimize retrieval (one experiment at a time)
+## Phase 4 — Minimal chat interface
+
+Right after the first complete pipeline, so that the build-in-public posts can show the product working, not only CLI output and metrics.
+
+- Streamlit or Gradio calling the same `qa.answer()` (no logic in the UI).
+- Shows expandable citations (chapter/section + short excerpt).
+- 👍/👎 button that saves the interaction: it becomes material for new golden set questions.
+- Local only: the shared demo, with visitors uploading their own documents, stays in "Later". Screenshots and videos for posts show short paraphrased answers, never long excerpts of the book.
+
+**Deliverable:** a usable local chat, good enough to show in public.
+
+---
+
+## Phase 5 — Optimize retrieval (one experiment at a time)
 
 Each row is an experiment with its own config; it is always compared with the previous best run.
 
 | # | Experiment | Hypothesis |
 |---|---|---|
-| 4.1 | Structure-aware chunking (sections, intact tables) | Improves `table` and `factual` |
-| 4.2 | Varying chunk size and k | Find the sweet spot |
-| 4.3 | Hybrid dense + BM25 with RRF | Improves exact terms ("Build 2", "LTHR") |
-| 4.4 | Query rewriting with an LLM (multi-query or HyDE) | Improves vague questions or questions phrased differently from the book |
-| 4.5 | Cross-encoder reranker | Improves precision of the top 5 |
-| 4.6 | Contextual chunking | Improves ambiguous chunks |
-| 4.7 | Parent-child | Improves `multi_hop` / `conceptual` |
-| 4.8 | **Generic pipeline baseline**: ingestion and chunking with a public tool versus our ingestion, with the same retrieval, LLM and golden set. **Tool to be evaluated** before the experiment (candidates: LlamaIndex, Unstructured, Docling, pandoc + a simple chunker), based on ePub support, output quality and dependencies | Measures how much the data work is worth (tables, glossary, repeated pull quotes, roles) and on which question categories. The baseline remains **only** a point of comparison (ADR 0001: no framework in the main pipeline) |
-| 4.9 | Semantic chunking (cut where consecutive sentences stop being similar) | Helps documents with little structure; probably no gain on the reference book, so it is also measured on the corpus |
+| 5.1 | Structure-aware chunking (sections, intact tables) | Improves `table` and `factual` |
+| 5.2 | Varying chunk size and k | Find the sweet spot |
+| 5.3 | Hybrid dense + BM25 with RRF | Improves exact terms ("Build 2", "LTHR") |
+| 5.4 | Query rewriting with an LLM (multi-query or HyDE) | Improves vague questions or questions phrased differently from the book |
+| 5.5 | Cross-encoder reranker | Improves precision of the top 5 |
+| 5.6 | Contextual chunking | Improves ambiguous chunks |
+| 5.7 | Parent-child | Improves `multi_hop` / `conceptual` |
+| 5.8 | **Generic pipeline baseline**: ingestion and chunking with a public tool versus our ingestion, with the same retrieval, LLM and golden set. **Tool to be evaluated** before the experiment (candidates: LlamaIndex, Unstructured, Docling, pandoc + a simple chunker), based on ePub support, output quality and dependencies | Measures how much the data work is worth (tables, glossary, repeated pull quotes, roles) and on which question categories. The baseline remains **only** a point of comparison (ADR 0001: no framework in the main pipeline) |
+| 5.9 | Semantic chunking (cut where consecutive sentences stop being similar) | Helps documents with little structure; probably no gain on the reference book, so it is also measured on the corpus |
 
 How to run them:
 - **Before starting**, review this list as a cost/complexity versus expected-gain trade-off, using the baseline run: implementation effort, cost per run (LLM calls for contextual chunking and query rewriting), latency, and which question categories the baseline fails. The order of the experiments follows from that review, not from the numbering.
@@ -99,7 +112,7 @@ How to run them:
 
 ---
 
-## Phase 5 — Optimize generation
+## Phase 6 — Optimize generation
 
 1. Prompt: strict grounding, citation format, answers in English keeping the book's terms.
 2. Handling `out_of_scope`: explicit refusal.
@@ -112,12 +125,12 @@ How to run them:
 
 ---
 
-## Phase 6 — Comparison with external baselines
+## Phase 7 — Comparison with external baselines
 
 Both baselines answer the same build-versus-buy question: how much does our own pipeline add over an approach that needs little or no pipeline at all?
 
 1. **Long context**: a generator that receives the whole book in context with prompt caching.
-2. **Managed "all-in-one" RAG**: the book uploaded to a hosted retrieval service (candidates to evaluate before the experiment: an LLM provider's file search, Bedrock Knowledge Bases, Vertex AI RAG Engine, Azure AI Search), with default settings. Like experiment 4.8, it stays **only** a point of comparison (ADR 0001). Copyright check first: uploading the book to a third-party service must be allowed for personal use and the data must not be shared or retained beyond the experiment.
+2. **Managed "all-in-one" RAG**: the book uploaded to a hosted retrieval service (candidates to evaluate before the experiment: an LLM provider's file search, Bedrock Knowledge Bases, Vertex AI RAG Engine, Azure AI Search), with default settings. Like experiment 5.8, it stays **only** a point of comparison (ADR 0001). Copyright check first: uploading the book to a third-party service must be allowed for personal use and the data must not be shared or retained beyond the experiment.
 
 Same golden set and judge for both: compare quality per question category, citation precision, cost and latency with the best RAG config.
 
@@ -126,13 +139,17 @@ Same golden set and judge for both: compare quality per question category, citat
 
 ---
 
-## Phase 7 — Minimal chat interface
+## Phase 8 — UI improvements (optional)
 
-- Streamlit or Gradio calling the same `qa.answer()` (no logic in the UI).
-- Shows expandable citations (chapter/section + short excerpt).
-- 👍/👎 button that saves the interaction: it becomes material for new golden set questions.
+Only if the build-in-public phase asks for it; the RAG pipeline and its evaluation come first.
 
-**Deliverable:** a usable local chat.
+- Streaming answers, so the first words arrive while the rest is generated.
+- Multi-turn conversation in the UI, using the follow-up condensing from Phase 6.
+- Citations you can open: the cited section, with the cited passage highlighted.
+- A page to review the 👍/👎 feedback and turn it into golden set questions.
+- Cost and latency per answer, visible during development.
+
+**Deliverable:** a chat that is pleasant to use and to show; every change keeps the logic in `qa`, not in the UI.
 
 ---
 

@@ -6,7 +6,7 @@
 ## Context
 ADR 0003 makes the golden set cite sections, and says that a retrieved chunk is relevant when it comes from a cited section. That assumed one section per chunk.
 
-The Phase 3 baseline must be the naive fixed-size chunker, so that Phase 4 measures the full value of using the book's structure. On the reference book, 192 of the 325 indexed sections are shorter than one 500-token chunk (median 311 words). Cutting only inside sections would turn most of them into a single chunk. The baseline would then already be close to structure-aware chunking (experiment 4.1), and 4.1 would underestimate its own effect.
+The Phase 3 baseline must be the naive fixed-size chunker, so that Phase 5 measures the full value of using the book's structure. On the reference book, 192 of the 325 indexed sections are shorter than one 500-token chunk (median 311 words). Cutting only inside sections would turn most of them into a single chunk. The baseline would then already be close to structure-aware chunking (experiment 5.1), and 5.1 would underestimate its own effect.
 
 ## Decision
 - The fixed-size chunker cuts the running text of the included sections, across section boundaries.
@@ -20,5 +20,5 @@ The Phase 3 baseline must be the naive fixed-size chunker, so that Phase 4 measu
 
 ## Consequences
 - Strategies that respect boundaries (structure-aware, parent-child) simply produce chunks with one section: same type, no special case.
-- "At least one cited section" is lenient for chunks covering several sections (on the reference book, 60% of baseline chunks cover two or more). This is a known bias of the baseline. Phase 4 compares strategies with the same rule, and the share of multi-section chunks is reported with each run.
+- "At least one cited section" is lenient for chunks covering several sections (on the reference book, 60% of baseline chunks cover two or more). This is a known bias of the baseline. Phase 5 compares strategies with the same rule, and the share of multi-section chunks is reported with each run.
 - A citation built from a crossing chunk may name a section that does not support the claim. The judge's citation accuracy will show how often this happens.
