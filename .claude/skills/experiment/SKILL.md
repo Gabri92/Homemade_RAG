@@ -6,7 +6,7 @@ argument-hint: <name> [what to change]
 
 # /experiment
 
-Every change to the RAG pipeline is a measured experiment (CLAUDE.md rule 2). This procedure runs one, always the same way. `$ARGUMENTS` holds the experiment name and, optionally, what to change; ask for what is missing. Chat with the user in Italian; everything written to the repository is in English.
+Every change to the RAG pipeline is a measured experiment (CLAUDE.md rule 2). This procedure runs one, always the same way. `$ARGUMENTS` holds the experiment name and, optionally, what to change; ask for what is missing. Chat with the user and write everything in the repository in English.
 
 ## 1. Plan (confirm before spending)
 

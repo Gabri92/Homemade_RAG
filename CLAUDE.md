@@ -20,4 +20,4 @@ References (read them when you touch the related area): `docs/architecture.md`, 
 5. **Definition of done**: `uv run ruff check . && uv run ruff format --check . && uv run mypy src && uv run pytest` all green.
 6. **Architectural decisions** (new component, technology change, winning config) → a new ADR in `docs/adr/`.
 7. **Keep the docs aligned**: if you change structure, commands or conventions, update the matching steering file in the same change.
-8. **Language**: everything in the repository (code, docs, comments, commits) is in **English**, because the project is built in public. Chat replies to the user are in **Italian**.
+8. **Language**: everything in the repository (code, docs, comments, commits) is in **English**, because the project is built in public. Chat replies to the user are in **English** too.
