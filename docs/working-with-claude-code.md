@@ -7,6 +7,7 @@ This project is developed with [Claude Code](https://claude.com/claude-code) as 
 | Piece | Where | Loaded | Purpose |
 |---|---|---|---|
 | Project instructions | `CLAUDE.md` | Every session | The always-valid rules (copyright, experiments, KISS, definition of done, language) and links to everything else |
+| Personal instructions | `CLAUDE.local.md` (gitignored) | Every session, on your machine only | Your own preferences, such as the chat language; never committed |
 | Steering files | `docs/steering/*.md` | Every session (imported by `CLAUDE.md` with `@`) | Product, tech, structure and conventions: the *principles* Claude should apply without being told |
 | Reference docs | `docs/architecture.md`, `docs/roadmap.md`, `docs/adr/`, `docs/ingestion-findings.md` | On demand, when the related area is touched | Detail that would waste context if it were always loaded |
 | Book-file guard | `.pre-commit-config.yaml`, hook `forbid-book-files` | On every commit | Refuses `data/`, `eval/runs/`, `eval/datasets/golden.jsonl`, `*.epub`, `*.pdf` even after `git add -f`: copyright protection that does not depend on anyone remembering a rule |

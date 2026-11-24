@@ -31,3 +31,6 @@ build/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Personal Claude Code settings (chat language and the like)
+CLAUDE.local.md
