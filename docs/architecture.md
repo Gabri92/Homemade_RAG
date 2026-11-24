@@ -127,7 +127,7 @@ Questions and answers are **English only**, the same language as the book. This 
 - **very short messages** (e.g. fewer than 3 words: "LTHR?", "Build 2") or low confidence → **let through**. Detection on short texts is unreliable, and blocking a legitimate question is worse than letting a doubtful case through;
 - the method's terms (Build, LTHR, Zone 5b) are already English, so they cause no problems.
 
-**Documents too:** the same rule applies to the source documents. Uploaded documents (shared demo) must be in English: at upload time a sample of the extracted text goes through the same detection, and a non-English document is rejected with a clear message. On long texts detection is far more reliable than on short questions.
+**Documents too:** the same rule applies to the source documents. Uploaded documents (shared demo, Phase 4) must be in English: at upload time a sample of the extracted text goes through the same detection, and a non-English document is rejected with a clear message. On long texts detection is far more reliable than on short questions.
 
 The gate is a single function (`is_english` in `language.py`), called at the start of `answer()`: when multilingual support arrives, it is replaced there.
 
@@ -180,7 +180,7 @@ Every external library lives in a single module (see §8): changing it touches o
 | Generation LLM | Claude (`claude-sonnet-5-5`) via the `anthropic` SDK | — |
 | Judge LLM (eval) | Claude (`claude-opus-5-5`) | — |
 | Config | YAML + `pydantic` | — |
-| UI (later) | CLI → Streamlit/Gradio | — |
+| UI | CLI → web demo with Streamlit/Gradio (Phase 4) | — |
 
 **Long-context baseline:** besides RAG, we implement a `Generator` that receives **the whole book** in context (with prompt caching), if it fits in the model's window. Comparing it with RAG in the eval is the most instructive way to understand when RAG is really needed.
 
@@ -294,7 +294,7 @@ An experiment = a new config, not a code change. `index` and `llm` are passed as
 ## 9. Data and copyright
 
 - The book (`data/raw/`) and all its derivatives (`data/processed/`, `data/index/`) **must never be committed** (they are in `.gitignore`, and a pre-commit hook refuses them).
-- Strictly personal use with a legally owned copy. The book is never distributed: the planned shared demo (`docs/steering/product.md`, "Shared demo") serves only the documents each visitor uploads, not the reference book.
+- Strictly personal use with a legally owned copy. The book is never distributed: the shared demo (Phase 4, `docs/steering/product.md`, "Shared demo") serves only the documents each visitor uploads, not the reference book.
 - Uploaded documents are third-party data: they stay in the visitor's session, are never shared between visitors and are deleted with their indexes. Terms of use and deletion must be settled before the demo link goes out.
 - DRM-protected files are not supported: the loader rejects them with a clear message, and the project never removes DRM.
 - Indexes are kept per document (`data/index/<document>/...`), with no global state in the query pipeline: the same code serves the reference book locally and one uploaded document per visitor.

@@ -11,19 +11,18 @@ A homemade clone of NotebookLM (now Gemini Notebook), specialized on sports docu
 ## User
 The project's author, who uses sports books as a reference. The book is in English and, for now, questions and answers are English only.
 
-Later, during a build-in-public phase, other people can try the product on their own documents (see "Shared demo").
+From Phase 4, during the build-in-public phase, other people can try the product on their own documents from a web page (see "Shared demo").
 
 ## Current scope
 - Q&A about the book (single question and follow-ups).
 - Ingestion, retrieval, generation and evaluation pipelines.
-- CLI interface; a minimal chat (Streamlit/Gradio) at the end of the roadmap.
+- CLI interface for development; a shared web demo (Phase 4) where visitors upload a document and chat with it.
 
 ## Non-goals (for now)
 - Multilingual support (questions or answers in languages other than English).
 - Anything beyond question answering over the source documents: the project is a homemade, NotebookLM-style RAG.
 - Products built on top of it: if the clone is reused, that happens in a separate project and is not described in this repository.
 - Accounts and authentication: the shared demo is reached through a link, with no sign-in.
-- Uploading documents in the current scope: uploads arrive with the shared demo (see roadmap, "Later").
 - Using "batteries-included" RAG frameworks (LangChain, LlamaIndex) for the main pipeline: they would hide exactly what we want to learn.
 
 ## Assistant behaviour principles
@@ -32,12 +31,12 @@ Later, during a build-in-public phase, other people can try the product on their
 - Accepts and answers English only: a message in another language gets a notice and does not start the query (see `docs/architecture.md` §4.1).
 - No medical advice; paraphrases instead of reproducing long passages.
 
-## Shared demo (planned, build in public)
-A later phase opens the product to other people through a link, so they can try it while the project is built in public.
-- **Visitors upload their own documents** in the supported formats (ePub for now) and ask questions about them, as in NotebookLM.
-- **Documents in English only (for now):** questions are English only (language gate), and retrieval compares the question with the document text, so a document in another language could not be queried. The loader checks the language of an uploaded document and rejects a non-English one with a clear message (`docs/architecture.md` §4.1). Both rules go away together when multilingual support arrives. The demo does not serve the reference book: it stays a local document for development and evaluation.
+## Shared demo (Phase 4, build in public)
+Right after the first complete pipeline, and before the optimizations, the product opens to other people through a link: a web page, with nothing to install, where they upload a document and chat with it while the project is built in public.
+- **Visitors upload their own documents** in the supported formats (ePub for now) and ask questions about them, as in NotebookLM. The demo does not serve the reference book: it stays a local document for development and evaluation.
+- **Documents in English only (for now):** questions are English only (language gate), and retrieval compares the question with the document text, so a document in another language could not be queried. The loader checks the language of an uploaded document and rejects a non-English one with a clear message (`docs/architecture.md` §4.1). Both rules go away together when multilingual support arrives.
 - **No accounts or authentication:** whoever has the link can use it. An uploaded document and its index belong to the visitor's session only and are never shared with other visitors.
 - **Open before the link goes out — uploaded documents:** the service processes and stores files that belong to others, so it needs terms of use (upload only documents you have the right to use), deletion of documents and indexes, and no use of uploads beyond answering their owner. DRM-protected files are not supported: the loader rejects them with a clear message and the project never strips DRM. See `docs/architecture.md` §9.
-- **Ingestion with nobody checking:** uploaded documents are not inspected by hand, so the generic quality report warns the visitor when a document was extracted badly (roadmap, "Later").
-- **Indexing time:** a document is indexed while the visitor waits, so embedding speed becomes a product constraint (a local model on CPU takes minutes for a book; an embedding API or a GPU takes seconds). To be measured before the phase starts.
+- **Ingestion with nobody checking:** uploaded documents are not inspected by hand, so the generic quality report warns the visitor in plain words when a document was extracted badly (roadmap, Phase 4).
+- **Indexing time:** a document is indexed while the visitor waits, so embedding speed becomes a product constraint (a local model on CPU takes minutes for a book; an embedding API or a GPU takes seconds). Measured at the start of Phase 4.
 - **Cost and abuse:** every query is paid by the author, so the demo needs a usage limit (per visitor and a global daily budget).

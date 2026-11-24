@@ -73,16 +73,30 @@ The largest phase: it builds the whole pipeline end to end, plus the way to meas
 
 ---
 
-## Phase 4 — Minimal chat interface
+## Phase 4 — Shared demo: web chat with document upload
 
-Right after the first complete pipeline, so that the build-in-public posts can show the product working, not only CLI output and metrics.
+Right after the first complete pipeline, before the optimizations: a web page reachable through a link, with no installation and no sign-in, where a visitor uploads a document and chats with it. The build-in-public posts can then show the product working and people can try it; Phases 5–6 improve a product that is already online. Product rules: `docs/steering/product.md`, "Shared demo".
 
-- Streamlit or Gradio calling the same `qa.answer()` (no logic in the UI).
-- Shows expandable citations (chapter/section + short excerpt).
-- 👍/👎 button that saves the interaction: it becomes material for new golden set questions.
-- Local only: the shared demo, with visitors uploading their own documents, stays in "Later". Screenshots and videos for posts show short paraphrased answers, never long excerpts of the book.
+Order of work (each step works on its own before the next):
+1. **Web chat** (Streamlit or Gradio, chosen at the start of the phase) calling the same `qa.answer()`: no logic in the UI. Expandable citations (chapter/section + short excerpt). First on this machine, on the reference book.
+2. **Upload and indexing**: the visitor uploads an ePub; ingestion and indexing run while the page shows progress. Indexing time is measured first (embedding model on the host's CPU, on a GPU, or an embedding API); changing the embedding model is an experiment on the golden set.
+3. **Checks on uploaded documents, with clear messages** that say what happened and what to do next:
+   - DRM-protected, corrupt or unsupported file → rejected;
+   - document not in English → rejected (same detection as the language gate, on a sample of the text);
+   - file too large → rejected (limit chosen with the indexing-time measurement);
+   - extraction problems found by the generic quality report (`homerag inspect`) → a warning in plain words; the document can still be used.
+   Every check is tested with synthetic files, messages included.
+4. **Isolation and deletion**: a document and its index belong to the visitor's session only; they are deleted when the session ends or after a time limit, and the visitor can delete them at any time.
+5. **Cost and abuse limits**: per-visitor limits (uploads, questions) and a global daily budget; when one is reached, a clear message.
+6. **Terms of use** shown before the first upload: upload only documents you have the right to use; uploads serve only to answer their owner and are deleted afterwards.
+7. **Hosting**: a public URL (platform chosen at the start of the phase); secrets only in the platform's secret store; the reference book is never deployed.
 
-**Deliverable:** a usable local chat, good enough to show in public.
+In local use (the author, on the reference book) a 👍/👎 button saves the interaction as material for new golden set questions. The public demo keeps nothing from visitors beyond what answering needs.
+
+Decisions recorded as ADRs at the start of the phase: UI framework, hosting platform, how documents are embedded at upload time, limit values. Screenshots and videos for posts show short paraphrased answers, never long excerpts of the book.
+
+**Learning:** what it takes to put a RAG in front of other people: indexing time, cost control, untrusted input, clear errors.
+**Deliverable:** a public link where anyone can upload an English ePub and chat with it, with a clear message for every rejected or badly extracted document.
 
 ---
 
@@ -154,11 +168,9 @@ Only if the build-in-public phase asks for it; the RAG pipeline and its evaluati
 
 ## Later (out of scope for now)
 
-- **Shared demo (build in public)**: the product reachable through a link, no accounts. Visitors upload their own documents and ask questions about them (see `docs/steering/product.md`, "Shared demo"). Before it goes out: terms of use and deletion for uploaded documents, rejection of DRM-protected files, rejection of non-English documents (same detection as the language gate, on a sample of the text), a usage limit, and indexing time measured (local embedding model vs an embedding API) as an experiment.
-
-- **User-added sources** (NotebookLM style; it is what the shared demo serves): the Loader and Cleaner rules are already generic (they work on HTML semantics and on `Block`), but thresholds and expected values are tuned on a single book. To generalize:
+- **User-added sources, generalized** (the shared demo of Phase 4 serves them): the Loader and Cleaner rules are already generic (they work on HTML semantics and on `Block`), but thresholds and expected values are tuned on a single book. To generalize:
   1. **ingestion corpus**: a few copyright-free ePubs/PDFs from different publishers (e.g. Project Gutenberg, Standard Ebooks, open-access articles), each with its own expected values, run as regression tests;
-  2. **automatic quality report** computed on every uploaded file, with no expected values: generic invariants (coverage of the source text, heading structure, untitled tables, figures without captions, duplicate rate, anomalous blocks) → warnings to the user when a document is extracted badly;
+  2. **automatic quality report** computed on every uploaded file, with no expected values: generic invariants (coverage of the source text, heading structure, untitled tables, figures without captions, duplicate rate, anomalous blocks) → warnings to the user when a document is extracted badly (first shown to visitors in Phase 4, then refined);
   3. **downstream evaluation**: a small golden set of questions for each corpus document, because ingestion quality is ultimately measured by the answers. The corpus favours sports and technical documents (manuals, guides, papers): the kind of document the product is evaluated on.
 
 - **Figures with Claude's multimodality**: during ingestion, images (first tables published as images, then charts and illustrations) are passed to Claude, which transcribes tables to Markdown and describes figures. The generated text replaces the caption-only `figure` block and is cached, so each image is paid for once. Measured as an experiment: golden set questions that depend on figures, before and after.
