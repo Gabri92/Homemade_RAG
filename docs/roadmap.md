@@ -155,7 +155,7 @@ Only if the build-in-public phase asks for it; the RAG pipeline and its evaluati
 
 ## Later (out of scope for now)
 
-- **Shared demo (build in public)**: the product reachable through a link, no accounts. Visitors upload their own documents and ask questions about them (see `docs/steering/product.md`, "Shared demo"). Before it goes out: terms of use and deletion for uploaded documents, rejection of DRM-protected files, a usage limit, and indexing time measured (local embedding model vs an embedding API) as an experiment.
+- **Shared demo (build in public)**: the product reachable through a link, no accounts. Visitors upload their own documents and ask questions about them (see `docs/steering/product.md`, "Shared demo"). Before it goes out: terms of use and deletion for uploaded documents, rejection of DRM-protected files, rejection of non-English documents (same detection as the language gate, on a sample of the text), a usage limit, and indexing time measured (local embedding model vs an embedding API) as an experiment.
 
 - **User-added sources** (NotebookLM style; it is what the shared demo serves): the Loader and Cleaner rules are already generic (they work on HTML semantics and on `Block`), but thresholds and expected values are tuned on a single book. To generalize:
   1. **ingestion corpus**: a few copyright-free ePubs/PDFs from different publishers (e.g. Project Gutenberg, Standard Ebooks, open-access articles), each with its own expected values, run as regression tests;

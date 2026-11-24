@@ -127,6 +127,8 @@ Questions and answers are **English only**, the same language as the book. This 
 - **very short messages** (e.g. fewer than 3 words: "LTHR?", "Build 2") or low confidence → **let through**. Detection on short texts is unreliable, and blocking a legitimate question is worse than letting a doubtful case through;
 - the method's terms (Build, LTHR, Zone 5b) are already English, so they cause no problems.
 
+**Documents too:** the same rule applies to the source documents. Uploaded documents (shared demo) must be in English: at upload time a sample of the extracted text goes through the same detection, and a non-English document is rejected with a clear message. On long texts detection is far more reliable than on short questions.
+
 The gate is a single function (`is_english` in `language.py`), called at the start of `answer()`: when multilingual support arrives, it is replaced there.
 
 ### Conversation design (Q&A)

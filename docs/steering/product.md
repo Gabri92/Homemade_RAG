@@ -34,7 +34,8 @@ Later, during a build-in-public phase, other people can try the product on their
 
 ## Shared demo (planned, build in public)
 A later phase opens the product to other people through a link, so they can try it while the project is built in public.
-- **Visitors upload their own documents** in the supported formats (ePub for now) and ask questions about them, as in NotebookLM. The demo does not serve the reference book: it stays a local document for development and evaluation.
+- **Visitors upload their own documents** in the supported formats (ePub for now) and ask questions about them, as in NotebookLM.
+- **Documents in English only (for now):** questions are English only (language gate), and retrieval compares the question with the document text, so a document in another language could not be queried. The loader checks the language of an uploaded document and rejects a non-English one with a clear message (`docs/architecture.md` §4.1). Both rules go away together when multilingual support arrives. The demo does not serve the reference book: it stays a local document for development and evaluation.
 - **No accounts or authentication:** whoever has the link can use it. An uploaded document and its index belong to the visitor's session only and are never shared with other visitors.
 - **Open before the link goes out — uploaded documents:** the service processes and stores files that belong to others, so it needs terms of use (upload only documents you have the right to use), deletion of documents and indexes, and no use of uploads beyond answering their owner. DRM-protected files are not supported: the loader rejects them with a clear message and the project never strips DRM. See `docs/architecture.md` §9.
 - **Ingestion with nobody checking:** uploaded documents are not inspected by hand, so the generic quality report warns the visitor when a document was extracted badly (roadmap, "Later").
