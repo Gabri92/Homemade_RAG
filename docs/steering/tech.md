@@ -40,7 +40,7 @@ uv run homerag ask "question"            # single Q&A
 uv run homerag eval run --config configs/experiments/<name>.yaml
 uv run homerag eval compare <run_a> <run_b>
 ```
-> Available now: `dump`, `ingest`, `inspect`, `sections`, `eval check`, `index`, `search`, `eval run` (retrieval only until Phase 3b). `ask` and `eval compare` arrive in Phase 3b. `uv run homerag --help` lists the existing commands. Task-oriented cheat sheet of what is available now: `docs/commands.md` (keep it aligned when commands change).
+> Available now: `dump`, `ingest`, `inspect`, `sections`, `eval check`, `index`, `search`, `eval run` (retrieval and language gate; generation and judge arrive in Phase 3b). `ask` and `eval compare` arrive in Phase 3b. `uv run homerag --help` lists the existing commands. Task-oriented cheat sheet of what is available now: `docs/commands.md` (keep it aligned when commands change).
 
 ## Secrets and configuration
 - `ANTHROPIC_API_KEY` and the like only in `.env` (gitignored), read through `pydantic-settings`.

@@ -3,6 +3,11 @@
 name: baseline
 document: data/processed/book.json
 
+language_gate:           # first step of the pipeline: non-English messages get a notice
+  languages: [en, it, es, fr, de]
+  min_words: 3           # shorter messages always pass (detection is unreliable on them)
+  min_confidence: 0.5    # block only if a non-English language reaches this confidence
+
 chunking:
   strategy: fixed        # N tokens with overlap; tables may be split on purpose (see 5.1)
   size_tokens: 500

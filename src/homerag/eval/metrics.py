@@ -5,7 +5,9 @@ covers at least one section the question cites (ADR 0005).
 - hit@k: is there at least one relevant chunk in the first k? (1 or 0)
 - recall@k: which share of the cited sections do the first k chunks cover?
 - reciprocal rank: 1 / position of the first relevant chunk (0 if none); its mean is MRR.
-Language-gate accuracy and the judge's scores arrive with Phase 3b.
+The language gate is scored on every question: English must pass, non-English must be
+blocked. Its two errors are counted apart, because blocking English is the worse one.
+The judge's scores arrive with Phase 3b.
 """
 
 from collections import defaultdict
@@ -69,3 +71,17 @@ def _mean(items: list[dict[str, float]]) -> dict[str, float]:
     names = list(items[0])
     means = {name: sum(item[name] for item in items) / len(items) for name in names}
     return {"n": float(len(items)), **means}
+
+
+def gate_metrics(outcomes: Iterable[tuple[bool, bool]]) -> dict[str, float]:
+    """Language-gate scores from `(expected_english, passed)` pairs, one per message."""
+    pairs = list(outcomes)
+    english_blocked = sum(expected and not passed for expected, passed in pairs)
+    non_english_passed = sum(passed and not expected for expected, passed in pairs)
+    errors = english_blocked + non_english_passed
+    return {
+        "n": float(len(pairs)),
+        "accuracy": (len(pairs) - errors) / len(pairs) if pairs else 0.0,
+        "english_blocked": float(english_blocked),
+        "non_english_passed": float(non_english_passed),
+    }

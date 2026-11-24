@@ -63,7 +63,7 @@ The largest phase: it builds the whole pipeline end to end, plus the way to meas
 
 ### Phase 3b — Generation and judge (v0.5.0)
 
-6. Language gate with `lingua-py`: non-English message → notice, no query.
+6. Language gate with `lingua-py`: non-English message → notice, no query. Gate accuracy (deterministic) scored by `eval run` on every golden question. ✅
 7. Claude generator: `llm.py` (retries, cache, cost), prompt `answer_v1` with citations, answers in English, `qa.answer`; `homerag ask "question"`.
 8. **LLM judge** (correctness, faithfulness, refusal on `out_of_scope`) + the full `eval run` (retrieval + generation, cost and latency per question) + `eval compare`.
 9. Development tooling, once `eval run` exists: the `/experiment` skill and the `eval-analyst` subagent (see `docs/working-with-claude-code.md`, "Planned").
@@ -117,7 +117,6 @@ How to run them:
 1. Prompt: strict grounding, citation format, answers in English keeping the book's terms.
 2. Handling `out_of_scope`: explicit refusal.
 3. Multi-turn: condensing the follow-up into a standalone question before retrieval.
-3b. *Gate accuracy* metric (deterministic) on the `non_english` category.
 4. **Judge calibration**: label ~30 answers by hand, measure judge/human agreement, fix the rubric.
 5. **Experiment: our citations vs the Claude API's native citations.** Pass the retrieved chunks as document/content blocks with citations enabled, so the API returns the cited text and its location; we keep our own metadata (chapter, section, printed page) to show the reader. Same golden set and judge: compare citation accuracy, faithfulness and prompt complexity against our prompt-based citation format. Answers whether citation handling is worth building ourselves.
 

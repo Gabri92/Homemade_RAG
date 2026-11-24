@@ -5,6 +5,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+- Language gate (`language.is_english`, `build_detector`, `NOTICE`; ADR 0006): local, deterministic detection with `lingua-py` among the configured languages; a message is blocked only when a non-English language reaches `min_confidence`, and messages under `min_words` always pass. New `language_gate` section in the experiment config.
+- Gate accuracy in `homerag eval run`: every golden question goes through the gate (`eval/metrics.gate_metrics`: accuracy, English blocked, non-English passed); saved in `gate.json` and printed with the misjudged ids. Baseline: 40/40 correct.
+
 ## [0.4.0] - 2026-11-24
 
 Phase 3a: retrieval baseline. First measured number at zero API cost.

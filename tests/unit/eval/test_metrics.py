@@ -2,6 +2,7 @@ import pytest
 
 from homerag.eval.metrics import (
     aggregate,
+    gate_metrics,
     hit_at,
     recall_at,
     reciprocal_rank,
@@ -81,3 +82,21 @@ def test_aggregate_keeps_category_order_and_puts_all_last() -> None:
 
     assert list(result) == ["table", "factual", "all"]
     assert result["table"] == {"n": 2.0, "mrr": 0.5}
+
+
+def test_gate_metrics_count_the_two_errors_apart() -> None:
+    # (expected_english, passed): one correct each way, one English blocked, one foreign passed.
+    outcomes = [(True, True), (False, False), (True, False), (False, True)]
+
+    scores = gate_metrics(outcomes)
+
+    assert scores == {
+        "n": 4.0,
+        "accuracy": 0.5,
+        "english_blocked": 1.0,
+        "non_english_passed": 1.0,
+    }
+
+
+def test_gate_metrics_on_no_messages_is_zero() -> None:
+    assert gate_metrics([])["accuracy"] == 0.0

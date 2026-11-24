@@ -91,3 +91,10 @@ def test_evaluation_ks_cannot_exceed_top_k(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="top_k"):
         load_experiment(path)
+
+
+def test_language_gate_must_include_english(tmp_path: Path) -> None:
+    path = write_config(tmp_path, language_gate={"languages": ["it", "de"]})
+
+    with pytest.raises(ValueError, match="include 'en'"):
+        load_experiment(path)

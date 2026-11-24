@@ -9,7 +9,7 @@ import typer
 
 from homerag.config import load_experiment
 from homerag.eval.dataset import check_references, load_golden
-from homerag.eval.run import format_metrics, run_experiment
+from homerag.eval.run import format_gate, format_metrics, run_experiment
 from homerag.index import ensure_index
 from homerag.ingest import (
     clean,
@@ -170,13 +170,14 @@ def eval_run(
         Path, typer.Option(exists=True, dir_okay=False, help="Golden-set JSONL file.")
     ] = GOLDEN,
 ) -> None:
-    """Run an experiment on the golden set (retrieval only for now) and save it in eval/runs/."""
+    """Run an experiment on the golden set (retrieval + language gate) and save it in eval/runs/."""
     try:
         report = run_experiment(config, golden)
     except (ValueError, OSError) as error:  # bad config or golden set, missing book.json
         typer.echo(f"ERROR {error}")
         raise typer.Exit(code=1) from error
     typer.echo(format_metrics(report.metrics), nl=False)
+    typer.echo(format_gate(report.gate, report.gate_errors), nl=False)
     if report.skipped:
         skipped = ", ".join(f"{c} {n}" for c, n in report.skipped.items())
         typer.echo(f"not scored on retrieval (no cited sections): {skipped}")

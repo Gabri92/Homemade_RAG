@@ -19,15 +19,15 @@ src/homerag/
   chunking.py    # chunking strategies (functions) + CHUNKERS registry: fixed
   index.py       # device choice, tokenizer offsets, EMBEDDERS + on-disk cache, vector index save/load (BM25 with 5.3)
   retrieval.py   # RETRIEVERS: dense (then bm25, RRF fusion, rerank in Phase 5); search, format_results
-  language.py    # (placeholder) language gate: is_english(text)
+  language.py    # language gate: build_detector, is_english(text, detector, cfg), NOTICE
   llm.py         # (placeholder) the single access point to the Anthropic API
   qa.py          # (placeholder) answer(question) -> Answer: gate -> retrieve -> generate
   prompts/       # (placeholder) prompts as versioned .md files
   eval/          # evaluation harness
     dataset.py   #   golden set: GoldenQuestion schema, load_golden, check_references
-    metrics.py   #   retrieval metrics (hit@k, recall@k, reciprocal rank) + aggregate per category
+    metrics.py   #   retrieval metrics (hit@k, recall@k, reciprocal rank) + aggregate per category; gate metrics
     judge.py     #   (placeholder) LLM-as-judge
-    run.py       #   runs an experiment on the golden set (retrieval only in 3a) and saves it (compare in 3b)
+    run.py       #   runs an experiment on the golden set (retrieval + language gate) and saves it (compare in 3b)
   cli.py         # typer commands: dump, ingest, inspect, sections, index, search, eval check, eval run (then ask, eval compare)
 .claude/               # Claude Code project settings: settings.json (hooks) + hooks/ scripts
 configs/experiments/   # one YAML per experiment: baseline.yaml is the Phase 3 starting point
