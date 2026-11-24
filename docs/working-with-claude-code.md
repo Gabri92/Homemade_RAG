@@ -33,28 +33,31 @@ A rule written in a prompt is a *request*: the model usually follows it, but not
 |---|---|---|
 | Must *never* happen | A hard check (pre-commit hook, permission `deny` rule) | Never commit the book → `forbid-book-files` |
 | Must *always* happen at a given moment | A Claude Code hook (`.claude/settings.json`) or a pre-commit hook | Definition of done before ending a turn and before every commit |
-| A multi-step procedure | A skill (slash command) | `/experiment` (planned) |
-| A focused job that benefits from its own context | A subagent | `eval-analyst`, `conventions-reviewer` (planned) |
+| A multi-step procedure | A skill (slash command) | `/experiment` |
+| A focused job that benefits from its own context | A subagent | `eval-analyst`; `conventions-reviewer` (planned) |
 | Context for one area of the code | Reference doc read on demand, or a nested `CLAUDE.md` in that folder | `docs/ingestion-findings.md` for ingestion work |
 | Principles and taste | Steering files | KISS, "When to grow the structure" |
 
-## Planned
+## Experiments: the `/experiment` skill and the `eval-analyst` subagent
 
-Introduced only when they have something to work on (YAGNI): both depend on `homerag eval`, which arrives in Phase 3 (step 9 of Phase 3b in the roadmap).
+Added in v0.5.0, once `homerag eval run` and `eval compare` existed.
 
 ### Skill: `/experiment`
 
-A **skill** is a Markdown file (`.claude/skills/experiment/SKILL.md`) that describes a procedure step by step. It is run by typing `/experiment <name>`, and Claude can also pick it up on its own when a request matches its description. It turns a rule that today must be *remembered* (CLAUDE.md rule 2: "every change to the RAG pipeline is an experiment") into a procedure that is *executed* the same way every time:
+A **skill** is a Markdown file (`.claude/skills/experiment/SKILL.md`) that describes a procedure step by step. It runs when you type `/experiment <name> [what to change]`, and Claude can also pick it up on its own when a request matches its description. It turns a rule that must be *remembered* (CLAUDE.md rule 2: "every change to the RAG pipeline is an experiment") into a procedure that is *executed* the same way every time:
 
-1. create `configs/experiments/<name>.yaml` starting from the current best config, changing only the variable under test;
-2. run `homerag eval run` on the baseline and on the new config (or reuse the cached baseline run);
-3. run `homerag eval compare` and summarize the deltas per metric and per question category, plus the questions that got worse;
-4. propose the `exp:` commit message with the metric summary;
-5. if the config wins, draft the ADR.
+1. plan: base config, one variable, hypothesis, expected cost; wait for a yes before any paid run;
+2. branch `exp/<name>` and `configs/experiments/<name>.yaml`, changing only the variable under test;
+3. run `homerag eval run` on the new config, reusing the base run when it is comparable;
+4. delegate the comparison to `eval-analyst`, check its numbers, decide (kept only if it improves the metric and category it was meant for);
+5. `exp:` commit with the metric summary; if it wins, an ADR draft and a CHANGELOG line.
 
-### Subagents: `eval-analyst` and `conventions-reviewer`
+### Subagent: `eval-analyst`
 
 A **subagent** is a Markdown file in `.claude/agents/` that defines a specialised assistant: its own instructions, a restricted set of tools, optionally a cheaper model. The main session delegates a task to it; the subagent works in a **separate context** and returns only its conclusion. This is the useful form of a "role": not a persona in the prompt ("you are a senior engineer"), but isolation of context and permissions.
 
-- **`eval-analyst`** — reads two runs in `eval/runs/`, compares metrics and per-question outputs, and returns a short report: what improved, what regressed, in which categories, with examples. Read-only. It keeps hundreds of lines of run output out of the main conversation.
-- **`conventions-reviewer`** — reviews a diff against `docs/steering/conventions.md` and `structure.md` only (KISS, one library per module, tests in the right folder, no logic in `cli.py`). Read-only. A narrow brief makes it stricter than a general review.
+`eval-analyst` (`.claude/agents/eval-analyst.md`, Sonnet, read-only) reads one or two runs in `eval/runs/`, interprets them with `docs/reading-a-run.md`, and returns a short report: verdict, per-part and per-category numbers, the questions to look at with their failure class, the next lever, and the cautions. It keeps run files out of the main conversation and never quotes the book. A new subagent is available from the next session after it is added.
+
+## Planned
+
+- **`conventions-reviewer`** (subagent): reviews a diff against `docs/steering/conventions.md` and `structure.md` only (KISS, one library per module, tests in the right folder, no logic in `cli.py`). Read-only. A narrow brief makes it stricter than a general review. Added when reviews start to repeat the same remarks.

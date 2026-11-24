@@ -30,7 +30,7 @@ src/homerag/
     run.py       #   runs an experiment on the golden set: gate, retrieval, answers + judge (`retrieval_only` skips them)
     report.py    #   run files: save_run, load_run, format_*, compare_runs (RUN_FORMAT)
   cli.py         # typer commands: dump, ingest, inspect, sections, index, search, ask, eval check, eval run, eval compare
-.claude/               # Claude Code project settings: settings.json (hooks, deny reading .env) + hooks/ scripts
+.claude/               # Claude Code project settings: settings.json (hooks, deny reading .env), hooks/, agents/eval-analyst.md, skills/experiment/
 configs/experiments/   # one YAML per experiment: baseline.yaml is the Phase 3 starting point
 eval/datasets/         # golden.jsonl (hand-written, gitignored: kept local, ADR 0004) + example.jsonl (synthetic, committed)
 eval/runs/             # run outputs (gitignored)

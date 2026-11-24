@@ -53,7 +53,10 @@ Answers are cached in `data/cache/llm/` (one JSON per request): asking the same 
 | `uv run homerag eval run` | Run `configs/experiments/baseline.yaml` on the golden set and print three tables: **retrieval** (hit@k, recall@k, MRR per category), **generation** (judge: `correct`, `faithful`, `declined`; code checks: `cites`, `cites_ok`, `english`, `copied`, `paraphrase`; `cost_usd` and `latency_s` per question) and the **language gate**, plus the run's cost. Saves `eval/runs/<date-time>-<name>/` (`config.yaml`, `results.jsonl` with one row per question, `metrics.json`, `meta.json`). About $1 the first time; a repeated run with the same config is served from the cache. Needs `ANTHROPIC_API_KEY` |
 | `uv run homerag eval run --retrieval-only` | Gate and retrieval only: free, fast, no API key. The loop for retrieval experiments |
 | `uv run homerag eval run --config configs/experiments/<name>.yaml` | Same, for another experiment; `--golden <file>` for another golden set |
+| `/experiment <name> [what to change]` (in Claude Code) | The whole experiment procedure: config, run, comparison through the `eval-analyst` subagent, `exp:` commit (`docs/working-with-claude-code.md`) |
 | `uv run homerag eval compare <run_a> <run_b>` | Run B against run A (folders, or their names in `eval/runs/`): metric changes per category, gate, cost, and the questions that got worse or better (`mrr`, `correct`, `faithful`, `cites`, `paraphrase`). Free. Runs saved before v0.5.0 must be run again |
+
+How to interpret the numbers: `docs/reading-a-run.md`.
 
 Typical loop while writing questions:
 1. `uv run homerag ingest data/raw/<book>.epub` (only if `book.json` is missing or ingestion changed);

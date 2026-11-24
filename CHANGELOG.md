@@ -6,6 +6,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 ## [Unreleased]
 
 ### Added
+- `docs/reading-a-run.md`: how to read a run, column by column, and from symptoms to causes and levers. The `/experiment` skill (`.claude/skills/experiment/`) runs an experiment end to end; the `eval-analyst` subagent (`.claude/agents/`) reports on one or two runs following the guide.
 - LLM judge (`eval/judge.py`, prompt `judge_v1`, ADR 0008): one structured-output call per answer to `claude-opus-5-5` returning reasoning, correctness (correct / partial / incorrect), faithfulness and whether the answer declines. Code-based answer checks in `eval/metrics.py`: cites a source, cites only real sources, English, longest run copied from a source (`evaluation.max_copied_words`).
 - Full `homerag eval run`: gate, retrieval, answers and judge, with cost and latency per question; `--retrieval-only` for the free loop. Run files moved to `eval/report.py` (`RUN_FORMAT` 2: one `results.jsonl` row per question, `metrics.json` by part, no `gate.json`). `homerag eval compare <run_a> <run_b>`: changes per category and the questions that got worse or better. First full baseline: correct 0.77, faithful 0.97, $1.14.
 - Structured outputs and per-call latency in `llm.py`; `judge.max_tokens` in the experiment config.
