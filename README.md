@@ -45,18 +45,46 @@ An evaluation harness sends the golden questions through the query pipeline and 
 
 Full plan: [`docs/roadmap.md`](docs/roadmap.md).
 
-## Quick start
+## What you need
 
-Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
+- Python 3.12+ and [uv](https://docs.astral.sh/uv/).
+- Your own copy of the document, as an **ePub in English**, in `data/raw/`.
+- Your own **Anthropic API key**. Answers and evaluations call the Claude API and are billed to your account: about one cent per question, and about $1 for a full `eval run` (a repeated run is served from the on-disk cache and costs nothing). A key from a workspace dedicated to this project, with a spending limit, keeps the cost bounded. Ingestion, indexing, search and `eval run --retrieval-only` are local and free.
+- About 9 GB of disk: most of it is PyTorch and the `BAAI/bge-m3` embedding model, downloaded on the first `index`. A CUDA GPU makes indexing faster; without one it runs on the CPU.
+
+## Quick start
 
 ```bash
 uv sync
 uv run pre-commit install
+cp .env.example .env                           # then put your key in .env: ANTHROPIC_API_KEY=...
 uv run homerag ingest data/raw/<book>.epub     # -> data/processed/book.json
 uv run homerag inspect data/raw/<book>.epub    # quality report, numbers only
+uv run homerag index                           # chunk + embed -> data/index/
+uv run homerag search "How long is the base period?"   # retrieval only, free
+uv run homerag ask "How long is the base period?"      # answer with citations (Claude API)
+```
+
+`.env` is gitignored and refused by a pre-commit hook: the key never reaches the repository.
+
+To evaluate, write your golden set (format in [`docs/architecture.md`](docs/architecture.md) §7.1, example in `eval/datasets/example.jsonl`), then:
+
+```bash
 uv run homerag sections                        # section ids to cite in the golden set
 uv run homerag eval check                      # validate eval/datasets/golden.jsonl
+uv run homerag eval run --retrieval-only       # gate + retrieval metrics, free
+uv run homerag eval run                        # + answers graded by an LLM judge (about $1)
+uv run homerag eval compare <run_a> <run_b>    # what changed between two runs
 ```
+
+How to read the numbers: [`docs/reading-a-run.md`](docs/reading-a-run.md).
+
+## Limits (for now)
+
+- **English only.** Ask questions in English: a message in another language gets a short notice and starts no search and no API call. Very short messages ("LTHR?") always pass.
+- **English documents only**, in **ePub**: retrieval compares the question with the document's text, so a document in another language could not be queried. A PDF loader is planned.
+- **Answers come only from the document.** When the retrieved passages do not cover a question, the assistant says so instead of using general knowledge. It gives no medical advice.
+- **Personal use.** Use a document you have the right to use; nothing derived from it should be published.
 
 All commands: [`docs/commands.md`](docs/commands.md). Definition of done:
 
@@ -68,6 +96,8 @@ Tests on the real book are skipped automatically when the book is not in `data/r
 
 ## Documentation
 
+- [`docs/commands.md`](docs/commands.md): every command, grouped by task.
+- [`docs/reading-a-run.md`](docs/reading-a-run.md): how to read an evaluation run and turn it into the next change.
 - [`docs/architecture.md`](docs/architecture.md): pipelines, chunking strategies, evaluation.
 - [`docs/roadmap.md`](docs/roadmap.md): phases and planned experiments.
 - [`docs/adr/`](docs/adr/): architecture decision records.
