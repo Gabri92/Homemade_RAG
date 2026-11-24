@@ -73,46 +73,38 @@ The largest phase: it builds the whole pipeline end to end, plus the way to meas
 
 ---
 
-## Phase 4 — Shared demo: web chat with document upload
+## Phase 4 — Shared demo: web chat over documents
 
-Right after the first complete pipeline, before the optimizations: a web page reachable through a link, with no installation and no sign-in, where a visitor uploads a document and chats with it. The build-in-public posts can then show the product working and people can try it; Phases 5–6 improve a product that is already online. Product rules: `docs/steering/product.md`, "Shared demo".
+Right after the first complete pipeline, before the optimizations: a web page reachable through a link, with no installation and no sign-in, where a visitor picks a document and chats with it. The build-in-public posts can then show the product working and people can try it; Phases 5–6 improve a product that is already online. Product rules: `docs/steering/product.md`, "Shared demo".
 
-It is split in two, because opening the link to anyone brings risks (security, costs, other people's data) that a private demo does not have. 4a builds the product and measures indexing time and cost per question with real use; 4b is planned in detail along the way, from those numbers.
+It is split in two. Most of the risk of a public demo comes from files sent by strangers: malicious files, other people's copyright and personal data, session isolation, indexing while the visitor waits. 4a avoids all of it by serving only documents chosen and prepared by the author, so the link can be public early, with the cost of questions as the main remaining risk. 4b adds uploads, planned in detail along the way.
 
-### Phase 4a — Private demo
+### Phase 4a — Public demo on curated documents
 
-A link that is not advertised, used by the author and a few trusted people.
+1. **Curated documents**: 2–3 sports or technical documents in English whose license allows showing excerpts to the public (public domain or an open license such as Creative Commons); never the reference book. Each one is ingested and checked by hand like the reference book, with a small golden set, so the quality of the demo is measured.
+2. **Indexes built offline**: on the author's machine (GPU), published with the demo as read-only files shared by all visitors. The server only embeds the question, so it needs no GPU.
+3. **Web chat** (Streamlit or Gradio, chosen at the start of the phase): pick a document, ask, read the answer with expandable citations (chapter/section + short excerpt). It calls the same `qa.answer()`: no logic in the UI. First on this machine, on the reference book.
+4. **Cost and abuse limits**: a spending limit on the API key in the Anthropic console (the final safety net, independent of the code); a global daily budget in the app (the real ceiling: without accounts, per-visitor limits can be bypassed); per-visitor limits on questions; a clear message when one is reached. Questions are not stored beyond what answering needs, and the page says so.
+5. **Hosting** on a public URL (platform chosen at the start of the phase): secrets only in the platform's secret store; the deployed files are checked so that the reference book and its derivatives are never included.
 
-Order of work (each step works on its own before the next):
-1. **Web chat** (Streamlit or Gradio, chosen at the start of the phase) calling the same `qa.answer()`: no logic in the UI. Expandable citations (chapter/section + short excerpt). First on this machine, on the reference book.
-2. **Upload and indexing**: the visitor uploads an ePub; ingestion and indexing run while the page shows progress. Indexing time is measured first (embedding model on the host's CPU, on a GPU, or an embedding API); changing the embedding model is an experiment on the golden set.
-3. **Checks on uploaded documents, with clear messages** that say what happened and what to do next:
-   - DRM-protected, corrupt or unsupported file → rejected (DRM detection does not exist yet in the loader);
-   - document not in English → rejected (same detection as the language gate, on a sample of the text);
-   - file too large, or too large once decompressed (an ePub is a zip) → rejected; a time limit on processing;
-   - extraction problems found by the generic quality report (`homerag inspect`) → a warning in plain words; the document can still be used.
-   Every check is tested with synthetic files, messages included.
-4. **Isolation and deletion**: a document and its index belong to the visitor's session only; they are deleted when the session ends or after a time limit, and the visitor can delete them at any time. Tested: one session never reads another's files.
-5. **Hosting** of the private link (platform chosen at the start of the phase); secrets only in the platform's secret store; the reference book is never deployed; a spending limit set on the API key in the Anthropic console.
+In local use (the author, on the reference book) a 👍/👎 button saves the interaction as material for new golden set questions.
 
-In local use (the author, on the reference book) a 👍/👎 button saves the interaction as material for new golden set questions. The demo keeps nothing from visitors beyond what answering needs.
+Decisions recorded as ADRs at the start of the phase: UI framework, hosting platform, curated documents and their licenses, limit values. Screenshots and videos for posts show short paraphrased answers, never long excerpts of the book.
 
-Decisions recorded as ADRs at the start of the phase: UI framework, hosting platform, how documents are embedded at upload time.
+**Learning:** what it takes to put a RAG in front of other people: hosting, cost control, cost per question measured with real use.
+**Deliverable:** a public link where anyone can chat with the curated documents, within a daily budget.
 
-**Learning:** what it takes to put a RAG in front of other people: indexing time, untrusted input, clear errors.
-**Deliverable:** a private link where an English ePub can be uploaded and queried, with a clear message for every rejected or badly extracted document; indexing time and cost per question measured.
+### Phase 4b — Document upload (planned along the way)
 
-### Phase 4b — Public opening (planned along the way)
+Visitors upload their own documents, as in NotebookLM. It brings back the risks that 4a avoids, so it is planned in detail with the numbers from 4a (cost per question, traffic) and may come after the optimizations. Starting point:
+- **Upload and indexing**: ingestion and indexing while the page shows progress; indexing time measured first (the host's CPU, a GPU, or an embedding API; changing the embedding model is an experiment on the golden set).
+- **Checks on uploaded documents, with clear messages** that say what happened and what to do next: DRM-protected, corrupt or unsupported file → rejected (DRM detection does not exist yet in the loader); not in English → rejected (same detection as the language gate, on a sample of the text); too large, or too large once decompressed (an ePub is a zip) → rejected, with a time limit on processing; extraction problems found by the generic quality report → a warning in plain words. Every check is tested with synthetic files, messages included.
+- **Security on untrusted files**: zip bombs, XML external entities in the ePub parser.
+- **Isolation and deletion**: a document and its index belong to the visitor's session only and are deleted after a time limit or on request; tested so that one session never reads another's files, also under concurrent use.
+- **Terms of use and privacy notice** before the first upload: upload only documents you have the right to use; uploads serve only to answer their owner and are deleted afterwards; how long data is kept.
+- Per-visitor limits on uploads; hosting resized for indexing.
 
-What must be true before the link is shared publicly. The list is a starting point, to be reviewed with the numbers from 4a.
-- **Cost and abuse limits**: a global daily budget (the real ceiling: without accounts, per-visitor limits can be bypassed), per-visitor limits on uploads and questions, a clear message when one is reached.
-- **Terms of use and privacy notice** shown before the first upload: upload only documents you have the right to use; uploads serve only to answer their owner and are deleted afterwards; how long data is kept.
-- **Security checks on untrusted files**: zip bombs, XML external entities in the ePub parser, session isolation under concurrent use.
-- **Final hosting**, sized for the measured indexing time and expected traffic.
-
-Screenshots and videos for posts show short paraphrased answers, never long excerpts of the book.
-
-**Deliverable:** a public link, with limits, terms and security checks in place.
+**Deliverable:** visitors can upload an English ePub and chat with it, with a clear message for every rejected or badly extracted document.
 
 ---
 
@@ -184,10 +176,10 @@ Only if the build-in-public phase asks for it; the RAG pipeline and its evaluati
 
 ## Later (out of scope for now)
 
-- **User-added sources, generalized** (the shared demo of Phase 4 serves them): the Loader and Cleaner rules are already generic (they work on HTML semantics and on `Block`), but thresholds and expected values are tuned on a single book. To generalize:
+- **User-added sources, generalized** (the uploads of Phase 4b serve them): the Loader and Cleaner rules are already generic (they work on HTML semantics and on `Block`), but thresholds and expected values are tuned on a single book. To generalize:
   1. **ingestion corpus**: a few copyright-free ePubs/PDFs from different publishers (e.g. Project Gutenberg, Standard Ebooks, open-access articles), each with its own expected values, run as regression tests;
-  2. **automatic quality report** computed on every uploaded file, with no expected values: generic invariants (coverage of the source text, heading structure, untitled tables, figures without captions, duplicate rate, anomalous blocks) → warnings to the user when a document is extracted badly (first shown to visitors in Phase 4, then refined);
-  3. **downstream evaluation**: a small golden set of questions for each corpus document, because ingestion quality is ultimately measured by the answers. The corpus favours sports and technical documents (manuals, guides, papers): the kind of document the product is evaluated on.
+  2. **automatic quality report** computed on every uploaded file, with no expected values: generic invariants (coverage of the source text, heading structure, untitled tables, figures without captions, duplicate rate, anomalous blocks) → warnings to the user when a document is extracted badly (first shown to visitors in Phase 4b, then refined);
+  3. **downstream evaluation**: a small golden set of questions for each corpus document (the curated documents of Phase 4a are the first ones), because ingestion quality is ultimately measured by the answers. The corpus favours sports and technical documents (manuals, guides, papers): the kind of document the product is evaluated on.
 
 - **Figures with Claude's multimodality**: during ingestion, images (first tables published as images, then charts and illustrations) are passed to Claude, which transcribes tables to Markdown and describes figures. The generated text replaces the caption-only `figure` block and is cached, so each image is paid for once. Measured as an experiment: golden set questions that depend on figures, before and after.
 
