@@ -61,7 +61,7 @@ The largest phase: it builds the whole pipeline end to end, plus the way to meas
 **Learning:** have a starting number, at zero API cost. It will probably be mediocre: that's fine.
 **Deliverable:** first run in `eval/runs/` with retrieval metrics per category.
 
-### Phase 3b — Generation and judge (v0.5.0)
+### Phase 3b — Generation and judge ✅ (v0.5.0)
 
 > First full baseline run (30 answered questions, $1.14, about 3.6 s per answer): correct 0.77, faithful 0.97, paraphrase 1.00. Weakest: `table` (correct 0.30, declined 0.60) and `follow_up` (0.50). Most wrong answers are honest refusals when retrieval missed the cited section, so retrieval (Phase 5) comes before prompt work.
 

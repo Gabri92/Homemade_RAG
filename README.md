@@ -38,8 +38,8 @@ An evaluation harness sends the golden questions through the query pipeline and 
 | 1 | Ingestion and inspection | ✅ v0.2.0 |
 | 2 | Golden dataset format and validation | ✅ v0.3.0 |
 | 3a | Naive RAG baseline: retrieval + its metrics | ✅ v0.4.0 |
-| 3b | Naive RAG baseline: generation + judge | next |
-| 4a | Public demo: web chat over curated documents | planned |
+| 3b | Naive RAG baseline: generation + judge | ✅ v0.5.0 |
+| 4a | Public demo: web chat over curated documents | next |
 | 4b | Document upload in the demo (planned along the way) | planned |
 | 5–8 | Retrieval and generation experiments, external baselines, UI improvements (optional) | planned |
 
