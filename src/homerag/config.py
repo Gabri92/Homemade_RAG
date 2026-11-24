@@ -82,12 +82,15 @@ class GenerationConfig(_Section):
 class JudgeConfig(_Section):
     model: str
     effort: Effort
+    max_tokens: int = Field(gt=0)
     prompt: str
 
 
 class EvaluationConfig(_Section):
     # Cut-offs for hit rate and recall: all computed from the same top_k ranking.
     ks: tuple[int, ...] = Field(min_length=1)
+    # An answer copying a longer run of words from one source fails the "paraphrase" check.
+    max_copied_words: int = Field(gt=0)
 
     @model_validator(mode="after")
     def _sorted_positive_unique(self) -> Self:

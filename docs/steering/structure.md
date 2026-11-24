@@ -22,13 +22,14 @@ src/homerag/
   language.py    # language gate: build_detector, is_english(text, detector, cfg), NOTICE
   llm.py         # the single access point to the Anthropic API: LLMRequest -> Completion, cache, cost, prompts
   qa.py          # answer(question, resources, cfg) -> Answer: gate -> retrieve -> generate -> citations
-  prompts/       # prompts as versioned .md files (answer_v1.md)
+  prompts/       # prompts as versioned .md files (answer_v1.md, judge_v1.md)
   eval/          # evaluation harness
     dataset.py   #   golden set: GoldenQuestion schema, load_golden, check_references
-    metrics.py   #   retrieval metrics (hit@k, recall@k, reciprocal rank) + aggregate per category; gate metrics
-    judge.py     #   (placeholder) LLM-as-judge
-    run.py       #   runs an experiment on the golden set (retrieval + language gate) and saves it (compare in 3b)
-  cli.py         # typer commands: dump, ingest, inspect, sections, index, search, ask, eval check, eval run (then eval compare)
+    metrics.py   #   retrieval metrics (hit@k, recall@k, reciprocal rank), gate metrics, code-based answer checks, aggregate per category
+    judge.py     #   LLM-as-judge: Verdict (structured outputs), judge, verdict_scores
+    run.py       #   runs an experiment on the golden set: gate, retrieval, answers + judge (`retrieval_only` skips them)
+    report.py    #   run files: save_run, load_run, format_*, compare_runs (RUN_FORMAT)
+  cli.py         # typer commands: dump, ingest, inspect, sections, index, search, ask, eval check, eval run, eval compare
 .claude/               # Claude Code project settings: settings.json (hooks, deny reading .env) + hooks/ scripts
 configs/experiments/   # one YAML per experiment: baseline.yaml is the Phase 3 starting point
 eval/datasets/         # golden.jsonl (hand-written, gitignored: kept local, ADR 0004) + example.jsonl (synthetic, committed)

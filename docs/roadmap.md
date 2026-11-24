@@ -63,9 +63,11 @@ The largest phase: it builds the whole pipeline end to end, plus the way to meas
 
 ### Phase 3b — Generation and judge (v0.5.0)
 
+> First full baseline run (30 answered questions, $1.14, about 3.6 s per answer): correct 0.77, faithful 0.97, paraphrase 1.00. Weakest: `table` (correct 0.30, declined 0.60) and `follow_up` (0.50). Most wrong answers are honest refusals when retrieval missed the cited section, so retrieval (Phase 5) comes before prompt work.
+
 6. Language gate with `lingua-py`: non-English message → notice, no query. Gate accuracy (deterministic) scored by `eval run` on every golden question. ✅
 7. Claude generator: `llm.py` (retries, cache, cost), prompt `answer_v1` with citations, answers in English, `qa.answer`; `homerag ask "question"` (ADR 0007). ✅
-8. **LLM judge** (correctness, faithfulness, refusal on `out_of_scope`) + the full `eval run` (retrieval + generation, cost and latency per question) + `eval compare`.
+8. **LLM judge** (correctness, faithfulness, refusal on `out_of_scope`) + code-based answer checks + the full `eval run` (retrieval + generation, cost and latency per question) + `eval compare` (ADR 0008). ✅
 9. Development tooling, once `eval run` exists: the `/experiment` skill and the `eval-analyst` subagent (see `docs/working-with-claude-code.md`, "Planned").
 
 **Learning:** what a complete RAG answer costs, and how far a simple prompt gets.

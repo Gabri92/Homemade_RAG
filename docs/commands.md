@@ -1,6 +1,6 @@
 # Command cheat sheet
 
-Commands available now, grouped by task. The full list, including the one planned for Phase 3b (`eval compare`), is in `docs/steering/tech.md`. `uv run homerag --help` (or `<command> --help`) prints the live options.
+Commands available now, grouped by task. The full list is in `docs/steering/tech.md`. `uv run homerag --help` (or `<command> --help`) prints the live options.
 
 Everything under `data/` is gitignored: outputs written there never reach the repository.
 
@@ -38,7 +38,7 @@ Embeddings are cached in `data/cache/embeddings/` (one `.npy` per model + text):
 |---|---|
 | `uv run homerag ask "How long is the base period?"` | Full answer: language gate, retrieval, Claude with the `answer_v1` prompt. Prints the answer with `[n]` markers, the cited sections and pages, tokens and cost (about a cent). Needs the index and `ANTHROPIC_API_KEY` in `.env` (see `.env.example`) |
 | `uv run homerag ask "..." --config configs/experiments/<name>.yaml` | Same, with another experiment's model, effort, prompt or retrieval |
-| `uv run pytest -m integration` | Also runs one real Claude call (about a cent); skipped without an API key |
+| `uv run pytest -m integration` | Also runs two real Claude calls, an answer and a judge verdict (a few cents); skipped without an API key |
 
 Answers are cached in `data/cache/llm/` (one JSON per request): asking the same question with the same config again costs nothing and prints "cached, not paid again".
 
@@ -50,8 +50,10 @@ Answers are cached in `data/cache/llm/` (one JSON per request): asking the same 
 | `uv run homerag eval check` | Validate `eval/datasets/golden.jsonl` and check that every cited section exists in `data/processed/book.json` and is indexed. Exit code 1 on any problem |
 | `uv run homerag eval check <file.jsonl> --book <book.json>` | Same, on another file or book |
 | `uv run homerag eval check eval/datasets/example.jsonl` | Try the format on the synthetic example (its section ids are made up, so they are reported) |
-| `uv run homerag eval run` | Run `configs/experiments/baseline.yaml` on the golden set: builds or reuses the index, scores retrieval (hit@k, recall@k, MRR per category; `out_of_scope` waits for the generator), scores the language gate on every question (accuracy, English blocked, non-English passed, misjudged ids) and saves `eval/runs/<date-time>-<name>/` (`config.yaml`, `results.jsonl`, `metrics.json`, `gate.json`, `meta.json`). No API cost |
+| `uv run homerag eval run` | Run `configs/experiments/baseline.yaml` on the golden set and print three tables: **retrieval** (hit@k, recall@k, MRR per category), **generation** (judge: `correct`, `faithful`, `declined`; code checks: `cites`, `cites_ok`, `english`, `copied`, `paraphrase`; `cost_usd` and `latency_s` per question) and the **language gate**, plus the run's cost. Saves `eval/runs/<date-time>-<name>/` (`config.yaml`, `results.jsonl` with one row per question, `metrics.json`, `meta.json`). About $1 the first time; a repeated run with the same config is served from the cache. Needs `ANTHROPIC_API_KEY` |
+| `uv run homerag eval run --retrieval-only` | Gate and retrieval only: free, fast, no API key. The loop for retrieval experiments |
 | `uv run homerag eval run --config configs/experiments/<name>.yaml` | Same, for another experiment; `--golden <file>` for another golden set |
+| `uv run homerag eval compare <run_a> <run_b>` | Run B against run A (folders, or their names in `eval/runs/`): metric changes per category, gate, cost, and the questions that got worse or better (`mrr`, `correct`, `faithful`, `cites`, `paraphrase`). Free. Runs saved before v0.5.0 must be run again |
 
 Typical loop while writing questions:
 1. `uv run homerag ingest data/raw/<book>.epub` (only if `book.json` is missing or ingestion changed);

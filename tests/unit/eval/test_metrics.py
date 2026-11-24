@@ -2,8 +2,10 @@ import pytest
 
 from homerag.eval.metrics import (
     aggregate,
+    answer_checks,
     gate_metrics,
     hit_at,
+    longest_copied_run,
     recall_at,
     reciprocal_rank,
     retrieval_metrics,
@@ -100,3 +102,33 @@ def test_gate_metrics_count_the_two_errors_apart() -> None:
 
 def test_gate_metrics_on_no_messages_is_zero() -> None:
     assert gate_metrics([])["accuracy"] == 0.0
+
+
+SOURCE = "Synthetic training text: the base period builds endurance, force and speed skills."
+
+
+def test_longest_copied_run_ignores_case_punctuation_and_citation_marks() -> None:
+    answer = "The Base Period builds endurance, [1] force and speed - in short."
+
+    # "the base period builds endurance force and speed"
+    assert longest_copied_run(answer, [SOURCE, "unrelated words"]) == 8
+
+
+def test_answer_checks_flags_missing_and_invalid_citations_and_copying() -> None:
+    copied = "the base period builds endurance force and speed skills [1]"
+
+    checks = answer_checks(copied, [1, 7], [SOURCE], english=True, max_copied_words=5)
+
+    assert checks == {
+        "cites": 1.0,
+        "cites_ok": 0.0,
+        "english": 1.0,
+        "copied": 9.0,
+        "paraphrase": 0.0,
+    }
+
+
+def test_answer_without_citations_does_not_cite() -> None:
+    checks = answer_checks("The book does not cover this.", [], [SOURCE], True, 20)
+
+    assert (checks["cites"], checks["cites_ok"], checks["paraphrase"]) == (0.0, 1.0, 1.0)

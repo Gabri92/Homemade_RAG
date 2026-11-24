@@ -184,3 +184,10 @@ def test_ask_exits_1_on_invalid_config(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "ERROR" in result.output
+
+
+def test_eval_compare_exits_1_on_a_folder_that_is_not_a_run(tmp_path: Path) -> None:
+    result = runner.invoke(app, ["eval", "compare", str(tmp_path), str(tmp_path)])
+
+    assert result.exit_code == 1
+    assert "not a run folder" in result.output

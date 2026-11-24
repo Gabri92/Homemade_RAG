@@ -5,7 +5,10 @@ one; `cached` wraps any LLM with an on-disk cache; tests pass a fake function in
 - Retries: the SDK retries connection errors, 429 and 5xx with backoff.
 - Reproducibility: the API no longer accepts `temperature`, so a repeated request is served
   from the cache (key = the whole request) and is never paid twice.
-- Cost: tokens from the response times `PRICES`, logged for every paid call.
+- Cost and latency: tokens from the response times `PRICES`, and the call's duration; both
+  are kept in the cache, so a cached answer still reports what it cost when it was made.
+- Structured outputs: with `output_schema`, the API guarantees the text is JSON valid
+  against that schema (used by the judge).
 - Refusals: on the models that support it, a declined request is re-run server-side on a
   fallback model (`fallbacks: "default"`); `Usage.model` records which model answered.
 """
@@ -14,11 +17,13 @@ import hashlib
 import json
 import logging
 import os
+import time
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import anthropic
+from anthropic.types.beta import BetaOutputConfigParam
 from pydantic import SecretStr
 
 from homerag.config import Effort
@@ -54,6 +59,8 @@ class LLMRequest:
     max_tokens: int
     system: str
     user: str
+    # A JSON schema the answer must follow (structured outputs), or None for free text.
+    output_schema: dict[str, object] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,12 +98,16 @@ def anthropic_llm(api_key: SecretStr) -> LLM:
 
     def complete(request: LLMRequest) -> Completion:
         fallback = request.model in _FALLBACK_MODELS
+        output_config: BetaOutputConfigParam = {"effort": request.effort}
+        if request.output_schema is not None:
+            output_config["format"] = {"type": "json_schema", "schema": request.output_schema}
+        start = time.perf_counter()
         response = client.beta.messages.create(
             model=request.model,
             max_tokens=request.max_tokens,
             system=request.system,
             messages=[{"role": "user", "content": request.user}],
-            output_config={"effort": request.effort},
+            output_config=output_config,
             betas=[_FALLBACK_BETA] if fallback else anthropic.omit,
             fallbacks="default" if fallback else anthropic.omit,
         )
@@ -105,10 +116,19 @@ def anthropic_llm(api_key: SecretStr) -> LLM:
         # With a fallback, the totals are priced at the model that answered: close enough
         # for a rare event, and the answering model is recorded.
         usage = Usage(
-            response.model, tokens_in, tokens_out, cost_usd(response.model, tokens_in, tokens_out)
+            response.model,
+            tokens_in,
+            tokens_out,
+            cost_usd(response.model, tokens_in, tokens_out),
+            round(time.perf_counter() - start, 2),
         )
         logger.info(
-            "llm %s: %d in, %d out, $%.4f", usage.model, tokens_in, tokens_out, usage.cost_usd
+            "llm %s: %d in, %d out, $%.4f, %.1f s",
+            usage.model,
+            tokens_in,
+            tokens_out,
+            usage.cost_usd,
+            usage.latency_s,
         )
         return Completion(text, response.stop_reason or "", usage)
 

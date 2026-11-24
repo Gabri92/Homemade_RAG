@@ -6,6 +6,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 ## [Unreleased]
 
 ### Added
+- LLM judge (`eval/judge.py`, prompt `judge_v1`, ADR 0008): one structured-output call per answer to `claude-opus-5-5` returning reasoning, correctness (correct / partial / incorrect), faithfulness and whether the answer declines. Code-based answer checks in `eval/metrics.py`: cites a source, cites only real sources, English, longest run copied from a source (`evaluation.max_copied_words`).
+- Full `homerag eval run`: gate, retrieval, answers and judge, with cost and latency per question; `--retrieval-only` for the free loop. Run files moved to `eval/report.py` (`RUN_FORMAT` 2: one `results.jsonl` row per question, `metrics.json` by part, no `gate.json`). `homerag eval compare <run_a> <run_b>`: changes per category and the questions that got worse or better. First full baseline: correct 0.77, faithful 0.97, $1.14.
+- Structured outputs and per-call latency in `llm.py`; `judge.max_tokens` in the experiment config.
 - Claude generator: `llm.py` (the only module importing `anthropic`: `LLMRequest` -> `Completion`, on-disk answer cache in `data/cache/llm/`, cost from a price table, server-side refusal fallbacks), prompt `answer_v1`, `qa.answer` (gate -> retrieval -> generation -> citations built from chunk metadata, ADR 0007) and `homerag ask "question"`. `Usage` and `Citation.source` in the data types; `generation.max_tokens` 4096 in the baseline.
 - `.env.example`; `.claude/settings.json` denies Claude Code reading `.env`.
 - Language gate (`language.is_english`, `build_detector`, `NOTICE`; ADR 0006): local, deterministic detection with `lingua-py` among the configured languages; a message is blocked only when a non-English language reaches `min_confidence`, and messages under `min_words` always pass. New `language_gate` section in the experiment config.

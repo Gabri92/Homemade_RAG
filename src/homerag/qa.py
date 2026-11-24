@@ -71,12 +71,22 @@ def answer(question: str, resources: Resources, cfg: ExperimentConfig) -> Answer
 
 def build_user_message(question: str, retrieved: list[RetrievedChunk]) -> str:
     """The numbered sources (1 = best ranked), then the question."""
+    return format_sources(retrieved) + f"\n\nQuestion: {question}"
+
+
+def format_sources(retrieved: list[RetrievedChunk]) -> str:
+    """`<sources>` with one numbered `<source>` per chunk, with its section path and page."""
     sources = [
         f'<source id="{n}" section="{escape(_section_label(r))}"{_page_attr(r)}>\n'
         f"{r.chunk.text}\n</source>"
         for n, r in enumerate(retrieved, start=1)
     ]
-    return "<sources>\n" + "\n".join(sources) + f"\n</sources>\n\nQuestion: {question}"
+    return "<sources>\n" + "\n".join(sources) + "\n</sources>"
+
+
+def source_numbers(text: str) -> list[int]:
+    """Every source number cited in `text`, in order, with repeats ("[1][2] [1]" -> 1, 2, 1)."""
+    return [int(part) for match in _CITATION.finditer(text) for part in match.group(1).split(",")]
 
 
 def cite(text: str, retrieved: list[RetrievedChunk]) -> tuple[Citation, ...]:
@@ -85,13 +95,11 @@ def cite(text: str, retrieved: list[RetrievedChunk]) -> tuple[Citation, ...]:
     A number with no matching source is ignored (and logged): it cannot be checked.
     """
     numbers: list[int] = []
-    for match in _CITATION.finditer(text):
-        for part in match.group(1).split(","):
-            n = int(part)
-            if not 1 <= n <= len(retrieved):
-                logger.warning("answer cites source [%d], but there are %d", n, len(retrieved))
-            elif n not in numbers:
-                numbers.append(n)
+    for n in source_numbers(text):
+        if not 1 <= n <= len(retrieved):
+            logger.warning("answer cites source [%d], but there are %d", n, len(retrieved))
+        elif n not in numbers:
+            numbers.append(n)
     return tuple(
         Citation(n, chunk.id, section.id, section.path, chunk.page)
         for n in numbers

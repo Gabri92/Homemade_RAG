@@ -5,21 +5,25 @@ import numpy as np
 
 from homerag.config import load_experiment
 from homerag.eval.dataset import GoldenQuestion
+from homerag.eval.report import load_run, save_run
 from homerag.eval.run import (
-    format_gate,
-    format_metrics,
+    result_rows,
     retrieval_questions,
+    run_cost,
     run_gate,
+    run_generation,
     run_retrieval,
-    save_gate,
-    save_run,
     score_gate,
 )
 from homerag.index import VectorIndex, Vectors
 from homerag.language import build_detector
-from homerag.models import Chunk, SectionRef
+from homerag.llm import Completion, LLMRequest
+from homerag.models import Chunk, SectionRef, Usage
+from homerag.qa import Resources
 
 BASELINE = Path("configs/experiments/baseline.yaml")
+CFG = load_experiment(BASELINE)
+DETECTOR = build_detector(CFG.language_gate)
 
 
 def question(qid: str, category: str, *sections: str, **extra: str) -> GoldenQuestion:
@@ -46,15 +50,43 @@ QUESTIONS = [
 # Two chunks; the fake embedder points every question at the "base" chunk.
 INDEX = VectorIndex(
     (
-        Chunk("base#1", (SectionRef("base", ("Base",)),), "t", "1"),
-        Chunk("swim#1", (SectionRef("swim", ("Swim",)), SectionRef("bike", ("Bike",))), "t", "2"),
+        Chunk("base#1", (SectionRef("base", ("Base",)),), "synthetic chunk text", "1"),
+        Chunk(
+            "swim#1",
+            (SectionRef("swim", ("Swim",)), SectionRef("bike", ("Bike",))),
+            "other synthetic text",
+            "2",
+        ),
     ),
     np.array([[1.0, 0.0], [0.0, 1.0]], dtype=np.float32),
 )
 
+VERDICT = {"reasoning": "ok", "correctness": "partial", "faithful": True, "declined": False}
+
 
 def embed(texts: list[str]) -> Vectors:
     return np.array([[1.0, 0.0]] * len(texts), dtype=np.float32)
+
+
+class FakeLLM:
+    """Answers generation requests with a cited sentence and judge requests with a verdict."""
+
+    def __init__(self) -> None:
+        self.requests: list[LLMRequest] = []
+
+    def __call__(self, request: LLMRequest) -> Completion:
+        self.requests.append(request)
+        if request.output_schema is not None:
+            return Completion(json.dumps(VERDICT), "end_turn", Usage(request.model, 50, 30, 0.02))
+        return Completion(
+            "A synthetic answer for this test [1].",
+            "end_turn",
+            Usage(request.model, 100, 20, 0.01, latency_s=1.5, cached=True),
+        )
+
+
+def resources(llm: FakeLLM) -> Resources:
+    return Resources(INDEX, embed, DETECTOR, llm)
 
 
 def test_only_questions_citing_sections_are_scored_on_retrieval() -> None:
@@ -64,7 +96,7 @@ def test_only_questions_citing_sections_are_scored_on_retrieval() -> None:
 
 
 def test_run_retrieval_scores_each_question() -> None:
-    runs = run_retrieval(QUESTIONS, INDEX, embed, load_experiment(BASELINE))
+    runs = run_retrieval(QUESTIONS, INDEX, embed, CFG)
 
     assert [r.question.id for r in runs] == ["q-001", "q-002"]
     assert runs[0].retrieved[0].chunk.id == "base#1"
@@ -72,49 +104,15 @@ def test_run_retrieval_scores_each_question() -> None:
     assert runs[0].metrics["mrr"] == 1.0
 
 
-def test_saved_run_has_config_results_metrics_and_meta_but_no_chunk_text(tmp_path: Path) -> None:
-    cfg = load_experiment(BASELINE)
-    runs = run_retrieval(QUESTIONS, INDEX, embed, cfg)
-
-    gate_runs = run_gate(GATE_QUESTIONS, build_detector(cfg.language_gate), cfg.language_gate)
-
-    save_run(tmp_path / "run", cfg, runs, {"all": {"n": 2.0}}, {"seed": "meta"})
-    save_gate(tmp_path / "run", gate_runs)
-
-    files = sorted(p.name for p in (tmp_path / "run").iterdir())
-    assert files == ["config.yaml", "gate.json", "meta.json", "metrics.json", "results.jsonl"]
-    gate = json.loads((tmp_path / "run" / "gate.json").read_text(encoding="utf-8"))
-    assert gate["metrics"]["accuracy"] == 1.0
-    assert [row["passed"] for row in gate["questions"]] == [True, False]
-    results = (tmp_path / "run" / "results.jsonl").read_text(encoding="utf-8")
-    rows = [json.loads(line) for line in results.splitlines()]
-    assert rows[0]["retrieved"][0]["sections"] == ["base"]
-    assert "text" not in rows[0]["retrieved"][0]
-
-
-def test_format_metrics_prints_one_row_per_category() -> None:
-    table = format_metrics({"factual": {"n": 2.0, "hit@1": 0.5}, "all": {"n": 2.0, "hit@1": 0.5}})
-
-    lines = table.splitlines()
-    assert "hit@1" in lines[0]
-    assert lines[1].split() == ["factual", "2", "0.50"]
-    assert lines[2].split()[0] == "all"
-
-
-GATE_QUESTIONS = [
-    question("q-001", "factual", "base").model_copy(
-        update={"question": "How long should the base period last for a beginner?"}
-    ),
-    question("q-004", "non_english").model_copy(
-        update={"question": "Quanto deve durare il periodo di base per un principiante?"}
-    ),
-]
-
-
 def test_run_gate_scores_every_question_including_non_english() -> None:
-    gate = load_experiment(BASELINE).language_gate
+    english = question("q-001", "factual", "base").model_copy(
+        update={"question": "How long should the base period last for a beginner?"}
+    )
+    italian = question("q-004", "non_english").model_copy(
+        update={"question": "Quanto deve durare il periodo di base per un principiante?"}
+    )
 
-    runs = run_gate(GATE_QUESTIONS, build_detector(gate), gate)
+    runs = run_gate([english, italian], DETECTOR, CFG.language_gate)
 
     assert [(r.question.id, r.passed, r.correct) for r in runs] == [
         ("q-001", True, True),
@@ -123,11 +121,43 @@ def test_run_gate_scores_every_question_including_non_english() -> None:
     assert score_gate(runs)["accuracy"] == 1.0
 
 
-def test_format_gate_names_the_misjudged_questions() -> None:
-    gate = {"n": 2.0, "accuracy": 0.5, "english_blocked": 1.0, "non_english_passed": 0.0}
+def test_run_generation_answers_and_grades_all_but_non_english() -> None:
+    llm = FakeLLM()
 
-    text = format_gate(gate, ["q-001"])
+    runs = run_generation(QUESTIONS, resources(llm), CFG)
 
-    assert "accuracy 0.50" in text
-    assert "English blocked 1" in text
-    assert "misjudged: q-001" in text
+    assert [r.question.id for r in runs] == ["q-001", "q-002", "q-003"]
+    judge_requests = [r for r in llm.requests if r.output_schema is not None]
+    assert len(judge_requests) == 3
+    assert judge_requests[0].model == CFG.judge.model
+    metrics = runs[0].metrics
+    assert (metrics["correct"], metrics["faithful"], metrics["cites"]) == (0.5, 1.0, 1.0)
+    assert metrics["cost_usd"] == 0.03  # answer 0.01 + judge 0.02
+    assert metrics["latency_s"] == 1.5
+
+
+def test_run_cost_counts_cached_answers_as_not_paid_now() -> None:
+    runs = run_generation(QUESTIONS, resources(FakeLLM()), CFG)
+
+    assert run_cost(runs) == {"answers": 0.03, "judge": 0.06, "paid_now": 0.06}
+
+
+def test_saved_run_has_one_row_per_question_and_no_chunk_text(tmp_path: Path) -> None:
+    rows = result_rows(
+        QUESTIONS,
+        run_gate(QUESTIONS, DETECTOR, CFG.language_gate),
+        run_retrieval(QUESTIONS, INDEX, embed, CFG),
+        run_generation(QUESTIONS, resources(FakeLLM()), CFG),
+    )
+    meta = {"run_format": 2, "cost_usd": {"answers": 0.0, "judge": 0.0, "paid_now": 0.0}}
+
+    save_run(tmp_path / "run", CFG, rows, {"retrieval": {}, "generation": {}, "gate": {}}, meta)
+
+    saved = load_run(tmp_path / "run")
+    assert [row["id"] for row in saved.rows] == ["q-001", "q-002", "q-003", "q-004"]
+    assert saved.rows[0]["retrieval"]["retrieved"][0]["sections"] == ["base"]
+    assert saved.rows[0]["generation"]["verdict"]["correctness"] == "partial"
+    assert saved.rows[2]["retrieval"] is None  # out_of_scope cites no section
+    assert saved.rows[3]["generation"] is None  # non_english is only gated
+    text = (tmp_path / "run" / "results.jsonl").read_text(encoding="utf-8")
+    assert "synthetic chunk text" not in text

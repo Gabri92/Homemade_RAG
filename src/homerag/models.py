@@ -120,12 +120,14 @@ class Citation:
 class Usage:
     """What one LLM call used and cost. `model` is the model that answered: with refusal
     fallbacks it may differ from the one requested. `cached` means it came from the on-disk
-    cache, so nothing was paid this time; `cost_usd` is still what the call cost when made."""
+    cache, so nothing was paid this time; `cost_usd` and `latency_s` are still what the call
+    cost and took when it was made."""
 
     model: str
     input_tokens: int
     output_tokens: int
     cost_usd: float
+    latency_s: float = 0.0
     cached: bool = False
 
 

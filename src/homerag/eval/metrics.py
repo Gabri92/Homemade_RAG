@@ -7,9 +7,11 @@ covers at least one section the question cites (ADR 0005).
 - reciprocal rank: 1 / position of the first relevant chunk (0 if none); its mean is MRR.
 The language gate is scored on every question: English must pass, non-English must be
 blocked. Its two errors are counted apart, because blocking English is the worse one.
-The judge's scores arrive with Phase 3b.
+Generated answers get code-based checks (free and deterministic) next to the judge's grades
+(`eval/judge.py`): cites a source, cites only real sources, is in English, paraphrases.
 """
 
+import re
 from collections import defaultdict
 from collections.abc import Iterable
 
@@ -85,3 +87,57 @@ def gate_metrics(outcomes: Iterable[tuple[bool, bool]]) -> dict[str, float]:
         "english_blocked": float(english_blocked),
         "non_english_passed": float(non_english_passed),
     }
+
+
+_WORD = re.compile(r"[a-z0-9']+")
+_CITATION_MARK = re.compile(r"\[[\d,\s]+\]")
+
+
+def answer_checks(
+    text: str, numbers: list[int], sources: list[str], english: bool, max_copied_words: int
+) -> dict[str, float]:
+    """Code-based checks on one answer.
+
+    `numbers` are the source numbers the answer cites, `sources` the texts it was given.
+    - cites: it cites at least one real source (1 or 0);
+    - cites_ok: every cited number has a source (1 or 0);
+    - english: the answer is in English (1 or 0);
+    - copied: the longest run of words copied from one source;
+    - paraphrase: that run is at most `max_copied_words` long (1 or 0).
+    """
+    copied = longest_copied_run(text, sources)
+    valid = [n for n in numbers if 1 <= n <= len(sources)]
+    return {
+        "cites": float(bool(valid)),
+        "cites_ok": float(len(valid) == len(numbers)),
+        "english": float(english),
+        "copied": float(copied),
+        "paraphrase": float(copied <= max_copied_words),
+    }
+
+
+def longest_copied_run(text: str, sources: list[str]) -> int:
+    """Length in words of the longest run of `text` found word for word in one source.
+
+    Case and punctuation are ignored, and citation marks ("[2]") are removed first.
+    """
+    words = _words(_CITATION_MARK.sub(" ", text))
+    return max((_longest_common_run(words, _words(source)) for source in sources), default=0)
+
+
+def _words(text: str) -> list[str]:
+    return _WORD.findall(text.lower())
+
+
+def _longest_common_run(a: list[str], b: list[str]) -> int:
+    # Classic longest-common-substring table, one row at a time: O(len(a) * len(b)).
+    best = 0
+    previous = [0] * (len(b) + 1)
+    for word in a:
+        current = [0] * (len(b) + 1)
+        for j, other in enumerate(b, start=1):
+            if word == other:
+                current[j] = previous[j - 1] + 1
+                best = max(best, current[j])
+        previous = current
+    return best

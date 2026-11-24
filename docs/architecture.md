@@ -241,6 +241,8 @@ If retrieval is poor, no prompt will save generation: optimize retrieval **first
 
 ### 7.3 Generation metrics (LLM-as-judge)
 
+Implemented in v0.5.0 (ADR 0008): the judge grades correctness (correct / partial / incorrect), faithfulness and whether the answer declines; code-based checks add citations present and valid, English, and the longest run copied from a source. Answer relevance and citation accuracy are still to come.
+
 | Metric | What it measures |
 |---|---|
 | **Faithfulness / groundedness** | Is every claim supported by the retrieved context? (anti-hallucination) |
