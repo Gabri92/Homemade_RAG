@@ -1,6 +1,6 @@
 # Command cheat sheet
 
-Commands available now, grouped by task. The full list, including the ones planned for Phase 3b (`ask`, `eval compare`), is in `docs/steering/tech.md`. `uv run homerag --help` (or `<command> --help`) prints the live options.
+Commands available now, grouped by task. The full list, including the one planned for Phase 3b (`eval compare`), is in `docs/steering/tech.md`. `uv run homerag --help` (or `<command> --help`) prints the live options.
 
 Everything under `data/` is gitignored: outputs written there never reach the repository.
 
@@ -32,6 +32,16 @@ Everything under `data/` is gitignored: outputs written there never reach the re
 | `uv run homerag search "..." --text` | Same, plus a short snippet of each chunk, for your own terminal only (never paste it into issues, posts or logs) |
 
 Embeddings are cached in `data/cache/embeddings/` (one `.npy` per model + text): deleting the folder only costs recomputation.
+
+## Ask (Phase 3b)
+
+| Command | What it does |
+|---|---|
+| `uv run homerag ask "How long is the base period?"` | Full answer: language gate, retrieval, Claude with the `answer_v1` prompt. Prints the answer with `[n]` markers, the cited sections and pages, tokens and cost (about a cent). Needs the index and `ANTHROPIC_API_KEY` in `.env` (see `.env.example`) |
+| `uv run homerag ask "..." --config configs/experiments/<name>.yaml` | Same, with another experiment's model, effort, prompt or retrieval |
+| `uv run pytest -m integration` | Also runs one real Claude call (about a cent); skipped without an API key |
+
+Answers are cached in `data/cache/llm/` (one JSON per request): asking the same question with the same config again costs nothing and prints "cached, not paid again".
 
 ## Golden set
 

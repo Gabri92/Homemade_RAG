@@ -40,10 +40,10 @@ uv run homerag ask "question"            # single Q&A
 uv run homerag eval run --config configs/experiments/<name>.yaml
 uv run homerag eval compare <run_a> <run_b>
 ```
-> Available now: `dump`, `ingest`, `inspect`, `sections`, `eval check`, `index`, `search`, `eval run` (retrieval and language gate; generation and judge arrive in Phase 3b). `ask` and `eval compare` arrive in Phase 3b. `uv run homerag --help` lists the existing commands. Task-oriented cheat sheet of what is available now: `docs/commands.md` (keep it aligned when commands change).
+> Available now: `dump`, `ingest`, `inspect`, `sections`, `eval check`, `index`, `search`, `ask`, `eval run` (retrieval and language gate; generation and judge arrive in Phase 3b). `eval compare` arrives in Phase 3b. `uv run homerag --help` lists the existing commands. Task-oriented cheat sheet of what is available now: `docs/commands.md` (keep it aligned when commands change).
 
 ## Secrets and configuration
-- `ANTHROPIC_API_KEY` and the like only in `.env` (gitignored), read through `pydantic-settings`.
+- `ANTHROPIC_API_KEY` and the like only in `.env` (gitignored; `.env.example` lists the variables), read through `pydantic-settings` as `SecretStr`, never logged. Use a key from a Console workspace dedicated to this project, with a spending limit; the shared demo gets its own key. `.claude/settings.json` denies Claude Code reading `.env`.
 - No magic values in code: models, k, chunk sizes and prompts live in the experiment config.
 
 ## Dependency policy
@@ -52,8 +52,9 @@ uv run homerag eval compare <run_a> <run_b>
 - Every external library is imported in a single module (see `structure.md`).
 
 ## Cost and reproducibility
-- Temperature 0 for the judge and for experiments.
-- On-disk cache for embeddings (key = text hash + model) and judge answers, so identical calls are never paid twice.
+- The Claude API no longer accepts `temperature`: a fixed `effort` per config and the on-disk caches make runs repeatable.
+- On-disk cache for embeddings (key = text hash + model) and for LLM answers (`data/cache/llm/`, key = the whole request: model, effort, max_tokens, prompt, message), so identical calls are never paid twice.
+- Cost per call is computed in `llm.py` from the response's tokens and a price table (`PRICES`), and logged.
 - Every eval run saves the full config and the version of the prompts it used.
 
 ## Claude Code

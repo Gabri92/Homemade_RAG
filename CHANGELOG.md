@@ -6,6 +6,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 ## [Unreleased]
 
 ### Added
+- Claude generator: `llm.py` (the only module importing `anthropic`: `LLMRequest` -> `Completion`, on-disk answer cache in `data/cache/llm/`, cost from a price table, server-side refusal fallbacks), prompt `answer_v1`, `qa.answer` (gate -> retrieval -> generation -> citations built from chunk metadata, ADR 0007) and `homerag ask "question"`. `Usage` and `Citation.source` in the data types; `generation.max_tokens` 4096 in the baseline.
+- `.env.example`; `.claude/settings.json` denies Claude Code reading `.env`.
 - Language gate (`language.is_english`, `build_detector`, `NOTICE`; ADR 0006): local, deterministic detection with `lingua-py` among the configured languages; a message is blocked only when a non-English language reaches `min_confidence`, and messages under `min_words` always pass. New `language_gate` section in the experiment config.
 - Gate accuracy in `homerag eval run`: every golden question goes through the gate (`eval/metrics.gate_metrics`: accuracy, English blocked, non-English passed); saved in `gate.json` and printed with the misjudged ids. Baseline: 40/40 correct.
 

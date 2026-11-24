@@ -103,12 +103,30 @@ class RetrievedChunk:
 
 @dataclass(frozen=True, slots=True)
 class Citation:
-    """Where a claim comes from, built from the chunk's metadata, never from model text."""
+    """Where a claim comes from, built from the chunk's metadata, never from model text.
 
+    `source` is the number the answer uses for it ("[2]"): the chunk's position in the
+    context. A chunk covering several sections gives one citation per section (ADR 0005).
+    """
+
+    source: int
     chunk_id: str
     section_id: str
     section_path: tuple[str, ...]
     page: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Usage:
+    """What one LLM call used and cost. `model` is the model that answered: with refusal
+    fallbacks it may differ from the one requested. `cached` means it came from the on-disk
+    cache, so nothing was paid this time; `cost_usd` is still what the call cost when made."""
+
+    model: str
+    input_tokens: int
+    output_tokens: int
+    cost_usd: float
+    cached: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,3 +142,4 @@ class Answer:
     citations: tuple[Citation, ...] = ()
     retrieved: tuple[RetrievedChunk, ...] = ()
     blocked_by_gate: bool = False
+    usage: Usage | None = None

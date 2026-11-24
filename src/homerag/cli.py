@@ -7,7 +7,7 @@ from typing import Annotated
 
 import typer
 
-from homerag.config import load_experiment
+from homerag.config import load_experiment, load_settings
 from homerag.eval.dataset import check_references, load_golden
 from homerag.eval.run import format_gate, format_metrics, run_experiment
 from homerag.index import ensure_index
@@ -22,6 +22,7 @@ from homerag.ingest import (
     load_epub,
     save_book,
 )
+from homerag.qa import answer, format_answer, load_resources
 from homerag.retrieval import format_results, search
 
 app = typer.Typer(
@@ -135,6 +136,24 @@ def search_command(
         typer.echo(f"ERROR {error}")
         raise typer.Exit(code=1) from error
     typer.echo(format_results(results, show_text=text), nl=False)
+
+
+@app.command()
+def ask(
+    question: Annotated[str, typer.Argument(help="The question, in English, in quotes.")],
+    config: Annotated[
+        Path, typer.Option(exists=True, dir_okay=False, help="Experiment YAML.")
+    ] = BASELINE,
+) -> None:
+    """Answer one question from the document, with citations (calls the Claude API)."""
+    try:
+        cfg = load_experiment(config)
+        resources = load_resources(cfg, load_settings())
+        result = answer(question, resources, cfg)
+    except (ValueError, OSError) as error:  # bad config, missing index or API key
+        typer.echo(f"ERROR {error}")
+        raise typer.Exit(code=1) from error
+    typer.echo(format_answer(result), nl=False)
 
 
 @eval_app.command("check")

@@ -253,7 +253,7 @@ If retrieval is poor, no prompt will save generation: optimize retrieval **first
 Good practices for the judge:
 - **Explicit rubric** with a small scale (e.g. 1–3 or pass/fail) and reasoning before the score.
 - **Calibration:** label ~30 answers by hand and measure agreement with the judge before trusting the numbers.
-- A judge from a different/stronger model than the generator, temperature 0.
+- A judge from a different/stronger model than the generator, with a fixed effort; its answers are cached, so a repeated run is not paid again (the API no longer accepts `temperature`).
 
 ### 7.4 Experiments
 

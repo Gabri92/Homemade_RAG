@@ -174,3 +174,13 @@ def test_eval_run_exits_1_on_invalid_config(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "ERROR" in result.output
+
+
+def test_ask_exits_1_on_invalid_config(tmp_path: Path) -> None:
+    config = tmp_path / "bad.yaml"
+    config.write_text("name: bad\n", encoding="utf-8")
+
+    result = runner.invoke(app, ["ask", "How long is the base period?", "--config", str(config)])
+
+    assert result.exit_code == 1
+    assert "ERROR" in result.output
