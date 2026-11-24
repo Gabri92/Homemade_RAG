@@ -6,8 +6,10 @@ eval/datasets/golden.jsonl
 *.epub
 *.pdf
 
-# Secrets
+# Secrets: .env and every variant (.env.local, .env.production, ...), except the example
 .env
+.env.*
+!.env.example
 
 # Personal notes (prompting, building in public): local only
 notes/
@@ -31,3 +33,7 @@ build/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Personal Claude Code settings: chat language, local permissions and paths
+CLAUDE.local.md
+.claude/settings.local.json

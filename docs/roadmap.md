@@ -61,28 +61,52 @@ The largest phase: it builds the whole pipeline end to end, plus the way to meas
 **Learning:** have a starting number, at zero API cost. It will probably be mediocre: that's fine.
 **Deliverable:** first run in `eval/runs/` with retrieval metrics per category.
 
-### Phase 3b — Generation and judge (v0.5.0)
+### Phase 3b — Generation and judge ✅ (v0.5.0)
 
-6. Language gate with `lingua-py`: non-English message → notice, no query.
-7. Claude generator: `llm.py` (retries, cache, cost), prompt `answer_v1` with citations, answers in English, `qa.answer`; `homerag ask "question"`.
-8. **LLM judge** (correctness, faithfulness, refusal on `out_of_scope`) + the full `eval run` (retrieval + generation, cost and latency per question) + `eval compare`.
-9. Development tooling, once `eval run` exists: the `/experiment` skill and the `eval-analyst` subagent (see `docs/working-with-claude-code.md`, "Planned").
+> First full baseline run (30 answered questions, $1.14, about 3.6 s per answer): correct 0.77, faithful 0.97, paraphrase 1.00. Weakest: `table` (correct 0.30, declined 0.60) and `follow_up` (0.50). Most wrong answers are honest refusals when retrieval missed the cited section, so retrieval (Phase 5) comes before prompt work.
+
+6. Language gate with `lingua-py`: non-English message → notice, no query. Gate accuracy (deterministic) scored by `eval run` on every golden question. ✅
+7. Claude generator: `llm.py` (retries, cache, cost), prompt `answer_v1` with citations, answers in English, `qa.answer`; `homerag ask "question"` (ADR 0007). ✅
+8. **LLM judge** (correctness, faithfulness, refusal on `out_of_scope`) + code-based answer checks + the full `eval run` (retrieval + generation, cost and latency per question) + `eval compare` (ADR 0008). ✅
+9. Development tooling, once `eval run` exists: the `/experiment` skill and the `eval-analyst` subagent, with `docs/reading-a-run.md` as the guide they follow (see `docs/working-with-claude-code.md`). ✅
 
 **Learning:** what a complete RAG answer costs, and how far a simple prompt gets.
 **Deliverable:** first full run in `eval/runs/` with judged answers per category.
 
 ---
 
-## Phase 4 — Minimal chat interface
+## Phase 4 — Shared demo: web chat over documents
 
-Right after the first complete pipeline, so that the build-in-public posts can show the product working, not only CLI output and metrics.
+Right after the first complete pipeline, before the optimizations: a web page reachable through a link, with no installation and no sign-in, where a visitor picks a document and chats with it. The build-in-public posts can then show the product working and people can try it; Phases 5–6 improve a product that is already online. Product rules: `docs/steering/product.md`, "Shared demo".
 
-- Streamlit or Gradio calling the same `qa.answer()` (no logic in the UI).
-- Shows expandable citations (chapter/section + short excerpt).
-- 👍/👎 button that saves the interaction: it becomes material for new golden set questions.
-- Local only: the shared demo, with visitors uploading their own documents, stays in "Later". Screenshots and videos for posts show short paraphrased answers, never long excerpts of the book.
+It is split in two. Most of the risk of a public demo comes from files sent by strangers: malicious files, other people's copyright and personal data, session isolation, indexing while the visitor waits. 4a avoids all of it by serving only documents chosen and prepared by the author, so the link can be public early, with the cost of questions as the main remaining risk. 4b adds uploads, planned in detail along the way.
 
-**Deliverable:** a usable local chat, good enough to show in public.
+### Phase 4a — Public demo on curated documents
+
+1. **Curated documents**: 2–3 sports or technical documents in English whose license allows showing excerpts to the public (public domain or an open license such as Creative Commons); never the reference book. Each one is ingested and checked by hand like the reference book, with a small golden set, so the quality of the demo is measured.
+2. **Indexes built offline**: on the author's machine (GPU), published with the demo as read-only files shared by all visitors. The server only embeds the question, so it needs no GPU.
+3. **Web chat** (Streamlit or Gradio, chosen at the start of the phase): pick a document, ask, read the answer with expandable citations (chapter/section + short excerpt). It calls the same `qa.answer()`: no logic in the UI. First on this machine, on the reference book.
+4. **Cost and abuse limits**: a spending limit on the API key in the Anthropic console (the final safety net, independent of the code); a global daily budget in the app (the real ceiling: without accounts, per-visitor limits can be bypassed); per-visitor limits on questions; a clear message when one is reached. Questions are not stored beyond what answering needs, and the page says so.
+5. **Hosting** on a public URL (platform chosen at the start of the phase): secrets only in the platform's secret store; the deployed files are checked so that the reference book and its derivatives are never included.
+
+In local use (the author, on the reference book) a 👍/👎 button saves the interaction as material for new golden set questions.
+
+Decisions recorded as ADRs at the start of the phase: UI framework, hosting platform, curated documents and their licenses, limit values. Screenshots and videos for posts show short paraphrased answers, never long excerpts of the book.
+
+**Learning:** what it takes to put a RAG in front of other people: hosting, cost control, cost per question measured with real use.
+**Deliverable:** a public link where anyone can chat with the curated documents, within a daily budget.
+
+### Phase 4b — Document upload (planned along the way)
+
+Visitors upload their own documents, as in NotebookLM. It brings back the risks that 4a avoids, so it is planned in detail with the numbers from 4a (cost per question, traffic) and may come after the optimizations. Starting point:
+- **Upload and indexing**: ingestion and indexing while the page shows progress; indexing time measured first (the host's CPU, a GPU, or an embedding API; changing the embedding model is an experiment on the golden set).
+- **Checks on uploaded documents, with clear messages** that say what happened and what to do next: DRM-protected, corrupt or unsupported file → rejected (DRM detection does not exist yet in the loader); not in English → rejected (same detection as the language gate, on a sample of the text); too large, or too large once decompressed (an ePub is a zip) → rejected, with a time limit on processing; extraction problems found by the generic quality report → a warning in plain words. Every check is tested with synthetic files, messages included.
+- **Security on untrusted files**: zip bombs, XML external entities in the ePub parser.
+- **Isolation and deletion**: a document and its index belong to the visitor's session only and are deleted after a time limit or on request; tested so that one session never reads another's files, also under concurrent use.
+- **Terms of use and privacy notice** before the first upload: upload only documents you have the right to use; uploads serve only to answer their owner and are deleted afterwards; how long data is kept.
+- Per-visitor limits on uploads; hosting resized for indexing.
+
+**Deliverable:** visitors can upload an English ePub and chat with it, with a clear message for every rejected or badly extracted document.
 
 ---
 
@@ -117,8 +141,8 @@ How to run them:
 1. Prompt: strict grounding, citation format, answers in English keeping the book's terms.
 2. Handling `out_of_scope`: explicit refusal.
 3. Multi-turn: condensing the follow-up into a standalone question before retrieval.
-3b. *Gate accuracy* metric (deterministic) on the `non_english` category.
 4. **Judge calibration**: label ~30 answers by hand, measure judge/human agreement, fix the rubric.
+4b. **Numeric match check** (code-based, free): the numbers in the reference answer must appear in the answer; aimed at `table` and `factual`, and a cross-check on the judge (architecture §7.3).
 5. **Experiment: our citations vs the Claude API's native citations.** Pass the retrieved chunks as document/content blocks with citations enabled, so the API returns the cited text and its location; we keep our own metadata (chapter, section, printed page) to show the reader. Same golden set and judge: compare citation accuracy, faithfulness and prompt complexity against our prompt-based citation format. Answers whether citation handling is worth building ourselves.
 
 **Deliverable:** faithfulness and refusal correctness measured and reliable.
@@ -155,12 +179,10 @@ Only if the build-in-public phase asks for it; the RAG pipeline and its evaluati
 
 ## Later (out of scope for now)
 
-- **Shared demo (build in public)**: the product reachable through a link, no accounts. Visitors upload their own documents and ask questions about them (see `docs/steering/product.md`, "Shared demo"). Before it goes out: terms of use and deletion for uploaded documents, rejection of DRM-protected files, a usage limit, and indexing time measured (local embedding model vs an embedding API) as an experiment.
-
-- **User-added sources** (NotebookLM style; it is what the shared demo serves): the Loader and Cleaner rules are already generic (they work on HTML semantics and on `Block`), but thresholds and expected values are tuned on a single book. To generalize:
+- **User-added sources, generalized** (the uploads of Phase 4b serve them): the Loader and Cleaner rules are already generic (they work on HTML semantics and on `Block`), but thresholds and expected values are tuned on a single book. To generalize:
   1. **ingestion corpus**: a few copyright-free ePubs/PDFs from different publishers (e.g. Project Gutenberg, Standard Ebooks, open-access articles), each with its own expected values, run as regression tests;
-  2. **automatic quality report** computed on every uploaded file, with no expected values: generic invariants (coverage of the source text, heading structure, untitled tables, figures without captions, duplicate rate, anomalous blocks) → warnings to the user when a document is extracted badly;
-  3. **downstream evaluation**: a small golden set of questions for each corpus document, because ingestion quality is ultimately measured by the answers. The corpus favours sports and technical documents (manuals, guides, papers): the kind of document the product is evaluated on.
+  2. **automatic quality report** computed on every uploaded file, with no expected values: generic invariants (coverage of the source text, heading structure, untitled tables, figures without captions, duplicate rate, anomalous blocks) → warnings to the user when a document is extracted badly (first shown to visitors in Phase 4b, then refined);
+  3. **downstream evaluation**: a small golden set of questions for each corpus document (the curated documents of Phase 4a are the first ones), because ingestion quality is ultimately measured by the answers. The corpus favours sports and technical documents (manuals, guides, papers): the kind of document the product is evaluated on.
 
 - **Figures with Claude's multimodality**: during ingestion, images (first tables published as images, then charts and illustrations) are passed to Claude, which transcribes tables to Markdown and describes figures. The generated text replaces the caption-only `figure` block and is cached, so each image is paid for once. Measured as an experiment: golden set questions that depend on figures, before and after.
 

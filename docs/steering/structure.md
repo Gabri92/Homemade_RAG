@@ -6,7 +6,7 @@ Principle: **KISS**. One module per concept, functions before classes, no extra 
 Modules marked *(placeholder)* contain only a docstring describing their purpose: they are filled in from Phase 3 onwards.
 ```
 src/homerag/
-  models.py      # dataclasses: Block, Section, Book, SectionRef, Chunk, RetrievedChunk, Citation, Answer
+  models.py      # dataclasses: Block, Section, Book, SectionRef, Chunk, RetrievedChunk, Citation, Usage, Answer
   config.py      # settings (.env) + experiment config (YAML -> pydantic, frozen, unknown fields rejected)
   ingest/        # source -> blocks -> cleaning -> sections -> data/processed/book.json (ADR 0002)
     __init__.py  #   public API: from outside, import only from `homerag.ingest`
@@ -19,17 +19,18 @@ src/homerag/
   chunking.py    # chunking strategies (functions) + CHUNKERS registry: fixed
   index.py       # device choice, tokenizer offsets, EMBEDDERS + on-disk cache, vector index save/load (BM25 with 5.3)
   retrieval.py   # RETRIEVERS: dense (then bm25, RRF fusion, rerank in Phase 5); search, format_results
-  language.py    # (placeholder) language gate: is_english(text)
-  llm.py         # (placeholder) the single access point to the Anthropic API
-  qa.py          # (placeholder) answer(question) -> Answer: gate -> retrieve -> generate
-  prompts/       # (placeholder) prompts as versioned .md files
+  language.py    # language gate: build_detector, is_english(text, detector, cfg), NOTICE
+  llm.py         # the single access point to the Anthropic API: LLMRequest -> Completion, cache, cost, prompts
+  qa.py          # answer(question, resources, cfg) -> Answer: gate -> retrieve -> generate -> citations
+  prompts/       # prompts as versioned .md files (answer_v1.md, judge_v1.md)
   eval/          # evaluation harness
     dataset.py   #   golden set: GoldenQuestion schema, load_golden, check_references
-    metrics.py   #   retrieval metrics (hit@k, recall@k, reciprocal rank) + aggregate per category
-    judge.py     #   (placeholder) LLM-as-judge
-    run.py       #   runs an experiment on the golden set (retrieval only in 3a) and saves it (compare in 3b)
-  cli.py         # typer commands: dump, ingest, inspect, sections, index, search, eval check, eval run (then ask, eval compare)
-.claude/               # Claude Code project settings: settings.json (hooks) + hooks/ scripts
+    metrics.py   #   retrieval metrics (hit@k, recall@k, reciprocal rank), gate metrics, code-based answer checks, aggregate per category
+    judge.py     #   LLM-as-judge: Verdict (structured outputs), judge, verdict_scores
+    run.py       #   runs an experiment on the golden set: gate, retrieval, answers + judge (`retrieval_only` skips them)
+    report.py    #   run files: save_run, load_run, format_*, compare_runs (RUN_FORMAT)
+  cli.py         # typer commands: dump, ingest, inspect, sections, index, search, ask, eval check, eval run, eval compare
+.claude/               # Claude Code project settings: settings.json (hooks, deny reading .env), hooks/, agents/eval-analyst.md, skills/experiment/
 configs/experiments/   # one YAML per experiment: baseline.yaml is the Phase 3 starting point
 eval/datasets/         # golden.jsonl (hand-written, gitignored: kept local, ADR 0004) + example.jsonl (synthetic, committed)
 eval/runs/             # run outputs (gitignored)
@@ -43,7 +44,7 @@ tests/                 # one kind of test = one folder (see conventions.md, "Tes
     test_golden.py     #     golden-set section ids exist in the current ingestion (skipped until golden.jsonl exists)
   corpus/              #   generalization on ePubs from other publishers in data/corpus/ (`corpus` marker)
     expectations.py    #     expected values and where to download each ePub
-  integration/         #   real APIs and models: `integration` marker set in integration/conftest.py
+  integration/         #   real APIs and models (bge-m3 tokenizer, one Claude call): `integration` marker set in integration/conftest.py
   e2e/                 #   (from Phase 3b) question -> cited answer on the real book
 ```
 

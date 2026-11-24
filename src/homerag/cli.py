@@ -7,9 +7,10 @@ from typing import Annotated
 
 import typer
 
-from homerag.config import load_experiment
+from homerag.config import load_experiment, load_settings
 from homerag.eval.dataset import check_references, load_golden
-from homerag.eval.run import format_metrics, run_experiment
+from homerag.eval.report import compare_runs, format_cost, format_gate, format_metrics, load_run
+from homerag.eval.run import RUNS_ROOT, run_experiment
 from homerag.index import ensure_index
 from homerag.ingest import (
     clean,
@@ -22,6 +23,7 @@ from homerag.ingest import (
     load_epub,
     save_book,
 )
+from homerag.qa import answer, format_answer, load_resources
 from homerag.retrieval import format_results, search
 
 app = typer.Typer(
@@ -137,6 +139,24 @@ def search_command(
     typer.echo(format_results(results, show_text=text), nl=False)
 
 
+@app.command()
+def ask(
+    question: Annotated[str, typer.Argument(help="The question, in English, in quotes.")],
+    config: Annotated[
+        Path, typer.Option(exists=True, dir_okay=False, help="Experiment YAML.")
+    ] = BASELINE,
+) -> None:
+    """Answer one question from the document, with citations (calls the Claude API)."""
+    try:
+        cfg = load_experiment(config)
+        resources = load_resources(cfg, load_settings())
+        result = answer(question, resources, cfg)
+    except (ValueError, OSError) as error:  # bad config, missing index or API key
+        typer.echo(f"ERROR {error}")
+        raise typer.Exit(code=1) from error
+    typer.echo(format_answer(result), nl=False)
+
+
 @eval_app.command("check")
 def eval_check(
     golden: Annotated[
@@ -169,15 +189,49 @@ def eval_run(
     golden: Annotated[
         Path, typer.Option(exists=True, dir_okay=False, help="Golden-set JSONL file.")
     ] = GOLDEN,
+    retrieval_only: Annotated[
+        bool,
+        typer.Option("--retrieval-only", help="Skip answers and judge: free, no API key needed."),
+    ] = False,
 ) -> None:
-    """Run an experiment on the golden set (retrieval only for now) and save it in eval/runs/."""
+    """Run an experiment on the golden set and save it in eval/runs/.
+
+    Gate, retrieval, then answers graded by the judge (about $1 the first time; a repeated
+    run is served from the cache).
+    """
     try:
-        report = run_experiment(config, golden)
-    except (ValueError, OSError) as error:  # bad config or golden set, missing book.json
+        report = run_experiment(config, golden, retrieval_only=retrieval_only)
+    except (ValueError, OSError) as error:  # bad config or golden set, missing book.json or key
         typer.echo(f"ERROR {error}")
         raise typer.Exit(code=1) from error
-    typer.echo(format_metrics(report.metrics), nl=False)
+    typer.echo("retrieval")
+    typer.echo(format_metrics(report.metrics["retrieval"]), nl=False)
     if report.skipped:
         skipped = ", ".join(f"{c} {n}" for c, n in report.skipped.items())
         typer.echo(f"not scored on retrieval (no cited sections): {skipped}")
+    if report.metrics["generation"]:
+        typer.echo("\ngeneration")
+        typer.echo(format_metrics(report.metrics["generation"]), nl=False)
+        typer.echo(format_cost(report.cost), nl=False)
+    typer.echo("")
+    typer.echo(format_gate(report.metrics["gate"]["all"], report.gate_errors), nl=False)
     typer.echo(f"saved to {report.folder}")
+
+
+@eval_app.command("compare")
+def eval_compare(
+    run_a: Annotated[str, typer.Argument(help="First run: folder, or its name in eval/runs/.")],
+    run_b: Annotated[str, typer.Argument(help="Second run, compared with the first.")],
+) -> None:
+    """Compare two saved runs: metric changes per category and the questions that changed."""
+    try:
+        a, b = (load_run(_run_folder(name)) for name in (run_a, run_b))
+    except ValueError as error:
+        typer.echo(f"ERROR {error}")
+        raise typer.Exit(code=1) from error
+    typer.echo(compare_runs(a, b), nl=False)
+
+
+def _run_folder(name: str) -> Path:
+    path = Path(name)
+    return path if path.exists() else RUNS_ROOT / name

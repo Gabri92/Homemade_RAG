@@ -9,7 +9,7 @@ Read and follow the steering files:
 @docs/steering/structure.md
 @docs/steering/conventions.md
 
-References (read them when you touch the related area): `docs/architecture.md`, `docs/roadmap.md`, `docs/adr/`, `docs/ingestion-findings.md` (book defects and their status: update it when you fix or find an ingestion problem), `docs/working-with-claude-code.md` (how this repo is set up for Claude Code), `docs/commands.md` (command cheat sheet: update it when commands change). The user's personal notes live in `notes/` (gitignored): never commit them or quote them in repository docs.
+References (read them when you touch the related area): `docs/architecture.md`, `docs/roadmap.md`, `docs/adr/`, `docs/ingestion-findings.md` (book defects and their status: update it when you fix or find an ingestion problem), `docs/reading-a-run.md` (how to interpret an eval run), `docs/working-with-claude-code.md` (how this repo is set up for Claude Code), `docs/commands.md` (command cheat sheet: update it when commands change). The user's personal notes live in `notes/` (gitignored): never commit them or quote them in repository docs.
 
 ## Rules that always apply
 
@@ -20,4 +20,4 @@ References (read them when you touch the related area): `docs/architecture.md`, 
 5. **Definition of done**: `uv run ruff check . && uv run ruff format --check . && uv run mypy src && uv run pytest` all green.
 6. **Architectural decisions** (new component, technology change, winning config) → a new ADR in `docs/adr/`.
 7. **Keep the docs aligned**: if you change structure, commands or conventions, update the matching steering file in the same change.
-8. **Language**: everything in the repository (code, docs, comments, commits) is in **English**, because the project is built in public. Chat replies to the user are in **Italian**.
+8. **Language**: everything in the repository (code, docs, comments, commits) is in **English**, because the project is built in public. Chat replies are in **English** by default; a contributor can set another language for their own replies in `CLAUDE.local.md` (gitignored, never committed).

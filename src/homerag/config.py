@@ -33,6 +33,21 @@ class _Section(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
 
+class LanguageGateConfig(_Section):
+    # ISO 639-1 codes the detector chooses among; a small set makes detection more accurate.
+    languages: tuple[str, ...] = Field(min_length=2)
+    # Messages with fewer words are let through: detection on very short text is unreliable.
+    min_words: int = Field(gt=0)
+    # A message is blocked only if a non-English language reaches this confidence.
+    min_confidence: float = Field(gt=0, le=1)
+
+    @model_validator(mode="after")
+    def _english_among_unique_codes(self) -> Self:
+        if "en" not in self.languages or len(set(self.languages)) != len(self.languages):
+            raise ValueError("languages must include 'en' and have no repeats")
+        return self
+
+
 class ChunkingConfig(_Section):
     strategy: Literal["fixed"]
     size_tokens: int = Field(gt=0)
@@ -67,12 +82,15 @@ class GenerationConfig(_Section):
 class JudgeConfig(_Section):
     model: str
     effort: Effort
+    max_tokens: int = Field(gt=0)
     prompt: str
 
 
 class EvaluationConfig(_Section):
     # Cut-offs for hit rate and recall: all computed from the same top_k ranking.
     ks: tuple[int, ...] = Field(min_length=1)
+    # An answer copying a longer run of words from one source fails the "paraphrase" check.
+    max_copied_words: int = Field(gt=0)
 
     @model_validator(mode="after")
     def _sorted_positive_unique(self) -> Self:
@@ -82,10 +100,12 @@ class EvaluationConfig(_Section):
 
 
 class ExperimentConfig(_Section):
-    """One experiment: which document, and how to chunk, embed, retrieve, generate, judge."""
+    """One experiment: which document, the language gate, how to chunk, embed, retrieve,
+    generate, judge."""
 
     name: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]*$")
     document: Path
+    language_gate: LanguageGateConfig
     chunking: ChunkingConfig
     embedding: EmbeddingConfig
     retrieval: RetrievalConfig

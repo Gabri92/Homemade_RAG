@@ -5,6 +5,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-24
+
+Phase 3b: generation and judge. The first complete pipeline, measured end to end: correct 0.77, faithful 0.97, gate 40/40, about $1 per full run.
+
+### Added
+- `forbid-secrets` pre-commit hook: refuses `.env` and its variants, `CLAUDE.local.md`, `notes/` and `.claude/settings.local.json` even after `git add -f`; `.gitignore` now covers `.env.*` (except `.env.example`) and `.claude/settings.local.json`.
+- `docs/reading-a-run.md`: how to read a run, column by column, and from symptoms to causes and levers. The `/experiment` skill (`.claude/skills/experiment/`) runs an experiment end to end; the `eval-analyst` subagent (`.claude/agents/`) reports on one or two runs following the guide.
+- LLM judge (`eval/judge.py`, prompt `judge_v1`, ADR 0008): one structured-output call per answer to `claude-opus-5-5` returning reasoning, correctness (correct / partial / incorrect), faithfulness and whether the answer declines. Code-based answer checks in `eval/metrics.py`: cites a source, cites only real sources, English, longest run copied from a source (`evaluation.max_copied_words`).
+- Full `homerag eval run`: gate, retrieval, answers and judge, with cost and latency per question; `--retrieval-only` for the free loop. Run files moved to `eval/report.py` (`RUN_FORMAT` 2: one `results.jsonl` row per question, `metrics.json` by part, no `gate.json`). `homerag eval compare <run_a> <run_b>`: changes per category and the questions that got worse or better. First full baseline: correct 0.77, faithful 0.97, $1.14.
+- Structured outputs and per-call latency in `llm.py`; `judge.max_tokens` in the experiment config.
+- Claude generator: `llm.py` (the only module importing `anthropic`: `LLMRequest` -> `Completion`, on-disk answer cache in `data/cache/llm/`, cost from a price table, server-side refusal fallbacks), prompt `answer_v1`, `qa.answer` (gate -> retrieval -> generation -> citations built from chunk metadata, ADR 0007) and `homerag ask "question"`. `Usage` and `Citation.source` in the data types; `generation.max_tokens` 4096 in the baseline.
+- `.env.example`; `.claude/settings.json` denies Claude Code reading `.env`.
+- Language gate (`language.is_english`, `build_detector`, `NOTICE`; ADR 0006): local, deterministic detection with `lingua-py` among the configured languages; a message is blocked only when a non-English language reaches `min_confidence`, and messages under `min_words` always pass. New `language_gate` section in the experiment config.
+- Gate accuracy in `homerag eval run`: every golden question goes through the gate (`eval/metrics.gate_metrics`: accuracy, English blocked, non-English passed); saved in `gate.json` and printed with the misjudged ids. Baseline: 40/40 correct.
+
+### Changed
+- Roadmap: Phase 4 becomes the shared web demo, before the optimizations: 4a a public demo on curated, openly licensed documents (indexes built offline, cost limits); 4b document upload, planned along the way. Product, architecture and the risk notes follow.
+- Uploaded documents must be in English, like questions (product.md, architecture §4.1).
+- Reproducibility no longer relies on `temperature` (the API rejects it): fixed `effort` per config plus on-disk caches (`tech.md`).
+- Run files: `RUN_FORMAT` 2 (one `results.jsonl` row per question, `metrics.json` by part, no `gate.json`). Runs saved by 0.4.0 must be run again to be compared.
+
 ## [0.4.0] - 2026-11-24
 
 Phase 3a: retrieval baseline. First measured number at zero API cost.
