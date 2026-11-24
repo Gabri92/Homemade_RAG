@@ -8,6 +8,7 @@
 | Data and config validation | `pydantic` v2, `pydantic-settings`, YAML config |
 | LLM | `anthropic` SDK; generation `claude-sonnet-5-5`, judge `claude-opus-5-5` (configurable) |
 | Embedding / reranker | `sentence-transformers` with `BAAI/bge-m3` and `BAAI/bge-reranker-v2-m3` |
+| Torch | CUDA 12.6 build on Windows (local GPU), CPU build on Linux (CI), set in `[tool.uv.sources]`; the device is chosen at runtime from the experiment config |
 | Index | in-memory `numpy` (persisted to file); `rank-bm25` for lexical search |
 | Language detection | `lingua-py` (language gate: English only) |
 | Extraction | `ebooklib` + `beautifulsoup4` (ePub), `pymupdf` (PDF) |
@@ -33,11 +34,13 @@ uv run homerag ingest data/raw/<book>.epub  # load + clean + structure -> data/p
 uv run homerag inspect data/raw/<book>.epub # quality report (numbers only); exit code 1 on warnings
 uv run homerag sections                  # section ids, pages, excluded flags -> data/processed/sections.txt
 uv run homerag eval check                # validate eval/datasets/golden.jsonl against data/processed/book.json
+uv run homerag index [--config configs/experiments/<name>.yaml]  # chunk + embed -> data/index/ (reused if up to date)
+uv run homerag search "question" [--text]  # retrieval only: ranked chunks, no LLM
 uv run homerag ask "question"            # single Q&A
 uv run homerag eval run --config configs/experiments/<name>.yaml
 uv run homerag eval compare <run_a> <run_b>
 ```
-> Available now: `dump`, `ingest`, `inspect`, `sections`, `eval check`. `ask`, `eval run` and `eval compare` arrive in Phase 3. `uv run homerag --help` lists the existing commands. Task-oriented cheat sheet of what is available now: `docs/commands.md` (keep it aligned when commands change).
+> Available now: `dump`, `ingest`, `inspect`, `sections`, `eval check`, `index`, `search`, `eval run` (retrieval only until Phase 3b). `ask` and `eval compare` arrive in Phase 3b. `uv run homerag --help` lists the existing commands. Task-oriented cheat sheet of what is available now: `docs/commands.md` (keep it aligned when commands change).
 
 ## Secrets and configuration
 - `ANTHROPIC_API_KEY` and the like only in `.env` (gitignored), read through `pydantic-settings`.

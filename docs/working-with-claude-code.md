@@ -39,7 +39,7 @@ A rule written in a prompt is a *request*: the model usually follows it, but not
 
 ## Planned
 
-Introduced only when they have something to work on (YAGNI): both depend on `homerag eval`, which arrives in Phase 3.
+Introduced only when they have something to work on (YAGNI): both depend on `homerag eval`, which arrives in Phase 3 (step 9 of Phase 3b in the roadmap).
 
 ### Skill: `/experiment`
 

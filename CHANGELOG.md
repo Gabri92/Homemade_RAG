@@ -5,13 +5,32 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-24
+
+Phase 3a: retrieval baseline. First measured number at zero API cost.
+
+### Fixed
+- Section ids are always unique: the suffix for repeated title paths no longer collides with a title ending in a number (ingestion finding #16).
+
 ### Added
+- Retrieval evaluation: `eval/metrics.py` (hit@k, recall@k, reciprocal rank, means per category), `homerag eval run` saving `config.yaml`, `results.jsonl`, `metrics.json`, `meta.json` to `eval/runs/`; `evaluation.ks` in the experiment config. First baseline: hit@5 0.77, recall@5 0.73, MRR 0.61 over 26 questions.
+- Dense retrieval (`retrieval.dense_search`, registry `RETRIEVERS`): cosine similarity on normalized vectors, stable ranking on ties, refuses a question vector from another model; `homerag search "question" [--text]` prints the ranking.
+- `homerag index`: chunk + embed a document into `data/index/<document>/<strategy>-<hash>/`; the folder key hashes only the chunking and embedding settings, so experiments that change retrieval or generation share one index. An index built from another `book.json` (fingerprint in `meta.json`) or in another format is refused and rebuilt.
+- Embedders registry `EMBEDDERS` (`local`: sentence-transformers, fp16 on GPU) and an on-disk embedding cache (one `.npy` per model + text, atomic writes).
+- Fixed-size chunker (`chunking.fixed_size_chunks`, registry `CHUNKERS`): token windows with overlap over the running text, counted with the bge-m3 tokenizer (`index.token_spans_for`).
+- ADR 0005: a chunk may cover several sections; it is relevant when at least one of them is cited.
+- `tests/integration/` with the `integration` marker applied per folder.
+- Experiment configs: `configs/experiments/baseline.yaml`, validated by `load_experiment` (frozen, unknown fields and invalid values rejected with the file name).
+- Data types `SectionRef`, `Chunk`, `RetrievedChunk`, `Citation`, `Answer`.
+- `resolve_device`: `device: auto` uses CUDA only if a test computation succeeds, otherwise CPU with a warning.
+- Phase 3 dependencies: `anthropic`, `numpy`, `sentence-transformers` + `torch` (CUDA build on Windows, CPU build on Linux CI), `lingua-language-detector`, `pyyaml`; `types-pyyaml` for mypy.
 - `README.md`: project overview, unofficial-project notice, how the book and the golden set stay out of the repository.
 - ADR 0004: the golden set is kept local.
 - CI on GitHub Actions: every pull request and push to `main` runs all pre-commit hooks on all files.
 - Pull request template with the definition-of-done, experiment, docs and copyright checklist.
 
 ### Changed
+- Roadmap: Phase 3 split into 3a (retrieval baseline) and 3b (generation and judge); the minimal chat moves to Phase 4, right after the first complete pipeline; optimization and comparison phases become 5–8.
 - Changes reach `main` through pull requests merged with a merge commit (`docs/steering/conventions.md`, "Git").
 - `eval/datasets/golden.jsonl` is gitignored and refused by the `forbid-book-files` hook; `example.jsonl` stays the committed format example.
 - The pull-quote test fixture is fully synthetic.

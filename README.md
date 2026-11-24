@@ -37,8 +37,10 @@ An evaluation harness sends the golden questions through the query pipeline and 
 | 0 | Project setup | ✅ v0.1.0 |
 | 1 | Ingestion and inspection | ✅ v0.2.0 |
 | 2 | Golden dataset format and validation | ✅ v0.3.0 |
-| 3 | Naive RAG baseline + evaluation harness | next |
-| 4–7 | Retrieval and generation experiments, external baselines, minimal chat | planned |
+| 3a | Naive RAG baseline: retrieval + its metrics | ✅ v0.4.0 |
+| 3b | Naive RAG baseline: generation + judge | next |
+| 4 | Minimal chat interface | planned |
+| 5–8 | Retrieval and generation experiments, external baselines, UI improvements (optional) | planned |
 
 Full plan: [`docs/roadmap.md`](docs/roadmap.md).
 

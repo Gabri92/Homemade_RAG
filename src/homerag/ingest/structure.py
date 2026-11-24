@@ -95,12 +95,10 @@ def structure(blocks: list[Block], source: str) -> Book:
 
 
 def _finalise(drafts: list[_Draft]) -> list[Section]:
-    seen: dict[str, int] = {}
+    used: set[str] = set()
     sections = []
     for draft in drafts:
-        base = "/".join(_slug(title) for title in draft.path)
-        seen[base] = seen.get(base, 0) + 1
-        section_id = base if seen[base] == 1 else f"{base}-{seen[base]}"
+        section_id = _unique_id("/".join(_slug(title) for title in draft.path), used)
         pages = [p for p in (draft.heading_page, *(b.page for b in draft.blocks)) if p]
         sections.append(
             Section(
@@ -116,6 +114,16 @@ def _finalise(drafts: list[_Draft]) -> list[Section]:
             )
         )
     return sections
+
+
+def _unique_id(base: str, used: set[str]) -> str:
+    # A counter per base is not enough: a later title may itself slug to "base-2".
+    section_id, n = base, 1
+    while section_id in used:
+        n += 1
+        section_id = f"{base}-{n}"
+    used.add(section_id)
+    return section_id
 
 
 def _slug(text: str) -> str:

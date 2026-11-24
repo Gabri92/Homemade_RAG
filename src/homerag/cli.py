@@ -7,7 +7,10 @@ from typing import Annotated
 
 import typer
 
+from homerag.config import load_experiment
 from homerag.eval.dataset import check_references, load_golden
+from homerag.eval.run import format_metrics, run_experiment
+from homerag.index import ensure_index
 from homerag.ingest import (
     clean,
     format_blocks,
@@ -19,6 +22,7 @@ from homerag.ingest import (
     load_epub,
     save_book,
 )
+from homerag.retrieval import format_results, search
 
 app = typer.Typer(
     help="NotebookLM-style Q&A with citations over your documents.", no_args_is_help=True
@@ -28,12 +32,16 @@ app.add_typer(eval_app, name="eval")
 
 PROCESSED = Path("data/processed")
 GOLDEN = Path("eval/datasets/golden.jsonl")
+BASELINE = Path("configs/experiments/baseline.yaml")
 
 
 @app.callback()
 def main() -> None:
     """Keep subcommands explicit (`homerag dump ...`)."""
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    # Our own progress messages at INFO; libraries (model hub requests, model loading) only
+    # when something goes wrong.
+    logging.basicConfig(level=logging.WARNING, format="%(message)s")
+    logging.getLogger("homerag").setLevel(logging.INFO)
 
 
 @app.command()
@@ -94,6 +102,41 @@ def sections(
     typer.echo(f"{len(structured.sections)} sections written to {output}")
 
 
+@app.command()
+def index(
+    config: Annotated[
+        Path, typer.Option(exists=True, dir_okay=False, help="Experiment YAML.")
+    ] = BASELINE,
+) -> None:
+    """Chunk and embed the document of an experiment, or reuse its index if up to date."""
+    try:
+        report = ensure_index(load_experiment(config))
+    except (ValueError, OSError) as error:  # bad config, stale index, missing book.json
+        typer.echo(f"ERROR {error}")
+        raise typer.Exit(code=1) from error
+    action = f"built in {report.seconds:.1f}s" if report.built else "up to date, reused"
+    typer.echo(f"{report.chunks} chunks, {action}: {report.folder}")
+
+
+@app.command("search")
+def search_command(
+    question: Annotated[str, typer.Argument(help="The question, in quotes.")],
+    config: Annotated[
+        Path, typer.Option(exists=True, dir_okay=False, help="Experiment YAML.")
+    ] = BASELINE,
+    text: Annotated[
+        bool, typer.Option("--text", help="Show a short snippet of each chunk (local use).")
+    ] = False,
+) -> None:
+    """Show which chunks the retriever ranks highest for a question (no LLM involved)."""
+    try:
+        results = search(question, load_experiment(config))
+    except (ValueError, OSError) as error:  # bad config, missing index, missing book.json
+        typer.echo(f"ERROR {error}")
+        raise typer.Exit(code=1) from error
+    typer.echo(format_results(results, show_text=text), nl=False)
+
+
 @eval_app.command("check")
 def eval_check(
     golden: Annotated[
@@ -116,3 +159,25 @@ def eval_check(
         typer.echo(f"ERROR {problem}")
     if problems:
         raise typer.Exit(code=1)
+
+
+@eval_app.command("run")
+def eval_run(
+    config: Annotated[
+        Path, typer.Option(exists=True, dir_okay=False, help="Experiment YAML.")
+    ] = BASELINE,
+    golden: Annotated[
+        Path, typer.Option(exists=True, dir_okay=False, help="Golden-set JSONL file.")
+    ] = GOLDEN,
+) -> None:
+    """Run an experiment on the golden set (retrieval only for now) and save it in eval/runs/."""
+    try:
+        report = run_experiment(config, golden)
+    except (ValueError, OSError) as error:  # bad config or golden set, missing book.json
+        typer.echo(f"ERROR {error}")
+        raise typer.Exit(code=1) from error
+    typer.echo(format_metrics(report.metrics), nl=False)
+    if report.skipped:
+        skipped = ", ".join(f"{c} {n}" for c, n in report.skipped.items())
+        typer.echo(f"not scored on retrieval (no cited sections): {skipped}")
+    typer.echo(f"saved to {report.folder}")

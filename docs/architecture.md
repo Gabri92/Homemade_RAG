@@ -96,7 +96,7 @@ Starts from `book.json` and is re-run for every experiment config.
 
 | Step | Responsibility | Practical notes |
 |---|---|---|
-| **Chunker** | Splits sections into `Chunk`s; each chunk keeps the id of its section | Interchangeable strategies (see §5). The section id is what links retrieval metrics to the golden set. |
+| **Chunker** | Splits the included sections into `Chunk`s; each chunk keeps the ids of the sections it covers | Interchangeable strategies (see §5). The section ids link retrieval metrics to the golden set: a chunk is relevant when it covers a cited section (ADR 0005). |
 | **Enricher** | Adds metadata and, optionally, generated context | `chapter`, `section`, `page`, `content_type` (prose/table/workout), `sport`. |
 | **Embedder** | Computes vectors | Interchangeable model (see §6). |
 | **Index** | Persists vectors + lexical index | For one book (~1–3k chunks) an in-memory / on-file index is enough. |
@@ -144,10 +144,21 @@ The gate is a single function (`is_english` in `language.py`), called at the sta
 
 | Strategy | Description | When it wins |
 |---|---|---|
-| **Fixed-size + overlap** | N tokens with overlap | Baseline: simple, gives a reference point |
+| **Fixed-size + overlap** | N tokens with overlap over the running text of the book, ignoring section boundaries (a chunk may cover several sections) | Baseline: simple, gives a reference point |
 | **Structure-aware** | One chunk per section/subsection, split only if too long; tables intact | Well-structured books like this one |
+| **Semantic** | Split where the meaning changes: consecutive sentences with low embedding similarity mark a boundary, with a maximum size | Documents with little structure (e.g. uploaded files without useful headings) |
 | **Contextual chunking** | Each chunk is prefixed with 1–2 LLM-generated sentences that place it in the book ("This passage, from the chapter on the Base period, describes…") | Chunks that are ambiguous on their own (pronouns, "this period") |
 | **Parent-child** | Small chunks are indexed, but the wider "parent" section is passed to the LLM | Questions that need wide context |
+
+The strategies answer three different questions, so they combine across axes and are alternatives within one axis:
+
+| Axis | Question | Strategies |
+|---|---|---|
+| **Where to cut** | How is the text divided? | fixed-size, structure-aware, semantic (they can be nested: e.g. semantic splits inside sections that are too long) |
+| **What to add to a chunk** | Is the chunk understandable on its own? | contextual chunking |
+| **What to give the LLM** | The retrieved piece, or something larger? | parent-child |
+
+Chunk size and k are parameters of all of them. When a second axis arrives, it becomes its own step (an enricher after the chunker, a parent lookup after retrieval), so any splitter can be combined with it without one function per combination.
 
 ---
 

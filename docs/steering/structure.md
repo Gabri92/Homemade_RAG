@@ -6,8 +6,8 @@ Principle: **KISS**. One module per concept, functions before classes, no extra 
 Modules marked *(placeholder)* contain only a docstring describing their purpose: they are filled in from Phase 3 onwards.
 ```
 src/homerag/
-  models.py      # dataclasses: Block, Section, Book (then Chunk, RetrievedChunk, Answer, Citation)
-  config.py      # settings (.env) + experiment config (YAML -> pydantic)
+  models.py      # dataclasses: Block, Section, Book, SectionRef, Chunk, RetrievedChunk, Citation, Answer
+  config.py      # settings (.env) + experiment config (YAML -> pydantic, frozen, unknown fields rejected)
   ingest/        # source -> blocks -> cleaning -> sections -> data/processed/book.json (ADR 0002)
     __init__.py  #   public API: from outside, import only from `homerag.ingest`
     epub.py      #   ePub Loader (one file per format: pdf.py tomorrow)
@@ -16,24 +16,24 @@ src/homerag/
     book_file.py #   save_book / load_book for book.json, with SCHEMA_VERSION
     quality.py   #   generic quality report (no expected values): `homerag inspect`
     dump.py      #   format_blocks, format_sections for inspection
-  chunking.py    # (placeholder) chunking strategies (functions) + CHUNKERS registry
-  index.py       # (placeholder) embeddings, numpy index, BM25, save/load
-  retrieval.py   # (placeholder) dense, bm25, RRF fusion, rerank
+  chunking.py    # chunking strategies (functions) + CHUNKERS registry: fixed
+  index.py       # device choice, tokenizer offsets, EMBEDDERS + on-disk cache, vector index save/load (BM25 with 5.3)
+  retrieval.py   # RETRIEVERS: dense (then bm25, RRF fusion, rerank in Phase 5); search, format_results
   language.py    # (placeholder) language gate: is_english(text)
   llm.py         # (placeholder) the single access point to the Anthropic API
   qa.py          # (placeholder) answer(question) -> Answer: gate -> retrieve -> generate
   prompts/       # (placeholder) prompts as versioned .md files
   eval/          # evaluation harness
     dataset.py   #   golden set: GoldenQuestion schema, load_golden, check_references
-    metrics.py   #   (placeholder) metrics (pure functions)
+    metrics.py   #   retrieval metrics (hit@k, recall@k, reciprocal rank) + aggregate per category
     judge.py     #   (placeholder) LLM-as-judge
-    run.py       #   (placeholder) runs an experiment, saves and compares runs
-  cli.py         # typer commands: dump, ingest, inspect, sections, eval check (then ask, eval run/compare)
+    run.py       #   runs an experiment on the golden set (retrieval only in 3a) and saves it (compare in 3b)
+  cli.py         # typer commands: dump, ingest, inspect, sections, index, search, eval check, eval run (then ask, eval compare)
 .claude/               # Claude Code project settings: settings.json (hooks) + hooks/ scripts
-configs/experiments/   # one YAML per experiment (from Phase 3)
+configs/experiments/   # one YAML per experiment: baseline.yaml is the Phase 3 starting point
 eval/datasets/         # golden.jsonl (hand-written, gitignored: kept local, ADR 0004) + example.jsonl (synthetic, committed)
 eval/runs/             # run outputs (gitignored)
-data/                  # raw/, processed/, index/ (gitignored)
+data/                  # raw/, processed/, index/, cache/ (gitignored)
 notes/                 # personal notes: prompting, building in public (gitignored)
 tests/                 # one kind of test = one folder (see conventions.md, "Tests")
   conftest.py          #   shared fixtures (make_epub: synthetic mini-ePub)
@@ -43,16 +43,16 @@ tests/                 # one kind of test = one folder (see conventions.md, "Tes
     test_golden.py     #     golden-set section ids exist in the current ingestion (skipped until golden.jsonl exists)
   corpus/              #   generalization on ePubs from other publishers in data/corpus/ (`corpus` marker)
     expectations.py    #     expected values and where to download each ePub
-  integration/         #   (from Phase 3) real APIs and models, `integration` marker
-  e2e/                 #   (from Phase 3) question -> cited answer on the real book
+  integration/         #   real APIs and models: `integration` marker set in integration/conftest.py
+  e2e/                 #   (from Phase 3b) question -> cited answer on the real book
 ```
 
 ## Rules
 - **Dependencies flow one way:** `cli` → `qa` / `eval` → the rest. `models.py` imports no other project module.
-- **One external library, one module:** `anthropic` only in `llm.py`, `sentence_transformers` only in `index.py` / `retrieval.py`, `lingua` only in `language.py`. Replacing a technology then touches one file.
+- **One external library, one module:** `anthropic` only in `llm.py`, `sentence_transformers`, `transformers` and `torch` only in `index.py` / `retrieval.py`, `lingua` only in `language.py`. Replacing a technology then touches one file.
 - **Interchangeable strategies = functions with the same signature in a dictionary.** Example:
   ```python
-  CHUNKERS: dict[str, Callable[[list[Section], ChunkingConfig], list[Chunk]]] = {
+  CHUNKERS: dict[str, Callable[[Book, ChunkingConfig, TokenSpans], list[Chunk]]] = {
       "fixed": fixed_size_chunks,
       "sections": section_chunks,
   }

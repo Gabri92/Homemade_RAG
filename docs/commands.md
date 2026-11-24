@@ -1,6 +1,6 @@
 # Command cheat sheet
 
-Commands available now, grouped by task. The full list, including the ones planned for Phase 3 (`ask`, `eval run`, `eval compare`), is in `docs/steering/tech.md`. `uv run homerag --help` (or `<command> --help`) prints the live options.
+Commands available now, grouped by task. The full list, including the ones planned for Phase 3b (`ask`, `eval compare`), is in `docs/steering/tech.md`. `uv run homerag --help` (or `<command> --help`) prints the live options.
 
 Everything under `data/` is gitignored: outputs written there never reach the repository.
 
@@ -21,6 +21,18 @@ Everything under `data/` is gitignored: outputs written there never reach the re
 | `uv run homerag dump data/raw/<book>.epub --clean` | Blocks after the Cleaner → `data/processed/blocks_clean.txt` |
 | `git diff --no-index data/processed/blocks_raw.txt data/processed/blocks_clean.txt` | What the Cleaner changed |
 
+## Index and search (Phase 3a)
+
+| Command | What it does |
+|---|---|
+| `uv run homerag index` | Chunk + embed the document of `configs/experiments/baseline.yaml` → `data/index/<document>/<strategy>-<hash>/` (`vectors.npy`, `chunks.json`, `meta.json`). Reuses the index when it is up to date; rebuilds it when `book.json` or the chunking/embedding settings changed. First run downloads bge-m3 (~2.2 GB) into the Hugging Face cache |
+| `uv run homerag index --config configs/experiments/<name>.yaml` | Same, for another experiment. Experiments that change only retrieval, generation or judge settings share the same index |
+
+| `uv run homerag search "How long is the base period?"` | Retrieval only, no LLM: rank, score, chunk id, section path, page of the top-k chunks. Needs the index (`homerag index`) |
+| `uv run homerag search "..." --text` | Same, plus a short snippet of each chunk, for your own terminal only (never paste it into issues, posts or logs) |
+
+Embeddings are cached in `data/cache/embeddings/` (one `.npy` per model + text): deleting the folder only costs recomputation.
+
 ## Golden set
 
 | Command | What it does |
@@ -29,6 +41,8 @@ Everything under `data/` is gitignored: outputs written there never reach the re
 | `uv run homerag eval check` | Validate `eval/datasets/golden.jsonl` and check that every cited section exists in `data/processed/book.json` and is indexed. Exit code 1 on any problem |
 | `uv run homerag eval check <file.jsonl> --book <book.json>` | Same, on another file or book |
 | `uv run homerag eval check eval/datasets/example.jsonl` | Try the format on the synthetic example (its section ids are made up, so they are reported) |
+| `uv run homerag eval run` | Run `configs/experiments/baseline.yaml` on the golden set: builds or reuses the index, scores retrieval (hit@k, recall@k, MRR per category; `out_of_scope` and `non_english` wait for Phase 3b) and saves `eval/runs/<date-time>-<name>/` (`config.yaml`, `results.jsonl`, `metrics.json`, `meta.json`). No API cost |
+| `uv run homerag eval run --config configs/experiments/<name>.yaml` | Same, for another experiment; `--golden <file>` for another golden set |
 
 Typical loop while writing questions:
 1. `uv run homerag ingest data/raw/<book>.epub` (only if `book.json` is missing or ingestion changed);
