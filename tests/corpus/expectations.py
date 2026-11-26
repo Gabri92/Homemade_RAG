@@ -31,9 +31,11 @@ NON_CONTENT_ROLES = {
     "frontmatter",
     "backmatter",
     "bibliography",
+    # Found from the content, for any publisher (#21).
+    "quiz",
 }
 
-INCLUDED_SECTIONS = {"engels": 15, "slocum": 23, "whymper": 34, "exercise-science": 422}
+INCLUDED_SECTIONS = {"engels": 15, "slocum": 23, "whymper": 34, "exercise-science": 418}
 APPENDICES = {"engels": 0, "slocum": 0, "whymper": 9, "exercise-science": 0}
 
 # SHA-256 of the edition a committed golden set cites (ADR 0010): a new edition can change
