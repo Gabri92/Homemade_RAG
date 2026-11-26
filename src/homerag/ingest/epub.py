@@ -142,12 +142,50 @@ def landmark_types(nav_html: str | bytes) -> dict[str, list[str]]:
 
 
 def _file_types(soup: BeautifulSoup) -> list[str]:
-    """Types a document declares about itself: its top-level section first, then <body>."""
+    """Types a document declares about itself: its top-level section first, then <body>.
+
+    Without any epub:type, the Pressbooks markers are used instead (#17).
+    """
     body = soup.body
     if body is None:
         return []
     top = body.find(["section", "article"], recursive=False)
-    return (_epub_types(top) if isinstance(top, Tag) else []) + _epub_types(body)
+    types = (_epub_types(top) if isinstance(top, Tag) else []) + _epub_types(body)
+    return types or _pressbooks_types(body)
+
+
+# Pressbooks (the open-textbook platform) writes no epub:type: each file says what it
+# is in the id or the classes of its first <div>. Mapped to the EPUB vocabulary (#17).
+_PRESSBOOKS_IDS = {
+    "cover-image": "cover",
+    "half-title-page": "halftitlepage",
+    "title-page": "titlepage",
+    "copyright-page": "copyright-page",
+    "toc": "toc",
+}
+_PRESSBOOKS_BODY_CLASSES = frozenset({"chapter", "part"})
+_PRESSBOOKS_DIVISIONS = {"front-matter": "frontmatter", "back-matter": "backmatter"}
+_PRESSBOOKS_NEUTRAL_CLASSES = frozenset({"standard", "miscellaneous"})
+
+
+def _pressbooks_types(body: Tag) -> list[str]:
+    """Types from the first <div>: a known id, else a Pressbooks kind class.
+
+    Any other <div> (a sidebar, a figure) says nothing about the file: no types.
+    """
+    div = body.find("div")
+    if not isinstance(div, Tag):
+        return []
+    if (file_id := str(div.get("id", ""))) in _PRESSBOOKS_IDS:
+        return [_PRESSBOOKS_IDS[file_id]]
+    classes = [c for c in div.get_attribute_list("class") if c]
+    if _PRESSBOOKS_BODY_CLASSES & set(classes):
+        return ["chapter"]
+    division = next((_PRESSBOOKS_DIVISIONS[c] for c in classes if c in _PRESSBOOKS_DIVISIONS), None)
+    if division is None:
+        return []
+    others = [c for c in classes if c not in _PRESSBOOKS_DIVISIONS]
+    return [c for c in others if c not in _PRESSBOOKS_NEUTRAL_CLASSES] + [division]
 
 
 def _book_landmark_types(book: epub.EpubBook) -> dict[str, list[str]]:
