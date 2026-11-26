@@ -15,6 +15,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Interfaces apart from the RAG core (ADR 0012): `cli.py` and `chat.py` move to `src/homerag/interfaces/`, and the `homerag` command points at `homerag.interfaces.cli:app`. `tests/unit/test_architecture.py` checks the structure rules on the imports: the core never imports the interfaces, each external library stays in its module, `models.py` imports no project module.
 - `embedding.py` split out of `index.py` (304 lines, two reasons to change): device, tokenizer, embedders and their cache in one module, the vector index in the other.
 - Tests: one `FakeLLM` and the fake resources in `tests/conftest.py` instead of four copies. Shorter functions (`run_experiment`, `anthropic_llm`, `build_app`), and a comment for every `Any`.
+- `eval/run.py` (314 lines) split by reason to change: `eval/parts.py` runs and scores each part (gate, retrieval, generation), `eval/report.py` also builds the rows of the run file next to `RUN_FORMAT`, and `eval/run.py` keeps `run_experiment`.
 - Web chat layout follows the screen. Chat and source panel take their height from the window, so the question box stays in view. On a phone the header shrinks, the panel goes under the chat, and picking a source scrolls the page to it.
 
 ### Fixed

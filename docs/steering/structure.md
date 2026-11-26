@@ -34,8 +34,9 @@ src/homerag/
     dataset.py   #   golden set: GoldenQuestion schema, load_golden, check_references
     metrics.py   #   retrieval metrics (hit@k, recall@k, reciprocal rank), gate metrics, code-based answer checks, aggregate per category
     judge.py     #   LLM-as-judge: Verdict (structured outputs), judge, verdict_scores
-    run.py       #   runs an experiment on the golden set: gate, retrieval, answers + judge (`retrieval_only` skips them)
-    report.py    #   run files: save_run, load_run, format_*, compare_runs (RUN_FORMAT)
+    parts.py     #   the parts of a run, each scored on its own: run_gate, run_retrieval, run_generation
+    run.py       #   run_experiment: the parts on the golden set, metrics per category, cost, provenance (`retrieval_only` skips answers)
+    report.py    #   run files: result_rows, save_run, load_run, format_*, compare_runs (RUN_FORMAT)
   interfaces/    # what talks to a person (ADR 0012); the core never imports it
     cli.py       #   typer commands: dump, ingest, inspect, sections, index, search, ask, chat, eval check, eval run, eval compare
     chat.py      #   local web chat (Gradio, ADR 0011): document menu, chat, source panel
@@ -48,7 +49,7 @@ eval/runs/             # run outputs (gitignored)
 data/                  # raw/, processed/, index/, cache/ (gitignored)
 notes/                 # personal notes: prompting, building in public (gitignored)
 tests/                 # one kind of test = one folder (see conventions.md, "Tests")
-  conftest.py          #   shared fixtures and fakes (make_epub, blocks_of, page_marker; FakeLLM, fake_resources)
+  conftest.py          #   shared fixtures and fakes (make_epub, blocks_of, page_marker; FakeLLM, fake_resources; a synthetic golden set)
   unit/                #   fast, offline; mirrors src/homerag/ (unit/ingest/test_cleaning.py, unit/interfaces/test_cli.py, ...)
     test_architecture.py #   the rules below, checked on the imports: core vs interfaces, one library per module
   book/                #   on the real book: `book` marker and automatic skip in book/conftest.py

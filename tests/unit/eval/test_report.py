@@ -4,6 +4,8 @@ from typing import Any
 
 import pytest
 
+from homerag.config import load_experiment
+from homerag.eval.parts import run_gate, run_generation, run_retrieval
 from homerag.eval.report import (
     SavedRun,
     compare_runs,
@@ -11,6 +13,17 @@ from homerag.eval.report import (
     format_gate,
     format_metrics,
     load_run,
+    result_rows,
+    save_run,
+)
+from homerag.language import build_detector
+from tests.conftest import (
+    EVAL_INDEX,
+    GOLDEN_QUESTIONS,
+    FakeLLM,
+    answer_or_verdict,
+    embed_on_first_axis,
+    fake_resources,
 )
 
 GATE = {"all": {"n": 2.0, "accuracy": 1.0, "english_blocked": 0.0, "non_english_passed": 0.0}}
@@ -74,3 +87,33 @@ def test_format_cost_says_what_was_paid_in_this_run() -> None:
     text = format_cost({"answers": 0.31, "judge": 0.74, "paid_now": 0.2})
 
     assert "answers $0.31, judge $0.74 (paid in this run $0.20" in text
+
+
+# --- the rows of a run ------------------------------------------------------------
+
+RUN_CFG = load_experiment(Path("configs/experiments/baseline.yaml"))
+
+
+def test_saved_run_has_one_row_per_question_and_no_chunk_text(tmp_path: Path) -> None:
+    rows = result_rows(
+        GOLDEN_QUESTIONS,
+        run_gate(GOLDEN_QUESTIONS, build_detector(RUN_CFG.language_gate), RUN_CFG.language_gate),
+        run_retrieval(GOLDEN_QUESTIONS, EVAL_INDEX, embed_on_first_axis, RUN_CFG),
+        run_generation(
+            GOLDEN_QUESTIONS,
+            fake_resources(EVAL_INDEX, FakeLLM(answer_or_verdict), RUN_CFG.language_gate),
+            RUN_CFG,
+        ),
+    )
+    meta = {"run_format": 2, "cost_usd": {"answers": 0.0, "judge": 0.0, "paid_now": 0.0}}
+
+    save_run(tmp_path / "run", RUN_CFG, rows, {"retrieval": {}, "generation": {}, "gate": {}}, meta)
+
+    loaded = load_run(tmp_path / "run")
+    assert [row["id"] for row in loaded.rows] == ["q-001", "q-002", "q-003", "q-004"]
+    assert loaded.rows[0]["retrieval"]["retrieved"][0]["sections"] == ["base"]
+    assert loaded.rows[0]["generation"]["verdict"]["correctness"] == "partial"
+    assert loaded.rows[2]["retrieval"] is None  # out_of_scope cites no section
+    assert loaded.rows[3]["generation"] is None  # non_english is only gated
+    text = (tmp_path / "run" / "results.jsonl").read_text(encoding="utf-8")
+    assert "synthetic chunk text" not in text

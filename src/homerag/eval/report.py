@@ -1,4 +1,4 @@
-"""Run files: write, read back, print and compare them. Plain JSON in, plain text out.
+"""Run files: build their rows, write, read back, print and compare them. Plain JSON in and out.
 
 A run folder holds `config.yaml`, `results.jsonl` (one row per golden question), `metrics.json`
 (means per part: retrieval, generation, gate; then per category) and `meta.json`.
@@ -6,13 +6,15 @@ A run folder holds `config.yaml`, `results.jsonl` (one row per golden question),
 """
 
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any  # JSON rows and metadata: values of mixed types, checked when read
 
 import yaml
 
 from homerag.config import ExperimentConfig
+from homerag.eval.dataset import GoldenQuestion
+from homerag.eval.parts import GateRun, GenerationRun, QuestionRun
 
 RUN_FORMAT = 2  # 2: one results row per question with every part; metrics.json by part
 
@@ -30,6 +32,62 @@ class SavedRun:
     meta: dict[str, Any]
     metrics: dict[str, Metrics]
     rows: list[dict[str, Any]]
+
+
+def result_rows(
+    questions: list[GoldenQuestion],
+    gate_runs: list[GateRun],
+    retrieval_runs: list[QuestionRun],
+    generation_runs: list[GenerationRun],
+) -> list[dict[str, Any]]:
+    """One JSON-ready row per golden question, with whichever parts ran for it."""
+    gate = {r.question.id: r for r in gate_runs}
+    retrieval = {r.question.id: r for r in retrieval_runs}
+    generation = {r.question.id: r for r in generation_runs}
+    return [
+        {
+            "id": q.id,
+            "category": q.category,
+            "question": q.question,
+            "gate": {"passed": gate[q.id].passed, "correct": gate[q.id].correct},
+            "retrieval": _retrieval_row(retrieval[q.id]) if q.id in retrieval else None,
+            "generation": _generation_row(generation[q.id]) if q.id in generation else None,
+        }
+        for q in questions
+    ]
+
+
+def _retrieval_row(run: QuestionRun) -> dict[str, Any]:
+    return {
+        "cited": list(run.question.relevant_section_ids),
+        "retrieved": [
+            {
+                "rank": r.rank,
+                "score": round(r.score, 4),
+                "chunk_id": r.chunk.id,
+                "sections": [s.id for s in r.chunk.sections],
+                "page": r.chunk.page,
+            }
+            for r in run.retrieved
+        ],
+        "metrics": run.metrics,
+    }
+
+
+def _generation_row(run: GenerationRun) -> dict[str, Any]:
+    result = run.answer
+    return {
+        "blocked_by_gate": result.blocked_by_gate,
+        "answer": result.text,
+        "citations": [
+            {"source": c.source, "chunk_id": c.chunk_id, "section_id": c.section_id}
+            for c in result.citations
+        ],
+        "usage": asdict(result.usage) if result.usage else None,
+        "verdict": run.verdict.model_dump() if run.verdict else None,
+        "judge_usage": asdict(run.judge_usage) if run.judge_usage else None,
+        "metrics": run.metrics,
+    }
 
 
 def save_run(
