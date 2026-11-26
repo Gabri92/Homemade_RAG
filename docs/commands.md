@@ -42,6 +42,16 @@ Embeddings are cached in `data/cache/embeddings/` (one `.npy` per model + text):
 
 Answers are cached in `data/cache/llm/` (one JSON per request): asking the same question with the same config again costs nothing and prints "cached, not paid again".
 
+## Web chat (Phase 4a)
+
+| Command | What it does |
+|---|---|
+| `uv run homerag chat` | Web chat on http://127.0.0.1:7860, this machine only. Pick a document from `configs/documents.yaml` (for now the openly licensed one), ask in English, and check each answer: every cited chunk opens under the answer, and the source panel shows the whole cited section with the passage the model read highlighted. Needs each document's index and `ANTHROPIC_API_KEY`; about a cent per question, cached like `ask`. Ctrl+C to stop |
+| `uv run homerag chat --port 7861` | Same, on another port |
+| `uv run homerag chat --documents <file>.yaml` | Same, with another list of documents (title, author, license, URL, experiment config) |
+
+The first start loads bge-m3 and each index (about 20 s). Each question is answered on its own: follow-ups are not rewritten yet.
+
 ## Golden set
 
 | Command | What it does |

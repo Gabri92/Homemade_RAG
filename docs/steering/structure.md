@@ -6,7 +6,7 @@ Principle: **KISS**. One module per concept, functions before classes, no extra 
 Modules marked *(placeholder)* contain only a docstring describing their purpose: they are filled in from Phase 3 onwards.
 ```
 src/homerag/
-  models.py      # dataclasses: Block, Section, Book, SectionRef, Chunk, RetrievedChunk, Citation, Usage, Answer
+  models.py      # dataclasses: Block, Section, Book, SectionRef, Chunk, RetrievedChunk, Citation, Passage, Usage, Answer
   config.py      # settings (.env) + experiment config (YAML -> pydantic, frozen, unknown fields rejected)
   ingest/        # source -> blocks -> cleaning -> sections -> data/processed/book.json (ADR 0002)
     __init__.py  #   public API: from outside, import only from `homerag.ingest`
@@ -26,7 +26,9 @@ src/homerag/
   retrieval.py   # RETRIEVERS: dense (then bm25, RRF fusion, rerank in Phase 5); search, format_results
   language.py    # language gate: build_detector, is_english(text, detector, cfg), NOTICE
   llm.py         # the single access point to the Anthropic API: LLMRequest -> Completion, cache, cost, prompts
-  qa.py          # answer(question, resources, cfg) -> Answer: gate -> retrieve -> generate -> citations
+  qa.py          # answer(question, resources, cfg) -> Answer: gate -> retrieve -> generate -> citations;
+                 #   passages(answer, book): each cited section with the chunk the model read marked
+  chat.py        # local web chat (Gradio, ADR 0011): document menu, chat, source panel; the only module importing gradio
   prompts/       # prompts as versioned .md files (answer_v1.md, judge_v1.md)
   eval/          # evaluation harness
     dataset.py   #   golden set: GoldenQuestion schema, load_golden, check_references
@@ -34,9 +36,10 @@ src/homerag/
     judge.py     #   LLM-as-judge: Verdict (structured outputs), judge, verdict_scores
     run.py       #   runs an experiment on the golden set: gate, retrieval, answers + judge (`retrieval_only` skips them)
     report.py    #   run files: save_run, load_run, format_*, compare_runs (RUN_FORMAT)
-  cli.py         # typer commands: dump, ingest, inspect, sections, index, search, ask, eval check, eval run, eval compare
+  cli.py         # typer commands: dump, ingest, inspect, sections, index, search, ask, chat, eval check, eval run, eval compare
 .claude/               # Claude Code project settings: settings.json (hooks, deny reading .env), hooks/, agents/eval-analyst.md, skills/experiment/
 configs/experiments/   # one YAML per experiment: baseline.yaml is the Phase 3 starting point
+configs/documents.yaml # documents offered in the web chat: title, author, license, URL, experiment config
 eval/datasets/         # golden.jsonl (hand-written, gitignored: kept local, ADR 0004) + example.jsonl (synthetic, committed)
                        # + one set per curated document of the demo, committed (open license): exercise-science*.jsonl + .md (method)
 eval/runs/             # run outputs (gitignored)
@@ -55,8 +58,8 @@ tests/                 # one kind of test = one folder (see conventions.md, "Tes
 ```
 
 ## Rules
-- **Dependencies flow one way:** `cli` → `qa` / `eval` → the rest. `models.py` imports no other project module.
-- **One external library, one module:** `anthropic` only in `llm.py`, `sentence_transformers`, `transformers` and `torch` only in `index.py` / `retrieval.py`, `lingua` only in `language.py`. Replacing a technology then touches one file.
+- **Dependencies flow one way:** `cli` / `chat` → `qa` / `eval` → the rest. `models.py` imports no other project module.
+- **One external library, one module:** `anthropic` only in `llm.py`, `sentence_transformers`, `transformers` and `torch` only in `index.py` / `retrieval.py`, `lingua` only in `language.py`, `gradio` only in `chat.py`. Replacing a technology then touches one file.
 - **Interchangeable strategies = functions with the same signature in a dictionary.** Example:
   ```python
   CHUNKERS: dict[str, Callable[[Book, ChunkingConfig, TokenSpans], list[Chunk]]] = {

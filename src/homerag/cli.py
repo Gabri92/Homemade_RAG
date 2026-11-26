@@ -7,7 +7,7 @@ from typing import Annotated
 
 import typer
 
-from homerag.config import load_experiment, load_settings
+from homerag.config import load_documents, load_experiment, load_settings
 from homerag.eval.dataset import check_references, load_golden
 from homerag.eval.report import compare_runs, format_cost, format_gate, format_metrics, load_run
 from homerag.eval.run import RUNS_ROOT, run_experiment
@@ -35,6 +35,7 @@ app.add_typer(eval_app, name="eval")
 PROCESSED = Path("data/processed")
 GOLDEN = Path("eval/datasets/golden.jsonl")
 BASELINE = Path("configs/experiments/baseline.yaml")
+DOCUMENTS = Path("configs/documents.yaml")
 
 
 @app.callback()
@@ -155,6 +156,26 @@ def ask(
         typer.echo(f"ERROR {error}")
         raise typer.Exit(code=1) from error
     typer.echo(format_answer(result), nl=False)
+
+
+@app.command()
+def chat(
+    documents: Annotated[
+        Path, typer.Option(exists=True, dir_okay=False, help="Documents to offer (YAML).")
+    ] = DOCUMENTS,
+    port: Annotated[int, typer.Option(help="Port on this machine.")] = 7860,
+) -> None:
+    """Open the web chat on this machine: http://127.0.0.1:<port> (calls the Claude API)."""
+    # Imported here: gradio takes seconds to import, and only this command needs it.
+    from homerag.chat import launch, open_documents  # noqa: PLC0415
+
+    try:
+        opened = open_documents(load_documents(documents), load_settings())
+    except (ValueError, OSError) as error:  # bad list or config, missing index or API key
+        typer.echo(f"ERROR {error}")
+        raise typer.Exit(code=1) from error
+    typer.echo(f"Chat on http://127.0.0.1:{port} (Ctrl+C to stop)")
+    launch(opened, port)
 
 
 @eval_app.command("check")

@@ -4,7 +4,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from homerag.config import Settings, load_experiment
+from homerag.config import Settings, load_documents, load_experiment
 
 
 def test_reads_api_key_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -98,3 +98,29 @@ def test_language_gate_must_include_english(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="include 'en'"):
         load_experiment(path)
+
+
+# --- documents offered in the chat ---------------------------------------------------
+
+
+def test_the_committed_document_list_points_at_existing_configs() -> None:
+    documents = load_documents(Path("configs/documents.yaml"))
+
+    assert documents
+    assert all(d.config.exists() for d in documents)
+
+
+def test_document_list_rejects_repeated_titles(tmp_path: Path) -> None:
+    entry = {
+        "title": "Same",
+        "author": "A",
+        "url": "https://example.org",
+        "license": "CC BY 4.0",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+        "config": "configs/experiments/baseline.yaml",
+    }
+    path = tmp_path / "documents.yaml"
+    path.write_text(yaml.safe_dump({"documents": [entry, entry]}), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="titles must be unique"):
+        load_documents(path)
