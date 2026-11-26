@@ -12,6 +12,14 @@ The book is copyrighted and is **not** part of this repository, nor is anything 
 
 The hand-written **golden dataset** (`eval/datasets/golden.jsonl`) is kept local too: its answers paraphrase the book. `eval/datasets/example.jsonl` shows the format with synthetic questions about an invented training plan.
 
+## Third-party content
+
+The public demo (Phase 4a) uses openly licensed documents instead of the reference book. Their golden sets are committed, with attribution next to each one:
+
+- `eval/datasets/exercise-science*.jsonl`: questions and paraphrased answers adapted from *[Introduction to Exercise Science for Fitness Professionals](https://mhcc.pressbooks.pub/hpe172)* by Amanda Shelton (MHCC Library Press), used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Source, changes and edition are in [`eval/datasets/exercise-science.md`](eval/datasets/exercise-science.md).
+
+The documents themselves are not in the repository: each one is downloaded from its publisher, and a test checks that it is the edition the golden set cites. Why, and how a document is chosen: [ADR 0010](docs/adr/0010-curated-documents-and-their-licenses.md).
+
 ## Why build it by hand
 
 - **Learning first:** readable functions for each step (loader, cleaner, structurer, chunker, retriever, generator) instead of a batteries-included framework that would hide them.
@@ -39,7 +47,7 @@ An evaluation harness sends the golden questions through the query pipeline and 
 | 2 | Golden dataset format and validation | ✅ v0.3.0 |
 | 3a | Naive RAG baseline: retrieval + its metrics | ✅ v0.4.0 |
 | 3b | Naive RAG baseline: generation + judge | ✅ v0.5.0 |
-| 4a | Public demo: web chat over curated documents | next |
+| 4a | Public demo: web chat over curated documents | in progress |
 | 4b | Document upload in the demo (planned along the way) | planned |
 | 5–8 | Retrieval and generation experiments, external baselines, UI improvements (optional) | planned |
 

@@ -1,6 +1,9 @@
 """The ingestion must work on ePubs it was not designed on (findings #12-#19)."""
 
+import hashlib
 from pathlib import Path
+
+import pytest
 
 from homerag.ingest import ingest_epub, inspect_epub
 from tests.corpus import expectations as expected
@@ -40,3 +43,14 @@ def test_non_content_parts_are_excluded_and_content_included(corpus_book: Corpus
     assert sum(s.include for s in sections) == expected.INCLUDED_SECTIONS[key]
     assert len(appendices) == expected.APPENDICES[key]
     assert all(s.include for s in appendices)
+
+
+def test_golden_set_books_are_the_cited_edition(corpus_book: Corpus) -> None:
+    # ADR 0010: the committed golden set cites section ids of one edition.
+    key, path = corpus_book
+    if key not in expected.EDITION_SHA256:
+        pytest.skip(f"{key} has no committed golden set")
+
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+
+    assert digest == expected.EDITION_SHA256[key], f"{path.name} is not the cited edition"
