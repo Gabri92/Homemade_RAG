@@ -44,6 +44,14 @@ CSS = f"""
   flex: 1 1 0; min-height: 0; }}
 #chat-box #chat {{ flex: 1 1 0 !important; min-height: 200px; height: auto !important;
   border: none !important; }}
+/* The question box keeps its height (a flex child may shrink and clip the send button),
+   with room around the text and the button. */
+#chat-box > .styler > .form {{ flex: 0 0 auto !important; }}
+#question {{ padding: 12px 14px !important; }}
+#question .input-container {{ align-items: center !important; gap: 8px; }}
+#question textarea {{ min-height: 36px; padding-top: 8px !important;
+  padding-bottom: 8px !important; }}
+#question .submit-button {{ flex: 0 0 auto; width: 36px; height: 36px; }}
 /* Inside a group Gradio resets its children's borders: give the suggestions theirs back. */
 #chat-box .example {{ border: 1px solid var(--border-color-primary) !important; }}
 #panel, #panel > .html-container, #panel .prose {{ display: flex !important;
@@ -197,6 +205,7 @@ def build_app(documents: Sequence[ChatDocument]) -> gr.Blocks:
                         placeholder="Ask a question about the document, in English",
                         show_label=False,
                         submit_btn=True,
+                        elem_id="question",
                     )
                 menu = gr.Dropdown(list(by_title), value=first.entry.title, label="Document")
             with gr.Column(scale=2, min_width=300, elem_id="source-column"):
