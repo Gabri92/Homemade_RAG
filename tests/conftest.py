@@ -1,5 +1,6 @@
 """Shared fixtures. All book content here is synthetic: never use text from the real book."""
 
+import json
 from collections.abc import Callable
 from pathlib import Path
 
@@ -9,11 +10,12 @@ from ebooklib import epub
 
 from homerag.config import LanguageGateConfig
 from homerag.embedding import Vectors
+from homerag.eval.dataset import GoldenQuestion
 from homerag.index import VectorIndex
 from homerag.ingest import html_to_blocks
 from homerag.language import build_detector
 from homerag.llm import Completion, LLMRequest
-from homerag.models import Block, Usage
+from homerag.models import Block, Chunk, SectionRef, Usage
 from homerag.qa import Resources
 
 MakeEpub = Callable[[list[tuple[str, str]]], Path]
@@ -96,3 +98,57 @@ def embed_on_first_axis(texts: list[str]) -> Vectors:
 def fake_resources(index: VectorIndex, llm: FakeLLM, gate: LanguageGateConfig) -> Resources:
     """What `qa.answer` needs: a real language gate, the fake embedder and the given LLM."""
     return Resources(index, embed_on_first_axis, build_detector(gate), llm)
+
+
+# --- a synthetic golden set for the eval tests ------------------------------------------
+
+
+def golden_question(qid: str, category: str, *sections: str, **extra: str) -> GoldenQuestion:
+    """A valid golden question; a `non_english` one is in Italian, with no reference answer."""
+    fields: dict[str, object] = {
+        "id": qid,
+        "question": f"question {qid}",
+        "category": category,
+        "relevant_section_ids": sections,
+        "reference_answer": "a paraphrase",
+        **extra,
+    }
+    if category == "non_english":
+        fields.update(language="it", reference_answer=None)
+    return GoldenQuestion.model_validate(fields)
+
+
+GOLDEN_QUESTIONS = [
+    golden_question("q-001", "factual", "base"),
+    golden_question("q-002", "follow_up", "base", previous_id="q-001"),
+    golden_question("q-003", "out_of_scope"),
+    golden_question("q-004", "non_english"),
+]
+
+# Two chunks; embed_on_first_axis points every question at the "base" chunk.
+EVAL_INDEX = VectorIndex(
+    (
+        Chunk("base#1", (SectionRef("base", ("Base",)),), "synthetic chunk text", "1"),
+        Chunk(
+            "swim#1",
+            (SectionRef("swim", ("Swim",)), SectionRef("bike", ("Bike",))),
+            "other synthetic text",
+            "2",
+        ),
+    ),
+    np.array([[1.0, 0.0], [0.0, 1.0]], dtype=np.float32),
+)
+
+VERDICT = {"reasoning": "ok", "correctness": "partial", "faithful": True, "declined": False}
+
+
+def answer_or_verdict(request: LLMRequest) -> Completion:
+    """A `FakeLLM` reply: a cited sentence for an answer (cached, $0.01), the `VERDICT` for a
+    judge request ($0.02)."""
+    if request.output_schema is not None:
+        return Completion(json.dumps(VERDICT), "end_turn", Usage(request.model, 50, 30, 0.02))
+    return Completion(
+        "A synthetic answer for this test [1].",
+        "end_turn",
+        Usage(request.model, 100, 20, 0.01, latency_s=1.5, cached=True),
+    )
