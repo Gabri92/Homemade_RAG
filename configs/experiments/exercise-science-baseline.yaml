@@ -1,0 +1,40 @@
+# Baseline on the first curated document of the Phase 4a demo: the same pipeline as
+# baseline.yaml, on "Introduction to Exercise Science for Fitness Professionals" (CC BY 4.0).
+name: exercise-science-baseline
+document: data/processed/exercise-science/book.json
+
+language_gate:           # first step of the pipeline: non-English messages get a notice
+  languages: [en, it, es, fr, de]
+  min_words: 3           # shorter messages always pass (detection is unreliable on them)
+  min_confidence: 0.5    # block only if a non-English language reaches this confidence
+
+chunking:
+  strategy: fixed        # N tokens with overlap; tables may be split on purpose (see 5.1)
+  size_tokens: 500
+  overlap_tokens: 50
+
+embedding:
+  strategy: local        # sentence-transformers on this machine
+  model: BAAI/bge-m3
+  device: auto           # cuda if a test computation works, otherwise cpu (with a warning)
+  batch_size: 16
+
+retrieval:
+  strategy: dense        # cosine similarity, top k
+  top_k: 5
+
+generation:
+  model: claude-sonnet-5-5
+  effort: low
+  max_tokens: 4096       # thinking counts inside it; only the tokens used are paid
+  prompt: answer_v1
+
+judge:
+  model: claude-opus-5-5
+  effort: medium
+  max_tokens: 4096
+  prompt: judge_v1
+
+evaluation:
+  ks: [1, 3, 5]          # hit rate and recall at each cut-off, from the same top-5 ranking
+  max_copied_words: 20   # longest run of words an answer may copy from one source

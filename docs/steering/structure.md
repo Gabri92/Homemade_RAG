@@ -38,6 +38,7 @@ src/homerag/
 .claude/               # Claude Code project settings: settings.json (hooks, deny reading .env), hooks/, agents/eval-analyst.md, skills/experiment/
 configs/experiments/   # one YAML per experiment: baseline.yaml is the Phase 3 starting point
 eval/datasets/         # golden.jsonl (hand-written, gitignored: kept local, ADR 0004) + example.jsonl (synthetic, committed)
+                       # + one set per curated document of the demo, committed (open license): exercise-science*.jsonl + .md (method)
 eval/runs/             # run outputs (gitignored)
 data/                  # raw/, processed/, index/, cache/ (gitignored)
 notes/                 # personal notes: prompting, building in public (gitignored)

@@ -5,6 +5,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+- First curated document of the Phase 4a demo, *Introduction to Exercise Science for Fitness Professionals* (CC BY 4.0): experiment config `exercise-science-baseline.yaml` and two committed golden sets. `exercise-science.jsonl` has 27 questions written by Claude Haiku from seeded, sampled sections, checked for overlap with the passage and verified against it. `exercise-science-human.jsonl` has 10 hand-written questions, kept apart to measure the generator's bias. The method and prompt are in `eval/datasets/exercise-science.md`.
+
 ## [0.5.1] - 2026-11-26
 
 Fixes on `main` after Phase 3b: ingestion of Pressbooks open textbooks, the first candidate document for the Phase 4a shared demo.
