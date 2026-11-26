@@ -6,6 +6,9 @@ from pathlib import Path
 import pytest
 from ebooklib import epub
 
+from homerag.ingest import html_to_blocks
+from homerag.models import Block
+
 MakeEpub = Callable[[list[tuple[str, str]]], Path]
 
 
@@ -36,3 +39,16 @@ def make_epub(tmp_path: Path) -> MakeEpub:
         return path
 
     return build
+
+
+SOURCE = "ch01.xhtml"
+
+
+def blocks_of(html: str) -> list[Block]:
+    """Blocks of a synthetic document body, as the loader converts one file."""
+    return html_to_blocks(f"<html><body>{html}</body></html>", source=SOURCE)
+
+
+def page_marker(label: str) -> str:
+    """An EPUB printed-page marker, as publishers write it."""
+    return f'<span epub:type="pagebreak" id="page_{label}" aria-label=" page {label}. "></span>'
