@@ -13,6 +13,7 @@ from homerag.ingest.cleaning import (
     clean,
     merge_continued_tables,
     remove_pull_quotes,
+    remove_repeated_headings,
 )
 from homerag.ingest.dump import format_blocks, format_sections
 from homerag.ingest.epub import epub_text, html_to_blocks, load_epub
@@ -51,6 +52,7 @@ __all__ = [
     "merge_continued_tables",
     "quality_report",
     "remove_pull_quotes",
+    "remove_repeated_headings",
     "save_book",
     "structure",
 ]

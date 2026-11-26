@@ -103,7 +103,27 @@ def _is_untitled_table(block: Block, source: str) -> bool:
     return block.kind == "table" and block.source == source and block.text.startswith("|")
 
 
+def remove_repeated_headings(blocks: list[Block]) -> list[Block]:
+    """#18: a heading right after a heading with the same text (same file) is a repeat.
+
+    Pressbooks prints the chapter title, then the same title again as the first
+    heading of the text: kept twice, it would open an empty section.
+    """
+    result: list[Block] = []
+    for block in blocks:
+        previous = result[-1] if result else None
+        if not (
+            previous
+            and block.kind == previous.kind == "heading"
+            and block.source == previous.source
+            and block.text.casefold() == previous.text.casefold()
+        ):
+            result.append(block)
+    return result
+
+
 CLEANING_STEPS: list[CleaningStep] = [
+    remove_repeated_headings,
     remove_pull_quotes,
     merge_continued_tables,
     attach_intro_to_untitled_tables,

@@ -10,7 +10,12 @@ src/homerag/
   config.py      # settings (.env) + experiment config (YAML -> pydantic, frozen, unknown fields rejected)
   ingest/        # source -> blocks -> cleaning -> sections -> data/processed/book.json (ADR 0002)
     __init__.py  #   public API: from outside, import only from `homerag.ingest`
-    epub.py      #   ePub Loader (one file per format: pdf.py tomorrow)
+    epub/        #   ePub Loader (one file or package per format: pdf.py tomorrow), ADR 0009
+      loader.py  #     container: spine, navigation, page carry-over -> load_epub, epub_text
+      html.py    #     one document -> blocks (headings, lists, figures, notes, pages)
+      tables.py  #     tables -> Markdown (rowspan/colspan)
+      roles.py   #     what each file is: landmarks, epub:type
+      pressbooks.py #   one tool's conventions, used only where EPUB semantics are missing
     cleaning.py  #   Cleaner: structural rules on list[Block]
     structure.py #   Structurer: list[Block] -> Book (sections, ids, roles, inclusion, pages)
     book_file.py #   save_book / load_book for book.json, with SCHEMA_VERSION
@@ -37,8 +42,8 @@ eval/runs/             # run outputs (gitignored)
 data/                  # raw/, processed/, index/, cache/ (gitignored)
 notes/                 # personal notes: prompting, building in public (gitignored)
 tests/                 # one kind of test = one folder (see conventions.md, "Tests")
-  conftest.py          #   shared fixtures (make_epub: synthetic mini-ePub)
-  unit/                #   fast, offline; mirrors src/homerag/ (unit/ingest/test_cleaning.py, unit/eval/test_dataset.py, ...)
+  conftest.py          #   shared fixtures and helpers (make_epub: synthetic mini-ePub; blocks_of, page_marker)
+  unit/                #   fast, offline; mirrors src/homerag/ (unit/ingest/test_cleaning.py, unit/ingest/epub/test_html.py, ...)
   book/                #   on the real book: `book` marker and automatic skip in book/conftest.py
     expectations.py    #     expected values for the book (numbers and short titles only)
     test_golden.py     #     golden-set section ids exist in the current ingestion (skipped until golden.jsonl exists)
@@ -93,6 +98,7 @@ To be introduced at the start of chunking, not before (YAGNI). They are for **ex
 |---|---|
 | A new chunking / retrieval strategy | a function in `chunking.py` / `retrieval.py` + an entry in the registry |
 | A new source format | a file in `ingest/` (e.g. `pdf.py`) that produces `list[Block]` |
+| A publishing tool's conventions (e.g. Pressbooks) | a file in `ingest/epub/` named after the tool, called only where the EPUB semantics are missing (ADR 0009) |
 | A new cleaning rule | a function in `ingest/cleaning.py` + an entry in the `CLEANING_STEPS` sequence |
 | A new metric | a pure function in `eval/metrics.py` |
 | A new prompt or prompt version | a new file in `prompts/` |

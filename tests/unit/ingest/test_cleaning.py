@@ -3,6 +3,7 @@ from homerag.ingest import (
     clean,
     merge_continued_tables,
     remove_pull_quotes,
+    remove_repeated_headings,
 )
 from homerag.models import Block
 
@@ -175,3 +176,24 @@ def test_clean_is_idempotent() -> None:
     once = clean(blocks)
 
     assert clean(once) == once
+
+
+def heading(text: str, source: str = CH1, level: int = 1) -> Block:
+    return Block("heading", text, source, level=level)
+
+
+def test_heading_repeated_right_after_itself_is_dropped() -> None:
+    blocks = [heading("Recovery Basics"), heading("recovery basics"), para("Sleep matters.")]
+
+    assert remove_repeated_headings(blocks) == [heading("Recovery Basics"), para("Sleep matters.")]
+
+
+def test_same_heading_in_another_file_or_after_text_is_kept() -> None:
+    blocks = [
+        heading("Summary"),
+        heading("Summary", source=CH2),
+        para("Text."),
+        heading("Summary", source=CH2),
+    ]
+
+    assert remove_repeated_headings(blocks) == blocks

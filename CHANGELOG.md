@@ -5,6 +5,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+- Ingestion of Pressbooks ePubs (open textbooks, findings #17–#19): roles from the first `<div>` when a file has no `epub:type`, so cover, title page, copyright and table of contents are no longer searchable; chapter titles no longer doubled (note numbers in headings, chapter number and authors dropped; new Cleaner step `remove_repeated_headings`); figure captions inside `<figure>` and text in `<div>`s without `<p>` are kept (coverage 96.0% → 99.6%). The reference book's ingestion is unchanged. The Pressbooks book joins the corpus regression tests.
+
 ## [0.5.0] - 2026-11-24
 
 Phase 3b: generation and judge. The first complete pipeline, measured end to end: correct 0.77, faithful 0.97, gate 40/40, about $1 per full run.
