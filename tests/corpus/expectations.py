@@ -36,6 +36,12 @@ NON_CONTENT_ROLES = {
 INCLUDED_SECTIONS = {"engels": 15, "slocum": 23, "whymper": 34, "exercise-science": 422}
 APPENDICES = {"engels": 0, "slocum": 0, "whymper": 9, "exercise-science": 0}
 
+# SHA-256 of the edition a committed golden set cites (ADR 0010): a new edition can change
+# the section ids, so a different file must fail loudly instead of skewing the evaluation.
+EDITION_SHA256 = {
+    "exercise-science": "292827f057899c17cffdd7ae91dd02b25670d73d0ea06872588638f10d3e1da4",
+}
+
 # `inspect` warnings each book is known to raise: no page markers anywhere (#15); the
 # Pressbooks book also has open defects, see docs/ingestion-findings.md (#20).
 EXPECTED_WARNINGS = {

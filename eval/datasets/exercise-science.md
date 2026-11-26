@@ -2,6 +2,14 @@
 
 The first curated document of the Phase 4a shared demo: Amanda Shelton (ed.), *Introduction to Exercise Science for Fitness Professionals*, MHCC Library Press, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Download: https://mhcc.pressbooks.pub/hpe172 (EPUB export), into `data/corpus/exercise-science/`. Ingested with `homerag ingest ... --output data/processed/exercise-science/book.json`; the experiment config is `configs/experiments/exercise-science-baseline.yaml`.
 
+## Attribution and license
+
+The questions and reference answers in `exercise-science.jsonl` and `exercise-science-human.jsonl` are adapted from *[Introduction to Exercise Science for Fitness Professionals](https://mhcc.pressbooks.pub/hpe172)* by Amanda Shelton, MHCC Library Press, used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The book is itself a remix of other open textbooks, credited in its attribution statement.
+
+**Changes:** the book's text was not copied. Questions were written from it, and reference answers paraphrase it as short key points; specific values (numbers, names) are kept. The section ids refer to this project's ingestion of the book. Two defects of the book are corrected in the reference answers (see "Results"). This project is not affiliated with or endorsed by the author or the publisher.
+
+**Edition:** the ePub downloaded on 2026-11-26, SHA-256 `292827f057899c17cffdd7ae91dd02b25670d73d0ea06872588638f10d3e1da4`. A corpus test checks it, because a new edition can change the section ids. Only the text is used: some images in the book carry other licenses (ADR 0010).
+
 Unlike the reference book's golden set (ADR 0004), this one is committed: the book's license allows it. Reference answers are still paraphrased key points, for evaluation reasons: the judge compares content, and a copied reference would reward answers that copy the book.
 
 ## How the questions are made
