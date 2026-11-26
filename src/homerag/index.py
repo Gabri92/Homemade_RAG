@@ -13,7 +13,7 @@ from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any
+from typing import Any  # JSON metadata and chunks: values of mixed types, checked when read
 
 import numpy as np
 

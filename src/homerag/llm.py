@@ -112,27 +112,35 @@ def anthropic_llm(api_key: SecretStr) -> LLM:
             fallbacks="default" if fallback else anthropic.omit,
         )
         text = "".join(block.text for block in response.content if block.type == "text")
-        tokens_in, tokens_out = response.usage.input_tokens, response.usage.output_tokens
-        # With a fallback, the totals are priced at the model that answered: close enough
-        # for a rare event, and the answering model is recorded.
-        usage = Usage(
+        usage = _usage(
             response.model,
-            tokens_in,
-            tokens_out,
-            cost_usd(response.model, tokens_in, tokens_out),
-            round(time.perf_counter() - start, 2),
-        )
-        logger.info(
-            "llm %s: %d in, %d out, $%.4f, %.1f s",
-            usage.model,
-            tokens_in,
-            tokens_out,
-            usage.cost_usd,
-            usage.latency_s,
+            response.usage.input_tokens,
+            response.usage.output_tokens,
+            time.perf_counter() - start,
         )
         return Completion(text, response.stop_reason or "", usage)
 
     return complete
+
+
+def _usage(model: str, tokens_in: int, tokens_out: int, seconds: float) -> Usage:
+    """What one call used and cost, logged.
+
+    With a fallback, the totals are priced at the model that answered: close enough for a
+    rare event, and the answering model is recorded.
+    """
+    usage = Usage(
+        model, tokens_in, tokens_out, cost_usd(model, tokens_in, tokens_out), round(seconds, 2)
+    )
+    logger.info(
+        "llm %s: %d in, %d out, $%.4f, %.1f s",
+        model,
+        tokens_in,
+        tokens_out,
+        usage.cost_usd,
+        usage.latency_s,
+    )
+    return usage
 
 
 def cached(llm: LLM, cache_dir: Path = CACHE_ROOT) -> LLM:

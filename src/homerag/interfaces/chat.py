@@ -156,6 +156,11 @@ def header(entry: DocumentEntry) -> str:
     )
 
 
+def pick_source(label: str | None, panels: dict[str, str]) -> str:
+    """The panel of the source the reader picked, or the empty panel."""
+    return panels.get(label or "", EMPTY_PANEL)
+
+
 def build_app(documents: Sequence[ChatDocument]) -> gr.Blocks:
     """The page: document menu and chat on the left, the cited section on the right."""
     by_title = {d.entry.title: d for d in documents}
@@ -178,20 +183,18 @@ def build_app(documents: Sequence[ChatDocument]) -> gr.Blocks:
                 panel = gr.HTML(EMPTY_PANEL)
         panels = gr.State({})
 
+        # Handlers return one Gradio update per output: values or components, hence Any.
         def ask(question: str, history: History, title: str) -> tuple[Any, ...]:
             history, labels, found = respond(question, history, by_title[title])
             first_label = labels[0] if labels else None
             shown = found[first_label] if first_label else EMPTY_PANEL
             return history, gr.Radio(labels, value=first_label), shown, found, ""
 
-        def show(label: str | None, found: dict[str, str]) -> str:
-            return found.get(label or "", EMPTY_PANEL)
-
         def switch(title: str) -> tuple[Any, ...]:
             return header(by_title[title].entry), [], gr.Radio([], value=None), EMPTY_PANEL, {}
 
         box.submit(ask, [box, chat, menu], [chat, sources, panel, panels, box])
-        sources.input(show, [sources, panels], panel)
+        sources.input(pick_source, [sources, panels], panel)
         sources.input(None, js=SCROLL_TO_PANEL)
         menu.change(switch, menu, [top, chat, sources, panel, panels])
         panel.change(None, js=SCROLL_TO_MARK)

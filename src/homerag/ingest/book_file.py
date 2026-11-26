@@ -4,7 +4,7 @@ import json
 from dataclasses import asdict
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any
+from typing import Any  # book.json data: values of mixed types, checked when read
 
 from homerag.models import Block, Book, Section
 
