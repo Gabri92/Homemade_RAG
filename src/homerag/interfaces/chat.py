@@ -39,8 +39,13 @@ NARROW_PX = 720
 # scrolls: the chat column (header included) fills the window, the panel under it most of it.
 CSS = f"""
 #chat-column > *, #source-column > * {{ flex: 0 0 auto !important; }}
-#chat-column > #chat, #source-column > #panel {{ flex: 1 1 0 !important; min-height: 0; }}
-#chat {{ min-height: 240px; height: auto !important; }}
+#chat-column > #chat-box, #source-column > #panel {{ flex: 1 1 0 !important; min-height: 0; }}
+#chat-box, #chat-box > .styler {{ display: flex !important; flex-direction: column;
+  flex: 1 1 0; min-height: 0; }}
+#chat-box #chat {{ flex: 1 1 0 !important; min-height: 200px; height: auto !important;
+  border: none !important; }}
+/* Inside a group Gradio resets its children's borders: give the suggestions theirs back. */
+#chat-box .example {{ border: 1px solid var(--border-color-primary) !important; }}
 #panel, #panel > .html-container, #panel .prose {{ display: flex !important;
   flex-direction: column; flex: 1 1 0; min-height: 0; }}
 .source-panel {{ white-space: pre-wrap; line-height: 1.6; overflow-y: auto;
@@ -179,18 +184,20 @@ def build_app(documents: Sequence[ChatDocument]) -> gr.Blocks:
             # The header is in the chat column, so on a phone the whole column fits the screen.
             with gr.Column(scale=3, min_width=340, elem_id="chat-column"):
                 top = gr.Markdown(header(first.entry), elem_id="doc-header")
-                chat = gr.Chatbot(
-                    label="Chat",
-                    buttons=["copy"],
-                    elem_id="chat",
-                    scale=1,
-                    examples=suggestions(first.entry),
-                )
-                box = gr.Textbox(
-                    placeholder="Ask a question about the document, in English",
-                    show_label=False,
-                    submit_btn=True,
-                )
+                # One box for the conversation and the question; the menu in its own box.
+                with gr.Group(elem_id="chat-box"):
+                    chat = gr.Chatbot(
+                        label="Chat",
+                        buttons=["copy"],
+                        elem_id="chat",
+                        scale=1,
+                        examples=suggestions(first.entry),
+                    )
+                    box = gr.Textbox(
+                        placeholder="Ask a question about the document, in English",
+                        show_label=False,
+                        submit_btn=True,
+                    )
                 menu = gr.Dropdown(list(by_title), value=first.entry.title, label="Document")
             with gr.Column(scale=2, min_width=300, elem_id="source-column"):
                 sources = gr.Radio([], label="Sources of the last answer", elem_id="sources")
