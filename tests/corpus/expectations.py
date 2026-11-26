@@ -1,10 +1,13 @@
-"""Expected facts about the generalization corpus: public-domain ePubs from Standard Ebooks.
+"""Expected facts about the generalization corpus: openly licensed ePubs from other publishers.
 
-They are not committed. Download each "Compatible epub" from its page into
-data/corpus/<key>/ (the folder name is the key below):
+They are not committed. Download each ePub into data/corpus/<key>/ (the folder name is
+the key below). Standard Ebooks (public domain): the "Compatible epub" from its page.
 - whymper: https://standardebooks.org/ebooks/edward-whymper/scrambles-amongst-the-alps-in-the-years-1860-69
 - slocum:  https://standardebooks.org/ebooks/joshua-slocum/sailing-alone-around-the-world
 - engels:  https://standardebooks.org/ebooks/friedrich-engels/the-condition-of-the-working-class-in-england/florence-kelley-wischnewetzky
+
+Pressbooks (open textbooks, no epub:type): the EPUB export from the book's home page.
+- exercise-science: https://mhcc.pressbooks.pub/hpe172 (CC BY 4.0)
 """
 
 from pathlib import Path
@@ -22,7 +25,27 @@ NON_CONTENT_ROLES = {
     "loi",
     "colophon",
     "copyright-page",
+    # Pressbooks (#17): files recognised from their first <div>.
+    "cover",
+    "toc",
+    "frontmatter",
+    "backmatter",
+    "bibliography",
 }
 
-INCLUDED_SECTIONS = {"engels": 15, "slocum": 23, "whymper": 34}
-APPENDICES = {"engels": 0, "slocum": 0, "whymper": 9}
+INCLUDED_SECTIONS = {"engels": 15, "slocum": 23, "whymper": 34, "exercise-science": 422}
+APPENDICES = {"engels": 0, "slocum": 0, "whymper": 9, "exercise-science": 0}
+
+# `inspect` warnings each book is known to raise: no page markers anywhere (#15); the
+# Pressbooks book also has open defects, see docs/ingestion-findings.md (#20).
+EXPECTED_WARNINGS = {
+    "engels": ["blocks with page"],
+    "slocum": ["blocks with page"],
+    "whymper": ["blocks with page"],
+    "exercise-science": [
+        "untitled tables",
+        "duplicate paragraphs",
+        "words glued to numbers",
+        "blocks with page",
+    ],
+}

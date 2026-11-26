@@ -1,4 +1,4 @@
-"""The ingestion must work on ePubs it was not designed on (findings #12-#15)."""
+"""The ingestion must work on ePubs it was not designed on (findings #12-#19)."""
 
 from pathlib import Path
 
@@ -8,13 +8,13 @@ from tests.corpus import expectations as expected
 Corpus = tuple[str, Path]
 
 
-def test_only_missing_page_markers_are_reported(corpus_book: Corpus) -> None:
-    # #15: these ePubs have no printed-page markers; anything else is a regression.
-    _, path = corpus_book
+def test_only_known_warnings_are_reported(corpus_book: Corpus) -> None:
+    # #15: these ePubs have no printed-page markers; any new warning is a regression.
+    key, path = corpus_book
 
     warnings = [c.name for c in inspect_epub(path) if c.warning]
 
-    assert warnings == ["blocks with page"]
+    assert warnings == expected.EXPECTED_WARNINGS[key]
 
 
 def test_headingless_sections_are_never_ancestors(corpus_book: Corpus) -> None:
