@@ -11,6 +11,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - ADR 0010: how a curated document is chosen (license checked in the document; NC and ND excluded), attribution wherever its material appears, and why the files stay out of git. Attribution for the first document next to its golden set and in the README. A corpus test checks the SHA-256 of the edition the golden set cites.
 
 - Local web chat, `homerag chat` (Gradio, ADR 0011): pick a document from `configs/documents.yaml` (for now only the openly licensed one), ask, and check every answer at two depths. Each cited chunk opens under the answer. A source panel shows the whole cited section with the passage the model read highlighted, its pages, the license and a link to the book online. New `qa.passages()` and `models.Passage`, so the page only calls and lays out.
+- Suggested questions in the web chat: up to four per document (`suggested_questions` in `configs/documents.yaml`), shown inside the empty chat for a reader who does not know the document; a click asks one. The document menu moves under the question box.
 
 ### Changed
 - Interfaces apart from the RAG core (ADR 0012): `cli.py` and `chat.py` move to `src/homerag/interfaces/`, and the `homerag` command points at `homerag.interfaces.cli:app`. `tests/unit/test_architecture.py` checks the structure rules on the imports: the core never imports the interfaces, each external library stays in its module, `models.py` imports no project module.
@@ -20,6 +21,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Web chat layout follows the screen. Chat and source panel take their height from the window, so the question box stays in view. On a phone the header shrinks, the panel goes under the chat, and picking a source scrolls the page to it.
 
 ### Fixed
+- Web chat fits the window with no page scroll, at any size: the page is a flex layout (`fill_height`) where only the chat and the source panel grow, and long text scrolls inside them instead of fixed pixel offsets. The document header moves to the top of the chat column, so on a phone the header, menu, chat and question box fit one screen, and on a wide screen the source panel starts at the top.
 - Ingestion (findings #20, #21): an untitled table whose first row spans every column takes it as its title (new Cleaner step `title_from_spanning_row`, after the intro rule); multiple-choice quiz sections, recognised from their content, get the role `quiz` and are not searched. Only the Pressbooks book changes: untitled tables 8 → 2, 4 quiz sections excluded.
 
 ## [0.5.1] - 2026-11-26
