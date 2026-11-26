@@ -8,7 +8,14 @@ import numpy as np
 from homerag.chunking import BLOCK_SEPARATOR
 from homerag.config import DocumentEntry, load_experiment
 from homerag.index import VectorIndex
-from homerag.interfaces.chat import ChatDocument, build_app, header, respond, source_panel
+from homerag.interfaces.chat import (
+    ChatDocument,
+    build_app,
+    header,
+    respond,
+    source_panel,
+    suggestions,
+)
 from homerag.models import Block, Book, Chunk, Citation, Passage, Section, SectionRef
 from tests.conftest import FakeLLM, fake_resources
 
@@ -20,6 +27,7 @@ ENTRY = DocumentEntry(
     license="CC BY 4.0",
     license_url="https://creativecommons.org/licenses/by/4.0/",
     config=Path("configs/experiments/baseline.yaml"),
+    suggested_questions=("How long is the base period?", "What comes after base?"),
 )
 QUESTION = "How long is the base period?"
 
@@ -89,3 +97,17 @@ def test_header_links_the_book_online() -> None:
 
 def test_build_app_lays_out_the_page() -> None:
     assert isinstance(build_app([document("unused")]), gr.Blocks)
+
+
+def test_suggested_questions_become_chat_examples() -> None:
+    assert suggestions(ENTRY) == [
+        {"text": "How long is the base period?"},
+        {"text": "What comes after base?"},
+    ]
+
+
+def test_the_empty_chat_shows_the_suggested_questions() -> None:
+    app = build_app([document("unused")])
+    chats = [b for b in app.blocks.values() if isinstance(b, gr.Chatbot)]
+
+    assert [chat.examples for chat in chats] == [suggestions(ENTRY)]

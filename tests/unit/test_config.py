@@ -124,3 +124,20 @@ def test_document_list_rejects_repeated_titles(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="titles must be unique"):
         load_documents(path)
+
+
+def test_a_document_offers_at_most_four_suggested_questions(tmp_path: Path) -> None:
+    entry = {
+        "title": "One",
+        "author": "A",
+        "url": "https://example.org",
+        "license": "CC BY 4.0",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+        "config": "configs/experiments/baseline.yaml",
+        "suggested_questions": [f"Question {n}?" for n in range(5)],
+    }
+    path = tmp_path / "documents.yaml"
+    path.write_text(yaml.safe_dump({"documents": [entry]}), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="suggested_questions"):
+        load_documents(path)

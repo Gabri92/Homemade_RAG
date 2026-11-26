@@ -12,6 +12,7 @@ from html import escape
 from typing import Any
 
 import gradio as gr
+from gradio.components.chatbot import ExampleMessage
 
 from homerag.config import DocumentEntry, ExperimentConfig, Settings, load_experiment
 from homerag.ingest import load_book
@@ -157,13 +158,18 @@ def header(entry: DocumentEntry) -> str:
     )
 
 
+def suggestions(entry: DocumentEntry) -> list[ExampleMessage]:
+    """The document's suggested questions, shown in the empty chat: a click asks one."""
+    return [{"text": question} for question in entry.suggested_questions]
+
+
 def pick_source(label: str | None, panels: dict[str, str]) -> str:
     """The panel of the source the reader picked, or the empty panel."""
     return panels.get(label or "", EMPTY_PANEL)
 
 
 def build_app(documents: Sequence[ChatDocument]) -> gr.Blocks:
-    """The page: document, menu and chat on the left, the cited section on the right."""
+    """The page: document, chat and menu on the left, the cited section on the right."""
     by_title = {d.entry.title: d for d in documents}
     first = documents[0]
     app = gr.Blocks(title="homerag", analytics_enabled=False, fill_height=True)
@@ -173,13 +179,19 @@ def build_app(documents: Sequence[ChatDocument]) -> gr.Blocks:
             # The header is in the chat column, so on a phone the whole column fits the screen.
             with gr.Column(scale=3, min_width=340, elem_id="chat-column"):
                 top = gr.Markdown(header(first.entry), elem_id="doc-header")
-                menu = gr.Dropdown(list(by_title), value=first.entry.title, label="Document")
-                chat = gr.Chatbot(label="Chat", buttons=["copy"], elem_id="chat", scale=1)
+                chat = gr.Chatbot(
+                    label="Chat",
+                    buttons=["copy"],
+                    elem_id="chat",
+                    scale=1,
+                    examples=suggestions(first.entry),
+                )
                 box = gr.Textbox(
                     placeholder="Ask a question about the document, in English",
                     show_label=False,
                     submit_btn=True,
                 )
+                menu = gr.Dropdown(list(by_title), value=first.entry.title, label="Document")
             with gr.Column(scale=2, min_width=300, elem_id="source-column"):
                 sources = gr.Radio([], label="Sources of the last answer", elem_id="sources")
                 panel = gr.HTML(EMPTY_PANEL, elem_id="panel")
@@ -192,10 +204,17 @@ def build_app(documents: Sequence[ChatDocument]) -> gr.Blocks:
             shown = found[first_label] if first_label else EMPTY_PANEL
             return history, gr.Radio(labels, value=first_label), shown, found, ""
 
-        def switch(title: str) -> tuple[Any, ...]:
-            return header(by_title[title].entry), [], gr.Radio([], value=None), EMPTY_PANEL, {}
+        def ask_suggested(picked: gr.SelectData, history: History, title: str) -> tuple[Any, ...]:
+            return ask(picked.value["text"], history, title)
 
-        box.submit(ask, [box, chat, menu], [chat, sources, panel, panels, box])
+        def switch(title: str) -> tuple[Any, ...]:
+            entry = by_title[title].entry
+            chat_update = gr.Chatbot([], examples=suggestions(entry))
+            return header(entry), chat_update, gr.Radio([], value=None), EMPTY_PANEL, {}
+
+        answer_to = [chat, sources, panel, panels, box]
+        box.submit(ask, [box, chat, menu], answer_to)
+        chat.example_select(ask_suggested, [chat, menu], answer_to)
         sources.input(pick_source, [sources, panels], panel)
         sources.input(None, js=SCROLL_TO_PANEL)
         menu.change(switch, menu, [top, chat, sources, panel, panels])

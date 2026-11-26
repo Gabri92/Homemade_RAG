@@ -8,3 +8,8 @@ documents:
     license: CC BY 4.0
     license_url: https://creativecommons.org/licenses/by/4.0/
     config: configs/experiments/exercise-science-baseline.yaml
+    # Shown in the empty chat (at most 4); taken from the hand-written golden set.
+    suggested_questions:
+      - What happens to carbohydrates during digestion?
+      - What does "plyometric exercise" mean?
+      - What's the right order to do resistance training exercises in?

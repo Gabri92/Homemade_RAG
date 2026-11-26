@@ -144,6 +144,8 @@ class DocumentEntry(_Section):
     license: str = Field(min_length=1)
     license_url: str = Field(pattern=r"^https://")
     config: Path
+    # Shown in the empty chat for a reader who does not know the document; one click asks.
+    suggested_questions: tuple[str, ...] = Field(default=(), max_length=4)
 
 
 class DocumentCatalog(_Section):
