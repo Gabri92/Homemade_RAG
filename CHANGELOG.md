@@ -6,6 +6,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 ## [Unreleased]
 
 ### Added
+- Claude Code context check (`UserPromptSubmit` hook, `.claude/hooks/context_check.py`): it measures a session's context from its transcript and, past 150k and 300k tokens, asks Claude once to propose continuing in a new session with a hand-over brief.
 - First curated document of the Phase 4a demo, *Introduction to Exercise Science for Fitness Professionals* (CC BY 4.0): experiment config `exercise-science-baseline.yaml` and two committed golden sets. `exercise-science.jsonl` has 27 questions written by Claude Haiku from seeded, sampled sections, checked for overlap with the passage and verified against it. `exercise-science-human.jsonl` has 10 hand-written questions, kept apart to measure the generator's bias. The method and prompt are in `eval/datasets/exercise-science.md`.
 - ADR 0010: how a curated document is chosen (license checked in the document; NC and ND excluded), attribution wherever its material appears, and why the files stay out of git. Attribution for the first document next to its golden set and in the README. A corpus test checks the SHA-256 of the edition the golden set cites.
 
