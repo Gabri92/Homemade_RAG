@@ -4,7 +4,8 @@ import numpy as np
 import pytest
 
 from homerag.config import RetrievalConfig
-from homerag.index import VectorIndex, Vectors
+from homerag.embedding import Vectors
+from homerag.index import VectorIndex
 from homerag.models import Chunk, RetrievedChunk, SectionRef
 from homerag.retrieval import RETRIEVERS, dense_search, format_results
 

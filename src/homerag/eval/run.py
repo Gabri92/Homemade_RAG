@@ -21,18 +21,12 @@ from pathlib import Path
 from typing import Any
 
 from homerag.config import ExperimentConfig, LanguageGateConfig, load_experiment, load_settings
+from homerag.embedding import Embed, load_embedder_for
 from homerag.eval.dataset import ENGLISH, GoldenQuestion, load_golden
 from homerag.eval.judge import Verdict, judge, verdict_scores
 from homerag.eval.metrics import aggregate, answer_checks, gate_metrics, retrieval_metrics
 from homerag.eval.report import RUN_FORMAT, Metrics, save_run
-from homerag.index import (
-    Embed,
-    VectorIndex,
-    ensure_index,
-    fingerprint,
-    load_embedder_for,
-    open_index,
-)
+from homerag.index import VectorIndex, ensure_index, fingerprint, open_index
 from homerag.language import Detector, build_detector, is_english
 from homerag.llm import LLM, anthropic_llm, cached
 from homerag.models import Answer, RetrievedChunk, Usage

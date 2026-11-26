@@ -8,7 +8,8 @@ import pytest
 from ebooklib import epub
 
 from homerag.config import LanguageGateConfig
-from homerag.index import VectorIndex, Vectors
+from homerag.embedding import Vectors
+from homerag.index import VectorIndex
 from homerag.ingest import html_to_blocks
 from homerag.language import build_detector
 from homerag.llm import Completion, LLMRequest

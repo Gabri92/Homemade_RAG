@@ -1,7 +1,7 @@
 import numpy as np
 
 from homerag.config import EmbeddingConfig
-from homerag.index import load_local_embedder, token_spans_for
+from homerag.embedding import load_local_embedder, token_spans_for
 
 
 def test_bge_m3_offsets_point_into_the_original_text() -> None:

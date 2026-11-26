@@ -22,7 +22,8 @@ src/homerag/
     quality.py   #   generic quality report (no expected values): `homerag inspect`
     dump.py      #   format_blocks, format_sections for inspection
   chunking.py    # chunking strategies (functions) + CHUNKERS registry: fixed
-  index.py       # device choice, tokenizer offsets, EMBEDDERS + on-disk cache, vector index save/load (BM25 with 5.3)
+  embedding.py   # device choice, tokenizer offsets, EMBEDDERS + on-disk cache, load_embedder_for
+  index.py       # vector index: build, save, load, ensure_index, open_index (BM25 with 5.3)
   retrieval.py   # RETRIEVERS: dense (then bm25, RRF fusion, rerank in Phase 5); search, format_results
   language.py    # language gate: build_detector, is_english(text, detector, cfg), NOTICE
   llm.py         # the single access point to the Anthropic API: LLMRequest -> Completion, cache, cost, prompts
@@ -59,7 +60,7 @@ tests/                 # one kind of test = one folder (see conventions.md, "Tes
 
 ## Rules
 - **Dependencies flow one way:** `cli` / `chat` → `qa` / `eval` → the rest. `models.py` imports no other project module.
-- **One external library, one module:** `anthropic` only in `llm.py`, `sentence_transformers`, `transformers` and `torch` only in `index.py` / `retrieval.py`, `lingua` only in `language.py`, `gradio` only in `chat.py`. Replacing a technology then touches one file.
+- **One external library, one module:** `anthropic` only in `llm.py`, `sentence_transformers`, `transformers` and `torch` only in `embedding.py`, `lingua` only in `language.py`, `gradio` only in `chat.py`. Replacing a technology then touches one file.
 - **Interchangeable strategies = functions with the same signature in a dictionary.** Example:
   ```python
   CHUNKERS: dict[str, Callable[[Book, ChunkingConfig, TokenSpans], list[Chunk]]] = {

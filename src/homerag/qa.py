@@ -13,7 +13,8 @@ from html import escape
 
 from homerag.chunking import BLOCK_SEPARATOR, section_text
 from homerag.config import ExperimentConfig, Settings
-from homerag.index import Embed, VectorIndex, load_embedder_for, open_index
+from homerag.embedding import Embed, load_embedder_for
+from homerag.index import VectorIndex, open_index
 from homerag.language import NOTICE, Detector, build_detector, is_english
 from homerag.llm import LLM, LLMRequest, anthropic_llm, cached, load_prompt
 from homerag.models import Answer, Book, Citation, Passage, RetrievedChunk, Usage
