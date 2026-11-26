@@ -90,7 +90,7 @@ The evaluation pipeline acts as a fake user: the runner sends each golden questi
 | **Cleaner** | Removes headers/footers, page numbers, hyphenation, artifacts | Always inspect the output by hand: this is where half of the quality problems start. |
 | **Structurer** | Rebuilds the hierarchy: part → chapter → section; isolates tables and sidebars | Produces a structured `Book`, saved as `data/processed/book.json` (with `schema_version`). |
 
-### 3.2 Indexing (`chunking.py`, `index.py`; from Phase 3)
+### 3.2 Indexing (`chunking.py`, `embedding.py`, `index.py`; from Phase 3)
 
 Starts from `book.json` and is re-run for every experiment config.
 

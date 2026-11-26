@@ -12,6 +12,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Local web chat, `homerag chat` (Gradio, ADR 0011): pick a document from `configs/documents.yaml` (for now only the openly licensed one), ask, and check every answer at two depths. Each cited chunk opens under the answer. A source panel shows the whole cited section with the passage the model read highlighted, its pages, the license and a link to the book online. New `qa.passages()` and `models.Passage`, so the page only calls and lays out.
 
 ### Changed
+- Interfaces apart from the RAG core (ADR 0012): `cli.py` and `chat.py` move to `src/homerag/interfaces/`, and the `homerag` command points at `homerag.interfaces.cli:app`. `tests/unit/test_architecture.py` checks the structure rules on the imports: the core never imports the interfaces, each external library stays in its module, `models.py` imports no project module.
+- `embedding.py` split out of `index.py` (304 lines, two reasons to change): device, tokenizer, embedders and their cache in one module, the vector index in the other.
+- Tests: one `FakeLLM` and the fake resources in `tests/conftest.py` instead of four copies. Shorter functions (`run_experiment`, `anthropic_llm`, `build_app`), and a comment for every `Any`.
 - Web chat layout follows the screen. Chat and source panel take their height from the window, so the question box stays in view. On a phone the header shrinks, the panel goes under the chat, and picking a source scrolls the page to it.
 
 ### Fixed
