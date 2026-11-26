@@ -5,8 +5,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-26
+
+Fixes on `main` after Phase 3b: ingestion of Pressbooks open textbooks, the first candidate document for the Phase 4a shared demo.
+
+### Changed
+- The ePub loader is now the package `ingest/epub/` (`loader`, `html`, `tables`, `roles`, `pressbooks`), with the same public functions and no change in behaviour (ADR 0009). A publishing tool's conventions are used only where the EPUB semantics are missing.
+- README: what you need to run the project, and its limits.
+
 ### Fixed
 - Ingestion of Pressbooks ePubs (open textbooks, findings #17–#19): roles from the first `<div>` when a file has no `epub:type`, so cover, title page, copyright and table of contents are no longer searchable; chapter titles no longer doubled (note numbers in headings, chapter number and authors dropped; new Cleaner step `remove_repeated_headings`); figure captions inside `<figure>` and text in `<div>`s without `<p>` are kept (coverage 96.0% → 99.6%). The reference book's ingestion is unchanged. The Pressbooks book joins the corpus regression tests.
+- `/experiment` skill: the run cost is written in words, because `$1` in a skill is replaced by the first argument.
 
 ## [0.5.0] - 2026-11-24
 
