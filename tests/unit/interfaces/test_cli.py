@@ -5,7 +5,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from homerag.cli import app
+from homerag.interfaces.cli import app
 from tests.conftest import MakeEpub
 
 runner = CliRunner()

@@ -21,7 +21,7 @@
 - Descriptive names: `snake_case` for functions/modules, `PascalCase` for classes, `UPPER_CASE` for constants.
 - Short functions (roughly < 40 lines); if a block needs a comment to be understood, extract it into a well-named function.
 - Comments only for the *why*. Docstrings on the public functions of each module.
-- No `print` outside `cli.py`: use `logging`.
+- No `print` outside `interfaces/`: use `logging`.
 
 ## Errors
 - Fail early with clear messages. Never `except Exception: pass`.
@@ -43,7 +43,7 @@
 - Tests are a package (`tests/__init__.py`): import explicitly, e.g. `from tests.conftest import MakeEpub`.
 - External dependencies (LLM, embedding model) are replaced by passing a fake as a parameter, not with scattered `monkeypatch`.
 - The strategies in a registry are tested with a single test parametrized over all entries.
-- `cli.py`: one smoke test per command with typer's `CliRunner` (startup, error on invalid input, expected output). Logic is tested in the modules, not through the CLI.
+- `interfaces/cli.py`: one smoke test per command with typer's `CliRunner` (startup, error on invalid input, expected output). Logic is tested in the modules, not through the CLI.
 - Standard tests are deterministic and offline; those calling real APIs or models go in `tests/integration/`, where the `integration` marker is applied by the folder conftest.
 - Fixtures: a **synthetic mini-book** written by us, never text from the real book.
 - Bug found → first a test that reproduces it, then the fix.

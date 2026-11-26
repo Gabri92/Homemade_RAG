@@ -5,10 +5,10 @@ from pathlib import Path
 import gradio as gr
 import numpy as np
 
-from homerag.chat import ChatDocument, build_app, header, respond, source_panel
 from homerag.chunking import BLOCK_SEPARATOR
 from homerag.config import DocumentEntry, load_experiment
 from homerag.index import VectorIndex
+from homerag.interfaces.chat import ChatDocument, build_app, header, respond, source_panel
 from homerag.models import Block, Book, Chunk, Citation, Passage, Section, SectionRef
 from tests.conftest import FakeLLM, fake_resources
 
