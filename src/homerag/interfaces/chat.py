@@ -30,27 +30,28 @@ EMPTY_PANEL = (
 # Narrower than this, Gradio stacks the two columns: the source panel goes under the chat.
 NARROW_PX = 720
 
-# Up to this width the source column is narrow: its labels wrap, so the panel starts lower.
-MEDIUM_PX = 1100
-
-# Heights follow the window (dvh: the visible height, also on phones with a URL bar), so the
-# question box and the panel stay in view on any screen. On a narrow screen the columns are
-# stacked, so the chat and the panel each take most of the screen, and the header shrinks.
+# The page fills the window and never scrolls (Blocks(fill_height=True) makes it a flex
+# column): in each column only the chat and the source panel grow, the menu, the question
+# box and the source list keep their size, and long text scrolls inside the chat or the
+# panel. Gradio gives every child of an equal-height row's column a share of the free space,
+# hence the reset to `flex: 0 0 auto`. On a narrow screen the columns are stacked: the page
+# scrolls: the chat column (header included) fills the window, the panel under it most of it.
 CSS = f"""
-#chat {{ height: calc(100dvh - 340px) !important; min-height: 320px; }}
+#chat-column > *, #source-column > * {{ flex: 0 0 auto !important; }}
+#chat-column > #chat, #source-column > #panel {{ flex: 1 1 0 !important; min-height: 0; }}
+#chat {{ min-height: 240px; height: auto !important; }}
+#panel, #panel > .html-container, #panel .prose {{ display: flex !important;
+  flex-direction: column; flex: 1 1 0; min-height: 0; }}
 .source-panel {{ white-space: pre-wrap; line-height: 1.6; overflow-y: auto;
-  max-height: calc(100dvh - 440px); min-height: 160px; }}
+  flex: 1 1 0; min-height: 120px; }}
 .source-panel mark {{ background: rgba(250, 199, 117, 0.45); color: inherit; padding: 1px 0; }}
 .source-title {{ font-weight: 600; margin-bottom: 4px; white-space: normal; }}
 .source-meta, .source-empty {{ opacity: 0.7; font-size: 0.9em; white-space: normal; }}
-@media (max-width: {MEDIUM_PX}px) {{
-  .source-panel {{ max-height: calc(100dvh - 520px); }}
-}}
 @media (max-width: {NARROW_PX}px) {{
   #doc-header h3 {{ font-size: 1.05em; margin-bottom: 2px; }}
   #doc-header p {{ font-size: 0.85em; margin: 2px 0; }}
-  #chat {{ height: calc(100dvh - 365px) !important; min-height: 300px; }}
-  .source-panel {{ max-height: 65dvh; }}
+  #chat-column {{ height: calc(100dvh - 32px); }}
+  #source-column {{ height: 85dvh; }}
 }}
 """
 
@@ -162,25 +163,26 @@ def pick_source(label: str | None, panels: dict[str, str]) -> str:
 
 
 def build_app(documents: Sequence[ChatDocument]) -> gr.Blocks:
-    """The page: document menu and chat on the left, the cited section on the right."""
+    """The page: document, menu and chat on the left, the cited section on the right."""
     by_title = {d.entry.title: d for d in documents}
     first = documents[0]
-    app = gr.Blocks(title="homerag", analytics_enabled=False)
+    app = gr.Blocks(title="homerag", analytics_enabled=False, fill_height=True)
     with app:
-        top = gr.Markdown(header(first.entry), elem_id="doc-header")
-        with gr.Row():
+        with gr.Row(scale=1, equal_height=True, elem_id="main-row"):
             # min_width decides when the columns stack: both fit side by side from NARROW_PX.
-            with gr.Column(scale=3, min_width=340):
+            # The header is in the chat column, so on a phone the whole column fits the screen.
+            with gr.Column(scale=3, min_width=340, elem_id="chat-column"):
+                top = gr.Markdown(header(first.entry), elem_id="doc-header")
                 menu = gr.Dropdown(list(by_title), value=first.entry.title, label="Document")
-                chat = gr.Chatbot(label="Chat", buttons=["copy"], elem_id="chat")
+                chat = gr.Chatbot(label="Chat", buttons=["copy"], elem_id="chat", scale=1)
                 box = gr.Textbox(
                     placeholder="Ask a question about the document, in English",
                     show_label=False,
                     submit_btn=True,
                 )
-            with gr.Column(scale=2, min_width=300):
+            with gr.Column(scale=2, min_width=300, elem_id="source-column"):
                 sources = gr.Radio([], label="Sources of the last answer", elem_id="sources")
-                panel = gr.HTML(EMPTY_PANEL)
+                panel = gr.HTML(EMPTY_PANEL, elem_id="panel")
         panels = gr.State({})
 
         # Handlers return one Gradio update per output: values or components, hence Any.
