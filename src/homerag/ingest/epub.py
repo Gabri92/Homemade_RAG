@@ -81,7 +81,21 @@ def _parse(html: str | bytes) -> BeautifulSoup:
     for link in soup.find_all(_is_note_link):
         # #14: note numbers would stick to words ("summit.12"); notes keep their own text.
         link.decompose()
+    for marker in soup.find_all(_is_heading_note_marker):
+        # #18: "Protein Metabolism4" in a heading is a bare note number, not a title.
+        marker.decompose()
+    for byline in soup.find_all("p", class_=_PRESSBOOKS_TITLE_EXTRAS):
+        # #18: chapter number and authors under the title are layout, not content.
+        byline.decompose()
     return soup
+
+
+def _is_heading_note_marker(tag: Tag) -> bool:
+    return (
+        tag.name == "sup"
+        and tag.get_text().strip().isdigit()
+        and tag.find_parent(_HEADING_TAGS) is not None
+    )
 
 
 _NOTE_LINK_TYPES = frozenset({"noteref", "backlink"})
@@ -166,6 +180,8 @@ _PRESSBOOKS_IDS = {
 _PRESSBOOKS_BODY_CLASSES = frozenset({"chapter", "part"})
 _PRESSBOOKS_DIVISIONS = {"front-matter": "frontmatter", "back-matter": "backmatter"}
 _PRESSBOOKS_NEUTRAL_CLASSES = frozenset({"standard", "miscellaneous"})
+# Paragraphs of the chapter title block that are layout, not content (#18).
+_PRESSBOOKS_TITLE_EXTRAS = ["chapter-number", "chapter-author"]
 
 
 def _pressbooks_types(body: Tag) -> list[str]:

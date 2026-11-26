@@ -349,7 +349,7 @@ def test_load_epub_follows_spine_order_and_skips_navigation(make_epub: MakeEpub)
     assert [b.source for b in blocks] == ["ch01.xhtml"] * 2 + ["ch02.xhtml"] * 2
 
 
-# --- Pressbooks (#17) --------------------------------------------------------
+# --- Pressbooks (#17, #18) --------------------------------------------------------
 
 
 def test_pressbooks_files_get_their_role_from_the_first_div(make_epub: MakeEpub) -> None:
@@ -389,6 +389,22 @@ def test_epub_type_wins_over_pressbooks_markers(make_epub: MakeEpub) -> None:
     )
 
     assert load_epub(path)[0].role == "body"
+
+
+def test_note_number_in_a_heading_is_removed_but_not_in_text() -> None:
+    blocks = blocks_of("<h1>Lactate Threshold<sup>4</sup></h1><p>Area in m<sup>2</sup>.</p>")
+
+    assert [b.text for b in blocks] == ["Lactate Threshold", "Area in m2."]
+
+
+def test_pressbooks_chapter_number_and_authors_are_dropped() -> None:
+    blocks = blocks_of(
+        '<div class="chapter-title-wrap"><p class="chapter-number">3</p>'
+        '<h1 class="chapter-title">Warm-up</h1><p class="chapter-author">A. Coach</p></div>'
+        "<p>Start easy.</p>"
+    )
+
+    assert [b.text for b in blocks] == ["Warm-up", "Start easy."]
 
 
 def test_other_first_divs_say_nothing_about_the_role(make_epub: MakeEpub) -> None:
