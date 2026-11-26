@@ -217,3 +217,41 @@ def test_book_with_another_schema_version_is_rejected(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="schema"):
         load_book(path)
+
+
+# --- quizzes (#21) ----------------------------------------------------------------
+
+QUIZ = [
+    "1. How many rest days does a beginner need each week?",
+    "a. None",
+    "b. One or two",
+    "c. Five",
+    "2. Which drill trains cadence?",
+    "a. Long slow ride",
+    "b. High-cadence spin-ups",
+    "c. Hill repeats",
+]
+
+
+def test_multiple_choice_section_is_a_quiz_and_is_not_searched() -> None:
+    blocks = [heading("Test Yourself", 1), *(para(t) for t in QUIZ)]
+
+    section = structure(blocks, "book.epub").sections[0]
+
+    assert (section.role, section.include) == ("quiz", False)
+
+
+def test_numbered_steps_without_options_are_not_a_quiz() -> None:
+    steps = ["1. Warm up for ten minutes.", "2. Ride three intervals.", "3. Cool down."]
+    blocks = [heading("A Workout", 1), *(para(t) for t in steps)]
+
+    section = structure(blocks, "book.epub").sections[0]
+
+    assert (section.role, section.include) == ("body", True)
+
+
+def test_a_few_options_inside_a_long_section_do_not_make_it_a_quiz() -> None:
+    prose = [para(f"Paragraph {i} about recovery and sleep.") for i in range(8)]
+    blocks = [heading("Recovery", 1), *prose, *(para(t) for t in QUIZ[:4])]
+
+    assert structure(blocks, "book.epub").sections[0].include

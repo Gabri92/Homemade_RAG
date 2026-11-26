@@ -54,6 +54,13 @@ INCLUDED_ROLES = frozenset(
 )
 _ARABIC_PAGE = re.compile(r"\d+")
 
+# Multiple-choice quizzes (#21): a role found from the content, never searched.
+QUIZ = "quiz"
+QUIZ_MIN_QUESTIONS = 2
+QUIZ_MIN_SHARE = 0.6  # of the section's paragraphs and list items
+_QUESTION = re.compile(r"\d{1,2}[.)]\s")
+_OPTION = re.compile(r"[a-eA-E][.)]\s")
+
 
 @dataclass
 class _Draft:
@@ -100,20 +107,37 @@ def _finalise(drafts: list[_Draft]) -> list[Section]:
     for draft in drafts:
         section_id = _unique_id("/".join(_slug(title) for title in draft.path), used)
         pages = [p for p in (draft.heading_page, *(b.page for b in draft.blocks)) if p]
+        role = QUIZ if _is_quiz(draft.blocks) else draft.role
         sections.append(
             Section(
                 id=section_id,
                 title=draft.title,
                 level=draft.level,
                 path=draft.path,
-                role=draft.role,
-                include=draft.role in INCLUDED_ROLES,
+                role=role,
+                include=role in INCLUDED_ROLES,
                 blocks=tuple(draft.blocks),
                 first_page=pages[0] if pages else None,
                 last_page=pages[-1] if pages else None,
             )
         )
     return sections
+
+
+def _is_quiz(blocks: list[Block]) -> bool:
+    """#21: mostly numbered questions with lettered options ("1. ...", "a. ...").
+
+    Recognised by content, for any publisher (ADR 0009). A quiz reads like the user's
+    question, so it would outrank the sections that hold the answer.
+    """
+    texts = [b.text for b in blocks if b.kind in ("paragraph", "list_item")]
+    questions = sum(bool(_QUESTION.match(t)) for t in texts)
+    options = sum(bool(_OPTION.match(t)) for t in texts)
+    return (
+        questions >= QUIZ_MIN_QUESTIONS
+        and options >= 2 * questions
+        and questions + options >= QUIZ_MIN_SHARE * len(texts)
+    )
 
 
 def _unique_id(base: str, used: set[str]) -> str:

@@ -4,6 +4,7 @@ from homerag.ingest import (
     merge_continued_tables,
     remove_pull_quotes,
     remove_repeated_headings,
+    title_from_spanning_row,
 )
 from homerag.models import Block
 
@@ -197,3 +198,26 @@ def test_same_heading_in_another_file_or_after_text_is_kept() -> None:
     ]
 
     assert remove_repeated_headings(blocks) == blocks
+
+
+SPANNING = (
+    "| Recovery Methods | Recovery Methods |\n| --- | --- |\n| Method | Time |\n| Sleep | 8 h |"
+)
+
+
+def test_spanning_first_row_of_an_untitled_table_becomes_its_title() -> None:
+    assert title_from_spanning_row([table(SPANNING)]) == [
+        table("Recovery Methods\n| Method | Time |\n| --- | --- |\n| Sleep | 8 h |")
+    ]
+
+
+def test_table_already_titled_by_its_intro_keeps_its_rows() -> None:
+    titled = table(f"Accidents in the tunnel:\n{SPANNING}")
+
+    assert title_from_spanning_row([titled]) == [titled]
+
+
+def test_spanning_row_runs_after_the_intro_is_attached() -> None:
+    blocks = [para("Accidents in the tunnel:"), table(SPANNING)]
+
+    assert clean(blocks) == [table(f"Accidents in the tunnel:\n{SPANNING}")]

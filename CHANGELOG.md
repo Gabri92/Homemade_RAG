@@ -9,6 +9,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - First curated document of the Phase 4a demo, *Introduction to Exercise Science for Fitness Professionals* (CC BY 4.0): experiment config `exercise-science-baseline.yaml` and two committed golden sets. `exercise-science.jsonl` has 27 questions written by Claude Haiku from seeded, sampled sections, checked for overlap with the passage and verified against it. `exercise-science-human.jsonl` has 10 hand-written questions, kept apart to measure the generator's bias. The method and prompt are in `eval/datasets/exercise-science.md`.
 - ADR 0010: how a curated document is chosen (license checked in the document; NC and ND excluded), attribution wherever its material appears, and why the files stay out of git. Attribution for the first document next to its golden set and in the README. A corpus test checks the SHA-256 of the edition the golden set cites.
 
+### Fixed
+- Ingestion (findings #20, #21): an untitled table whose first row spans every column takes it as its title (new Cleaner step `title_from_spanning_row`, after the intro rule); multiple-choice quiz sections, recognised from their content, get the role `quiz` and are not searched. Only the Pressbooks book changes: untitled tables 8 → 2, 4 quiz sections excluded.
+
 ## [0.5.1] - 2026-11-26
 
 Fixes on `main` after Phase 3b: ingestion of Pressbooks open textbooks, the first candidate document for the Phase 4a shared demo.
