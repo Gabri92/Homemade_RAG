@@ -11,6 +11,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 - Local web chat, `homerag chat` (Gradio, ADR 0011): pick a document from `configs/documents.yaml` (for now only the openly licensed one), ask, and check every answer at two depths. Each cited chunk opens under the answer. A source panel shows the whole cited section with the passage the model read highlighted, its pages, the license and a link to the book online. New `qa.passages()` and `models.Passage`, so the page only calls and lays out.
 
+### Changed
+- Web chat layout follows the screen. Chat and source panel take their height from the window, so the question box stays in view. On a phone the header shrinks, the panel goes under the chat, and picking a source scrolls the page to it.
+
 ### Fixed
 - Ingestion (findings #20, #21): an untitled table whose first row spans every column takes it as its title (new Cleaner step `title_from_spanning_row`, after the intro rule); multiple-choice quiz sections, recognised from their content, get the role `quiz` and are not searched. Only the Pressbooks book changes: untitled tables 8 → 2, 4 quiz sections excluded.
 
