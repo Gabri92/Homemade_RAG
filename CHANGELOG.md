@@ -21,6 +21,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - Web chat layout follows the screen. Chat and source panel take their height from the window, so the question box stays in view. On a phone the header shrinks, the panel goes under the chat, and picking a source scrolls the page to it.
 
 ### Fixed
+- Web chat: the chat and the question box share one box, and the document menu has its own box under it (they were merged into one form).
 - Web chat fits the window with no page scroll, at any size: the page is a flex layout (`fill_height`) where only the chat and the source panel grow, and long text scrolls inside them instead of fixed pixel offsets. The document header moves to the top of the chat column, so on a phone the header, menu, chat and question box fit one screen, and on a wide screen the source panel starts at the top.
 - Ingestion (findings #20, #21): an untitled table whose first row spans every column takes it as its title (new Cleaner step `title_from_spanning_row`, after the intro rule); multiple-choice quiz sections, recognised from their content, get the role `quiz` and are not searched. Only the Pressbooks book changes: untitled tables 8 → 2, 4 quiz sections excluded.
 
