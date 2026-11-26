@@ -3,12 +3,16 @@
 from pathlib import Path
 
 import gradio as gr
+import numpy as np
 
 from homerag.chat import ChatDocument, build_app, header, respond, source_panel
-from homerag.config import DocumentEntry
-from homerag.models import Block, Book, Citation, Passage, Section
-from tests.unit.test_qa import BASE, BUILD, CFG, CHUNKS, FakeLLM, resources
+from homerag.chunking import BLOCK_SEPARATOR
+from homerag.config import DocumentEntry, load_experiment
+from homerag.index import VectorIndex
+from homerag.models import Block, Book, Chunk, Citation, Passage, Section, SectionRef
+from tests.conftest import FakeLLM, fake_resources
 
+CFG = load_experiment(Path("configs/experiments/baseline.yaml"))
 ENTRY = DocumentEntry(
     title="Synthetic Training Book",
     author="A. Author",
@@ -18,35 +22,35 @@ ENTRY = DocumentEntry(
     config=Path("configs/experiments/baseline.yaml"),
 )
 QUESTION = "How long is the base period?"
-# The two sections the synthetic chunks of test_qa were cut from.
+
+BASE = SectionRef("base", ("Training periods", "Base"))
+BUILD = SectionRef("build", ("Training periods", "Build"))
+# A synthetic book and two chunks cut from it: the second runs from "base" into "build".
 BOOK = Book(
     "b",
     (
-        Section(
-            "base",
-            "Base",
-            2,
-            BASE.path,
-            "body",
-            True,
-            (
-                Block("paragraph", CHUNKS[0].text, "ch.xhtml"),
-                Block("paragraph", "Synthetic text across base and", "ch.xhtml"),
-            ),
-        ),
-        Section(
-            "build", "Build", 2, BUILD.path, "body", True, (Block("paragraph", "build.", "x"),)
-        ),
+        Section("base", "Base", 2, BASE.path, "body", True, (
+            Block("paragraph", "Base lasts eight synthetic weeks.", "ch.xhtml"),
+            Block("paragraph", "Then comes", "ch.xhtml"),
+        )),
+        Section("build", "Build", 2, BUILD.path, "body", True, (
+            Block("paragraph", "the build period.", "ch.xhtml"),
+        )),
     ),
+)  # fmt: skip
+CHUNKS = (
+    Chunk("base#1", (BASE,), "Base lasts eight synthetic weeks.", "12"),
+    Chunk("base#2", (BASE, BUILD), f"Then comes{BLOCK_SEPARATOR}the build period.", None),
 )
+INDEX = VectorIndex(CHUNKS, np.array([[1.0, 0.0], [0.6, 0.8]], dtype=np.float32))
 
 
 def document(reply: str) -> ChatDocument:
-    return ChatDocument(ENTRY, CFG, resources(FakeLLM(reply)), BOOK)
+    return ChatDocument(ENTRY, CFG, fake_resources(INDEX, FakeLLM(reply), CFG.language_gate), BOOK)
 
 
 def test_respond_adds_the_turn_with_each_cited_chunk_and_its_panel() -> None:
-    history, labels, panels = respond(QUESTION, [], document("Weeks [1]."))
+    history, labels, panels = respond(QUESTION, [], document("Eight weeks [1]."))
 
     assert [m["role"] for m in history] == ["user", "assistant", "assistant"]
     assert "$0.0004 (paid)" in history[1]["content"]  # the cost under the answer
@@ -60,11 +64,13 @@ def test_respond_ignores_an_empty_question() -> None:
     assert respond("   ", [], document("never used")) == ([], [], {})
 
 
-def test_a_chunk_across_two_sections_opens_once_in_chat_and_twice_in_the_panel() -> None:
-    history, labels, _ = respond(QUESTION, [], document("Both [2]."))
+def test_a_chunk_across_two_sections_opens_once_per_section_in_the_panel() -> None:
+    history, labels, panels = respond(QUESTION, [], document("Then build [2]."))
 
     assert len(history) == 3
     assert labels == ["[2] Training periods > Base", "[2] Training periods > Build"]
+    assert "<mark>Then comes</mark>" in panels[labels[0]]
+    assert "<mark>the build period.</mark>" in panels[labels[1]]
 
 
 def test_panel_escapes_the_text_and_links_the_book_and_license() -> None:
