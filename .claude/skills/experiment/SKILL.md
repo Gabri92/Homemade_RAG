@@ -13,7 +13,7 @@ Every change to the RAG pipeline is a measured experiment (CLAUDE.md rule 2). Th
 - **Base**: the current best config. It is `configs/experiments/baseline.yaml` until an ADR names a winning config; check `docs/adr/` for the latest "winning config" decision.
 - **One variable**: state the hypothesis ("structure-aware chunking improves `table`") and the single setting that changes. Two settings at once means two experiments.
 - **Code first, if needed**: a new strategy is a function in its registry (`CHUNKERS`, `RETRIEVERS`, ...) with tests, following `docs/steering/structure.md`. It is committed before the experiment, as its own `feat:` commit.
-- **Cost**: a full run costs about $1 the first time (answers + judge); only the answers that change are paid again. A retrieval-only run is free (`--retrieval-only`): use it when the change cannot affect answers beyond retrieval and the user agrees.
+- **Cost**: a full run costs about one US dollar the first time (answers + judge); only the answers whose prompt changes are paid again. A change to chunking or to the embedding model changes the chunks, so every answer is paid again. A retrieval-only run is free (`--retrieval-only`): use it when the change cannot affect answers beyond retrieval and the user agrees.
 - Tell the user the plan and the expected cost in a few lines, and wait for a yes before any paid run.
 
 ## 2. Branch and config
