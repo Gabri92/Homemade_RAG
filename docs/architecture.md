@@ -180,7 +180,7 @@ Every external library lives in a single module (see §8): changing it touches o
 | Generation LLM | Claude (`claude-sonnet-5-5`) via the `anthropic` SDK | — |
 | Judge LLM (eval) | Claude (`claude-opus-5-5`) | — |
 | Config | YAML + `pydantic` | — |
-| UI | CLI → web demo with Streamlit/Gradio (Phase 4) | — |
+| UI | CLI, then a web chat with Gradio (Phase 4, ADR 0011) | — |
 
 **Long-context baseline:** besides RAG, we implement a `Generator` that receives **the whole book** in context (with prompt caching), if it fits in the model's window. Comparing it with RAG in the eval is the most instructive way to understand when RAG is really needed.
 

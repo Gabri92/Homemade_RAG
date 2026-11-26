@@ -13,6 +13,7 @@
 | Language detection | `lingua-py` (language gate: English only) |
 | Extraction | `ebooklib` + `beautifulsoup4` (ePub), `pymupdf` (PDF) |
 | CLI | `typer` |
+| Web chat | `gradio` (local; ADR 0011) |
 | Tests | `pytest` |
 | Quality | `ruff` (lint + format), `mypy --strict`, `pre-commit` |
 
@@ -37,10 +38,11 @@ uv run homerag eval check                # validate eval/datasets/golden.jsonl a
 uv run homerag index [--config configs/experiments/<name>.yaml]  # chunk + embed -> data/index/ (reused if up to date)
 uv run homerag search "question" [--text]  # retrieval only: ranked chunks, no LLM
 uv run homerag ask "question"            # single Q&A
+uv run homerag chat                      # web chat on http://127.0.0.1:7860 (documents in configs/documents.yaml)
 uv run homerag eval run --config configs/experiments/<name>.yaml
 uv run homerag eval compare <run_a> <run_b>
 ```
-> Available now: `dump`, `ingest`, `inspect`, `sections`, `eval check`, `index`, `search`, `ask`, `eval run` (gate, retrieval, answers graded by the judge; `--retrieval-only` for the free loop), `eval compare`. `uv run homerag --help` lists the existing commands. Task-oriented cheat sheet of what is available now: `docs/commands.md` (keep it aligned when commands change).
+> Available now: `dump`, `ingest`, `inspect`, `sections`, `eval check`, `index`, `search`, `ask`, `chat`, `eval run` (gate, retrieval, answers graded by the judge; `--retrieval-only` for the free loop), `eval compare`. `uv run homerag --help` lists the existing commands. Task-oriented cheat sheet of what is available now: `docs/commands.md` (keep it aligned when commands change).
 
 ## Secrets and configuration
 - `ANTHROPIC_API_KEY` and the like only in `.env` (gitignored; `.env.example` lists the variables), read through `pydantic-settings` as `SecretStr`, never logged. Use a key from a Console workspace dedicated to this project, with a spending limit; the shared demo gets its own key. `.claude/settings.json` denies Claude Code reading `.env`.

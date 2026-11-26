@@ -47,7 +47,7 @@ An evaluation harness sends the golden questions through the query pipeline and 
 | 2 | Golden dataset format and validation | ✅ v0.3.0 |
 | 3a | Naive RAG baseline: retrieval + its metrics | ✅ v0.4.0 |
 | 3b | Naive RAG baseline: generation + judge | ✅ v0.5.0 |
-| 4a | Public demo: web chat over curated documents | in progress |
+| 4a | Public demo: web chat over curated documents | in progress: local web chat done |
 | 4b | Document upload in the demo (planned along the way) | planned |
 | 5–8 | Retrieval and generation experiments, external baselines, UI improvements (optional) | planned |
 
@@ -72,6 +72,8 @@ uv run homerag index                           # chunk + embed -> data/index/
 uv run homerag search "How long is the base period?"   # retrieval only, free
 uv run homerag ask "How long is the base period?"      # answer with citations (Claude API)
 ```
+
+The web chat (`uv run homerag chat`, http://127.0.0.1:7860) runs on the openly licensed document of the demo: build its index first with `uv run homerag index --config configs/experiments/exercise-science-baseline.yaml` (download and ingestion in `eval/datasets/exercise-science.md`). Every citation opens next to the answer, and a source panel shows the whole cited section with the passage the model read highlighted.
 
 `.env` is gitignored and refused by a pre-commit hook: the key never reaches the repository.
 
