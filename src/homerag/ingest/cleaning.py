@@ -122,11 +122,35 @@ def remove_repeated_headings(blocks: list[Block]) -> list[Block]:
     return result
 
 
+def title_from_spanning_row(blocks: list[Block]) -> list[Block]:
+    """#20: a table still untitled whose first row is one cell spanning every column.
+
+    After merged cells are expanded, that cell repeats in each column ("| T | T |"):
+    it is the table's title. Runs after #9, so an intro paragraph wins and the row stays
+    (in some tables it is a group label, not a title).
+    """
+    return [_with_spanning_title(b) if _is_untitled_table(b, b.source) else b for b in blocks]
+
+
+def _with_spanning_title(block: Block) -> Block:
+    first_row, separator, *rows = block.text.split("\n")
+    cells = [c.strip() for c in _PIPE.split(first_row.strip().strip("|"))]
+    if len(cells) < _MIN_SPANNED_COLUMNS or len(set(cells)) > 1 or not rows:
+        return block  # one column, different cells, or no row left to be the header
+    header, *body = rows
+    return replace(block, text="\n".join([cells[0], header, separator, *body]))
+
+
+_PIPE = re.compile(r"(?<!\\)\|")  # a cell separator, not an escaped pipe in the text
+_MIN_SPANNED_COLUMNS = 2  # a one-column table has no spanning row to tell apart
+
+
 CLEANING_STEPS: list[CleaningStep] = [
     remove_repeated_headings,
     remove_pull_quotes,
     merge_continued_tables,
     attach_intro_to_untitled_tables,
+    title_from_spanning_row,
 ]
 
 
