@@ -1,7 +1,7 @@
 """Question answering: language gate -> retrieval -> grounded generation with citations.
 
 `answer(question, resources, cfg) -> Answer` is the entry point used by the CLI, the eval
-runner and, later, the chat UI. The model sees the retrieved chunks as numbered sources and
+runner and the web chat. The model sees the retrieved chunks as numbered sources and
 cites them as "[n]"; citations are then built from the chunks' metadata, never from model
 text, so a citation always points at a real section (ADR 0007).
 """
@@ -11,11 +11,12 @@ import re
 from dataclasses import dataclass
 from html import escape
 
+from homerag.chunking import BLOCK_SEPARATOR, section_text
 from homerag.config import ExperimentConfig, Settings
 from homerag.index import Embed, VectorIndex, load_embedder_for, open_index
 from homerag.language import NOTICE, Detector, build_detector, is_english
 from homerag.llm import LLM, LLMRequest, anthropic_llm, cached, load_prompt
-from homerag.models import Answer, Citation, RetrievedChunk
+from homerag.models import Answer, Book, Citation, Passage, RetrievedChunk, Usage
 from homerag.retrieval import RETRIEVERS
 
 logger = logging.getLogger(__name__)
@@ -113,18 +114,64 @@ def format_answer(result: Answer) -> str:
     lines = [result.text]
     if result.citations:
         lines += ["", "Sources:"]
-        lines += [
-            f"  [{c.source}] {' > '.join(c.section_path)}" + (f", p. {c.page}" if c.page else "")
-            for c in result.citations
-        ]
+        lines += [f"  {format_citation(c)}" for c in result.citations]
     if result.usage:
-        u = result.usage
-        paid = "cached, not paid again" if u.cached else "paid"
-        lines += [
-            "",
-            f"{u.model}: {u.input_tokens} in, {u.output_tokens} out, ${u.cost_usd:.4f} ({paid})",
-        ]
+        lines += ["", format_usage(result.usage)]
     return "\n".join(lines) + "\n"
+
+
+def format_citation(citation: Citation) -> str:
+    """ "[2] Chapter > Section, p. 12": how a citation is named to the reader."""
+    page = f", p. {citation.page}" if citation.page else ""
+    return f"[{citation.source}] {' > '.join(citation.section_path)}{page}"
+
+
+def format_usage(usage: Usage) -> str:
+    """ "model: 900 in, 120 out, $0.0045 (paid)": what one answer used and cost."""
+    paid = "cached, not paid again" if usage.cached else "paid"
+    return (
+        f"{usage.model}: {usage.input_tokens} in, {usage.output_tokens} out, "
+        f"${usage.cost_usd:.4f} ({paid})"
+    )
+
+
+def passages(result: Answer, book: Book) -> tuple[Passage, ...]:
+    """Each citation of an answer as its whole section, with the cited chunk's part marked.
+
+    This is what lets a reader who does not know the document check the answer: the claim
+    next to "[n]" must be in the marked text, which is exactly what the model read.
+    """
+    sections = {section.id: section for section in book.sections}
+    chunks = {r.chunk.id: r.chunk for r in result.retrieved}
+    found = []
+    for citation in result.citations:
+        text = section_text(sections[citation.section_id])
+        start, end = read_span(text, chunks[citation.chunk_id].text)
+        found.append(Passage(citation, text[:start], text[start:end], text[end:]))
+    return tuple(found)
+
+
+def read_span(section: str, chunk: str) -> tuple[int, int]:
+    """Where `chunk` overlaps `section`, both cut from the same running text (`chunking.py`).
+
+    A chunk lies inside the section, covers it whole, starts in it and runs into the next
+    sections, or starts earlier and ends in it. The last two meet the section at a block
+    separator. Returns (0, 0) if they do not overlap, which only a stale index can cause.
+    """
+    if (start := section.find(chunk)) >= 0:
+        return start, start + len(chunk)
+    if section in chunk:
+        return 0, len(section)
+    cuts = [i for i in range(len(chunk)) if chunk.startswith(BLOCK_SEPARATOR, i)]
+    for cut in reversed(cuts):  # the longest head of the chunk that ends the section
+        if cut and section.endswith(chunk[:cut]):
+            return len(section) - cut, len(section)
+    for cut in cuts:  # the longest tail of the chunk that starts the section
+        tail = chunk[cut + len(BLOCK_SEPARATOR) :]
+        if tail and section.startswith(tail):
+            return 0, len(tail)
+    logger.warning("chunk not found in its section: is the index up to date?")
+    return 0, 0
 
 
 def _section_label(result: RetrievedChunk) -> str:

@@ -1,13 +1,35 @@
+import re
 from pathlib import Path
 
 import numpy as np
+import pytest
 
-from homerag.config import load_experiment
+from homerag.chunking import BLOCK_SEPARATOR, fixed_size_chunks, section_text
+from homerag.config import ChunkingConfig, load_experiment
 from homerag.index import VectorIndex, Vectors
 from homerag.language import NOTICE, build_detector
 from homerag.llm import Completion, LLMRequest
-from homerag.models import Chunk, RetrievedChunk, SectionRef, Usage
-from homerag.qa import REFUSAL_NOTICE, Resources, answer, build_user_message, cite, format_answer
+from homerag.models import (
+    Answer,
+    Block,
+    Book,
+    Chunk,
+    Citation,
+    RetrievedChunk,
+    Section,
+    SectionRef,
+    Usage,
+)
+from homerag.qa import (
+    REFUSAL_NOTICE,
+    Resources,
+    answer,
+    build_user_message,
+    cite,
+    format_answer,
+    passages,
+    read_span,
+)
 
 CFG = load_experiment(Path("configs/experiments/baseline.yaml"))
 
@@ -105,3 +127,59 @@ def test_format_answer_lists_sources_and_cost() -> None:
 
     assert "[1] Training periods > Base, p. 12" in text
     assert "$0.0004 (paid)" in text
+
+
+# --- passages: what the source panel shows ------------------------------------------------
+
+SEP = BLOCK_SEPARATOR
+
+
+@pytest.mark.parametrize(
+    ("section", "chunk", "expected"),
+    [
+        (f"aa{SEP}bb cc{SEP}dd", "bb cc", "bb cc"),  # inside the section
+        (f"bb{SEP}cc", f"aa{SEP}bb{SEP}cc{SEP}dd", f"bb{SEP}cc"),  # covers it whole
+        (f"aa{SEP}bb cc", f"b cc{SEP}dd{SEP}ee", "b cc"),  # starts in it, runs on
+        (f"aa bb{SEP}cc", f"zz{SEP}yy{SEP}aa bb", "aa bb"),  # starts earlier, ends in it
+        ("aa bb", "zz", ""),  # no overlap (a stale index): nothing marked
+    ],
+)
+def test_read_span_finds_the_part_of_the_chunk_in_the_section(
+    section: str, chunk: str, expected: str
+) -> None:
+    start, end = read_span(section, chunk)
+
+    assert section[start:end] == expected
+
+
+def test_every_chunk_is_marked_in_every_section_it_covers() -> None:
+    def spans(text: str) -> list[tuple[int, int]]:
+        return [(m.start(), m.end()) for m in re.finditer(r"\S+", text)]
+
+    def make(sid: str, *texts: str) -> Section:
+        blocks = tuple(Block("paragraph", t, "ch.xhtml") for t in texts)
+        return Section(sid, sid, 1, (sid,), "body", True, blocks)
+
+    text = " ".join(f"w{i}" for i in range(9))
+    book = Book("b", (make("a", text, text), make("b", text), make("c", text, text)))
+    cfg = ChunkingConfig(strategy="fixed", size_tokens=12, overlap_tokens=3)
+    sections = {s.id: section_text(s) for s in book.sections}
+
+    for chunk in fixed_size_chunks(book, cfg, spans):
+        for ref in chunk.sections:
+            start, end = read_span(sections[ref.id], chunk.text)
+            assert end > start
+            assert sections[ref.id][start:end] in chunk.text
+
+
+def test_passages_split_each_cited_section_around_what_the_model_read() -> None:
+    intro = Block("paragraph", "Intro.", "ch.xhtml")
+    block = Block("paragraph", CHUNKS[0].text, "ch.xhtml")
+    book = Book("b", (Section("base", "Base", 2, BASE.path, "body", True, (intro, block)),))
+    citation = Citation(1, "base#1", "base", BASE.path, "12")
+    result = Answer(QUESTION, "Eight weeks [1].", (citation,), (RETRIEVED[0],))
+
+    (passage,) = passages(result, book)
+
+    assert passage.citation == citation
+    assert (passage.before, passage.read, passage.after) == ("Intro." + SEP, CHUNKS[0].text, "")

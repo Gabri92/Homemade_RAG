@@ -132,3 +132,35 @@ def load_experiment(path: Path) -> ExperimentConfig:
         return ExperimentConfig.model_validate(data)
     except ValidationError as error:
         raise ValueError(f"{path}: invalid experiment config\n{error}") from error
+
+
+class DocumentEntry(_Section):
+    """A document offered in the web chat: its experiment config and what the reader is told
+    about it (title, author, license and where to read it, ADR 0010)."""
+
+    title: str = Field(min_length=1)
+    author: str = Field(min_length=1)
+    url: str = Field(pattern=r"^https://")
+    license: str = Field(min_length=1)
+    license_url: str = Field(pattern=r"^https://")
+    config: Path
+
+
+class DocumentCatalog(_Section):
+    documents: tuple[DocumentEntry, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _unique_titles(self) -> Self:
+        titles = [d.title for d in self.documents]
+        if len(set(titles)) != len(titles):
+            raise ValueError("document titles must be unique: the chat picks a document by title")
+        return self
+
+
+def load_documents(path: Path) -> tuple[DocumentEntry, ...]:
+    """Read and validate the list of documents the web chat offers."""
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    try:
+        return DocumentCatalog.model_validate(data).documents
+    except ValidationError as error:
+        raise ValueError(f"{path}: invalid document list\n{error}") from error

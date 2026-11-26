@@ -12,7 +12,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from homerag.config import ChunkingConfig
-from homerag.models import Book, Chunk, SectionRef
+from homerag.models import Book, Chunk, Section, SectionRef
 
 TokenSpans = Callable[[str], list[tuple[int, int]]]
 """Maps a text to the (start, end) character offsets of each of its tokens."""
@@ -58,6 +58,11 @@ def fixed_size_chunks(book: Book, cfg: ChunkingConfig, token_spans: TokenSpans) 
         chunk_id = f"{sections[0].id}#{numbers[sections[0].id]}"
         chunks.append(Chunk(chunk_id, sections, text[start:end], covered[0].page))
     return chunks
+
+
+def section_text(section: Section) -> str:
+    """A section's blocks joined as in the running text, so a chunk's text can be found in it."""
+    return BLOCK_SEPARATOR.join(block.text for block in section.blocks)
 
 
 def _running_text(book: Book) -> tuple[str, list[_Piece]]:

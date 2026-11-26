@@ -3,7 +3,7 @@ from typing import get_args
 
 import pytest
 
-from homerag.chunking import BLOCK_SEPARATOR, CHUNKERS, fixed_size_chunks
+from homerag.chunking import BLOCK_SEPARATOR, CHUNKERS, fixed_size_chunks, section_text
 from homerag.config import ChunkingConfig
 from homerag.models import Block, Book, Section
 
@@ -99,3 +99,11 @@ def test_every_chunker_gives_unique_ids_and_keeps_all_the_words(name: str) -> No
     assert len({c.id for c in chunks}) == len(chunks)
     expected = set(words("a", 30).split()) | set(words("b", 17).split())
     assert {w for c in chunks for w in c.text.split()} == expected
+
+
+def test_section_text_joins_blocks_as_the_running_text_does() -> None:
+    book = Book("b", (section("a", "one two", "three"),))
+
+    (chunk,) = fixed_size_chunks(book, cfg(10, 0), word_spans)
+
+    assert section_text(book.sections[0]) == "one two" + BLOCK_SEPARATOR + "three" == chunk.text

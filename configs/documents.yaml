@@ -1,0 +1,10 @@
+# Documents offered in the web chat (`homerag chat`), in the order of the menu.
+# Each one points at the experiment config that ingests, indexes and answers on it.
+# For now only openly licensed documents (ADR 0010): the reference book stays on the CLI.
+documents:
+  - title: Introduction to Exercise Science for Fitness Professionals
+    author: Amanda Shelton (ed.), MHCC Library Press
+    url: https://mhcc.pressbooks.pub/hpe172
+    license: CC BY 4.0
+    license_url: https://creativecommons.org/licenses/by/4.0/
+    config: configs/experiments/exercise-science-baseline.yaml

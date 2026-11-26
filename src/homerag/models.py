@@ -117,6 +117,18 @@ class Citation:
 
 
 @dataclass(frozen=True, slots=True)
+class Passage:
+    """A cited section as a reader checks it: its whole text, split around the part of the
+    cited chunk that falls in it (`read`, what the model saw). `before + read + after` is the
+    section text."""
+
+    citation: Citation
+    before: str
+    read: str
+    after: str
+
+
+@dataclass(frozen=True, slots=True)
 class Usage:
     """What one LLM call used and cost. `model` is the model that answered: with refusal
     fallbacks it may differ from the one requested. `cached` means it came from the on-disk
