@@ -11,7 +11,8 @@ from collections.abc import Callable
 import numpy as np
 
 from homerag.config import ExperimentConfig, RetrievalConfig
-from homerag.index import Embed, VectorIndex, load_embedder_for, open_index
+from homerag.embedding import Embed, load_embedder_for
+from homerag.index import VectorIndex, open_index
 from homerag.models import RetrievedChunk
 
 Retriever = Callable[[str, VectorIndex, Embed, RetrievalConfig], list[RetrievedChunk]]

@@ -8,7 +8,7 @@ A run folder holds `config.yaml`, `results.jsonl` (one row per golden question),
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any  # JSON rows and metadata: values of mixed types, checked when read
 
 import yaml
 

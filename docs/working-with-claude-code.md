@@ -62,4 +62,4 @@ A **subagent** is a Markdown file in `.claude/agents/` that defines a specialise
 
 ## Planned
 
-- **`conventions-reviewer`** (subagent): reviews a diff against `docs/steering/conventions.md` and `structure.md` only (KISS, one library per module, tests in the right folder, no logic in `cli.py`). Read-only. A narrow brief makes it stricter than a general review. Added when reviews start to repeat the same remarks.
+- **`conventions-reviewer`** (subagent): reviews a diff against `docs/steering/conventions.md` and `structure.md` only (KISS, one library per module, tests in the right folder, no logic in `interfaces/`). Read-only. Part of these rules is already checked by `tests/unit/test_architecture.py` (ADR 0012). A narrow brief makes it stricter than a general review. Added when reviews start to repeat the same remarks.

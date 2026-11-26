@@ -22,13 +22,13 @@ src/homerag/
     quality.py   #   generic quality report (no expected values): `homerag inspect`
     dump.py      #   format_blocks, format_sections for inspection
   chunking.py    # chunking strategies (functions) + CHUNKERS registry: fixed
-  index.py       # device choice, tokenizer offsets, EMBEDDERS + on-disk cache, vector index save/load (BM25 with 5.3)
+  embedding.py   # device choice, tokenizer offsets, EMBEDDERS + on-disk cache, load_embedder_for
+  index.py       # vector index: build, save, load, ensure_index, open_index (BM25 with 5.3)
   retrieval.py   # RETRIEVERS: dense (then bm25, RRF fusion, rerank in Phase 5); search, format_results
   language.py    # language gate: build_detector, is_english(text, detector, cfg), NOTICE
   llm.py         # the single access point to the Anthropic API: LLMRequest -> Completion, cache, cost, prompts
   qa.py          # answer(question, resources, cfg) -> Answer: gate -> retrieve -> generate -> citations;
                  #   passages(answer, book): each cited section with the chunk the model read marked
-  chat.py        # local web chat (Gradio, ADR 0011): document menu, chat, source panel; the only module importing gradio
   prompts/       # prompts as versioned .md files (answer_v1.md, judge_v1.md)
   eval/          # evaluation harness
     dataset.py   #   golden set: GoldenQuestion schema, load_golden, check_references
@@ -36,7 +36,9 @@ src/homerag/
     judge.py     #   LLM-as-judge: Verdict (structured outputs), judge, verdict_scores
     run.py       #   runs an experiment on the golden set: gate, retrieval, answers + judge (`retrieval_only` skips them)
     report.py    #   run files: save_run, load_run, format_*, compare_runs (RUN_FORMAT)
-  cli.py         # typer commands: dump, ingest, inspect, sections, index, search, ask, chat, eval check, eval run, eval compare
+  interfaces/    # what talks to a person (ADR 0012); the core never imports it
+    cli.py       #   typer commands: dump, ingest, inspect, sections, index, search, ask, chat, eval check, eval run, eval compare
+    chat.py      #   local web chat (Gradio, ADR 0011): document menu, chat, source panel
 .claude/               # Claude Code project settings: settings.json (hooks, deny reading .env), hooks/, agents/eval-analyst.md, skills/experiment/
 configs/experiments/   # one YAML per experiment: baseline.yaml is the Phase 3 starting point
 configs/documents.yaml # documents offered in the web chat: title, author, license, URL, experiment config
@@ -46,8 +48,9 @@ eval/runs/             # run outputs (gitignored)
 data/                  # raw/, processed/, index/, cache/ (gitignored)
 notes/                 # personal notes: prompting, building in public (gitignored)
 tests/                 # one kind of test = one folder (see conventions.md, "Tests")
-  conftest.py          #   shared fixtures and helpers (make_epub: synthetic mini-ePub; blocks_of, page_marker)
-  unit/                #   fast, offline; mirrors src/homerag/ (unit/ingest/test_cleaning.py, unit/ingest/epub/test_html.py, ...)
+  conftest.py          #   shared fixtures and fakes (make_epub, blocks_of, page_marker; FakeLLM, fake_resources)
+  unit/                #   fast, offline; mirrors src/homerag/ (unit/ingest/test_cleaning.py, unit/interfaces/test_cli.py, ...)
+    test_architecture.py #   the rules below, checked on the imports: core vs interfaces, one library per module
   book/                #   on the real book: `book` marker and automatic skip in book/conftest.py
     expectations.py    #     expected values for the book (numbers and short titles only)
     test_golden.py     #     golden-set section ids exist in the current ingestion (skipped until golden.jsonl exists)
@@ -58,8 +61,10 @@ tests/                 # one kind of test = one folder (see conventions.md, "Tes
 ```
 
 ## Rules
-- **Dependencies flow one way:** `cli` / `chat` → `qa` / `eval` → the rest. `models.py` imports no other project module.
-- **One external library, one module:** `anthropic` only in `llm.py`, `sentence_transformers`, `transformers` and `torch` only in `index.py` / `retrieval.py`, `lingua` only in `language.py`, `gradio` only in `chat.py`. Replacing a technology then touches one file.
+- **Interfaces apart from the core (ADR 0012):** everything that talks to a person lives in `interfaces/` (the CLI, the web chat, later the hosted demo). An interface reads input, calls the core's public functions (`qa`, `eval`, `ingest`, `index`, `retrieval`) and lays out what comes back, with no RAG logic of its own. The core never imports `interfaces/`.
+- **Dependencies flow one way:** `interfaces` → `qa` / `eval` → the rest. `models.py` imports no other project module.
+- **One external library, one module:** `anthropic` only in `llm.py`, `sentence_transformers`, `transformers` and `torch` only in `embedding.py`, `lingua` only in `language.py`, `ebooklib` and `bs4` only in `ingest/epub/`, `gradio` only in `interfaces/chat.py`, `typer` only in `interfaces/cli.py`. Replacing a technology then touches one file.
+- These rules are checked by `tests/unit/test_architecture.py`: a new external library gets its line in `OWNERS` there.
 - **Interchangeable strategies = functions with the same signature in a dictionary.** Example:
   ```python
   CHUNKERS: dict[str, Callable[[Book, ChunkingConfig, TokenSpans], list[Chunk]]] = {
@@ -68,8 +73,8 @@ tests/                 # one kind of test = one folder (see conventions.md, "Tes
   }
   ```
   The config picks the key. No classes, no factories.
-- **Split a module only when needed:** beyond ~300 lines, or when it holds two things that change for different reasons. At that point it becomes a package (`chunking/`) with the same name.
-- **No logic in `cli.py`:** it reads arguments, calls `qa` or `eval`, prints.
+- **Split a module only when needed:** beyond ~300 lines, or when it holds two things that change for different reasons. At that point it becomes a package (`chunking/`) with the same name, or, when the two things are separate concepts, two modules named after them (`index.py` → `embedding.py` + `index.py`, ADR 0012).
+- **No logic in the interfaces:** `cli.py` reads arguments, calls the core, prints; `chat.py` reads the page, calls the core, lays out.
 
 ## When to grow the structure
 
@@ -106,5 +111,6 @@ To be introduced at the start of chunking, not before (YAGNI). They are for **ex
 | A new cleaning rule | a function in `ingest/cleaning.py` + an entry in the `CLEANING_STEPS` sequence |
 | A new metric | a pure function in `eval/metrics.py` |
 | A new prompt or prompt version | a new file in `prompts/` |
-| A new command | `cli.py` |
+| A new command | `interfaces/cli.py` |
+| A new way to reach the pipeline (web page, hosted demo, API) | a module in `interfaces/` |
 | A new data type | `models.py` |

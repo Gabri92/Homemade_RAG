@@ -6,9 +6,8 @@ import pytest
 
 from homerag.chunking import BLOCK_SEPARATOR, fixed_size_chunks, section_text
 from homerag.config import ChunkingConfig, load_experiment
-from homerag.index import VectorIndex, Vectors
-from homerag.language import NOTICE, build_detector
-from homerag.llm import Completion, LLMRequest
+from homerag.index import VectorIndex
+from homerag.language import NOTICE
 from homerag.models import (
     Answer,
     Block,
@@ -18,7 +17,6 @@ from homerag.models import (
     RetrievedChunk,
     Section,
     SectionRef,
-    Usage,
 )
 from homerag.qa import (
     REFUSAL_NOTICE,
@@ -30,6 +28,7 @@ from homerag.qa import (
     passages,
     read_span,
 )
+from tests.conftest import FakeLLM, fake_resources
 
 CFG = load_experiment(Path("configs/experiments/baseline.yaml"))
 
@@ -43,27 +42,11 @@ RETRIEVED = [RetrievedChunk(chunk, 0.9 - i / 10, i + 1) for i, chunk in enumerat
 QUESTION = "How long should the base period last for a beginner?"
 
 
-def embed(texts: list[str]) -> Vectors:
-    return np.array([[1.0, 0.0]] * len(texts), dtype=np.float32)
-
-
 INDEX = VectorIndex(CHUNKS, np.array([[1.0, 0.0], [0.6, 0.8]], dtype=np.float32))
 
 
-class FakeLLM:
-    """Records requests and replies with a fixed text and stop reason."""
-
-    def __init__(self, text: str, stop_reason: str = "end_turn") -> None:
-        self.text, self.stop_reason = text, stop_reason
-        self.requests: list[LLMRequest] = []
-
-    def __call__(self, request: LLMRequest) -> Completion:
-        self.requests.append(request)
-        return Completion(self.text, self.stop_reason, Usage(request.model, 100, 20, 0.0004))
-
-
 def resources(llm: FakeLLM) -> Resources:
-    return Resources(INDEX, embed, build_detector(CFG.language_gate), llm)
+    return fake_resources(INDEX, llm, CFG.language_gate)
 
 
 def test_user_message_numbers_the_sources_with_section_and_page() -> None:

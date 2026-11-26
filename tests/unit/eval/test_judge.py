@@ -6,8 +6,8 @@ import pytest
 from homerag.config import load_experiment
 from homerag.eval.dataset import GoldenQuestion
 from homerag.eval.judge import judge, judge_request, verdict_scores
-from homerag.llm import Completion, LLMRequest
-from homerag.models import Answer, Chunk, RetrievedChunk, SectionRef, Usage
+from homerag.models import Answer, Chunk, RetrievedChunk, SectionRef
+from tests.conftest import FakeLLM
 
 CFG = load_experiment(Path("configs/experiments/baseline.yaml")).judge
 
@@ -25,18 +25,8 @@ RESULT = Answer(QUESTION.question, "Eight weeks [1].", retrieved=(RetrievedChunk
 VERDICT = {"reasoning": "matches", "correctness": "correct", "faithful": True, "declined": False}
 
 
-def fake_llm(text: str, stop_reason: str = "end_turn") -> "FakeLLM":
-    return FakeLLM(text, stop_reason)
-
-
-class FakeLLM:
-    def __init__(self, text: str, stop_reason: str) -> None:
-        self.text, self.stop_reason = text, stop_reason
-        self.requests: list[LLMRequest] = []
-
-    def __call__(self, request: LLMRequest) -> Completion:
-        self.requests.append(request)
-        return Completion(self.text, self.stop_reason, Usage(request.model, 10, 5, 0.02))
+def fake_llm(text: str, stop_reason: str = "end_turn") -> FakeLLM:
+    return FakeLLM(text, stop_reason, cost_usd=0.02)
 
 
 def test_judge_request_holds_question_reference_sources_answer_and_schema() -> None:

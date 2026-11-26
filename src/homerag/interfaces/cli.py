@@ -167,7 +167,7 @@ def chat(
 ) -> None:
     """Open the web chat on this machine: http://127.0.0.1:<port> (calls the Claude API)."""
     # Imported here: gradio takes seconds to import, and only this command needs it.
-    from homerag.chat import launch, open_documents  # noqa: PLC0415
+    from homerag.interfaces.chat import launch, open_documents  # noqa: PLC0415
 
     try:
         opened = open_documents(load_documents(documents), load_settings())

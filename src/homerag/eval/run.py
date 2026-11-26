@@ -18,21 +18,15 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any
+from typing import Any  # JSON rows and metadata: values of mixed types, checked when read
 
 from homerag.config import ExperimentConfig, LanguageGateConfig, load_experiment, load_settings
+from homerag.embedding import Embed, load_embedder_for
 from homerag.eval.dataset import ENGLISH, GoldenQuestion, load_golden
 from homerag.eval.judge import Verdict, judge, verdict_scores
 from homerag.eval.metrics import aggregate, answer_checks, gate_metrics, retrieval_metrics
 from homerag.eval.report import RUN_FORMAT, Metrics, save_run
-from homerag.index import (
-    Embed,
-    VectorIndex,
-    ensure_index,
-    fingerprint,
-    load_embedder_for,
-    open_index,
-)
+from homerag.index import VectorIndex, ensure_index, fingerprint, open_index
 from homerag.language import Detector, build_detector, is_english
 from homerag.llm import LLM, anthropic_llm, cached
 from homerag.models import Answer, RetrievedChunk, Usage
@@ -179,22 +173,8 @@ def run_experiment(
         llm = cached(anthropic_llm(load_settings().anthropic_api_key))
     index_report = ensure_index(cfg)
     index = open_index(cfg)
-    embed = load_embedder_for(cfg.embedding)
-    detector = build_detector(cfg.language_gate)
-    gate_runs = run_gate(questions, detector, cfg.language_gate)
-    retrieval_runs = run_retrieval(questions, index, embed, cfg)
-    generation_runs = (
-        []
-        if llm is None
-        else run_generation(questions, Resources(index, embed, detector, llm), cfg)
-    )
-    metrics = {
-        "retrieval": aggregate((r.question.category, r.metrics) for r in retrieval_runs),
-        "generation": aggregate(
-            (r.question.category, r.metrics) for r in generation_runs if r.metrics
-        ),
-        "gate": {"all": score_gate(gate_runs)},
-    }
+    gate_runs, retrieval_runs, generation_runs = _run_parts(questions, cfg, index, llm)
+    metrics = run_metrics(gate_runs, retrieval_runs, generation_runs)
     retrieved_ids = {r.question.id for r in retrieval_runs}
     skipped: dict[str, int] = dict(
         Counter(q.category for q in questions if q.id not in retrieved_ids)
@@ -205,12 +185,7 @@ def run_experiment(
         "homerag_version": version("homerag"),
         "started_at": started_at.isoformat(timespec="seconds"),
         "retrieval_only": llm is None,
-        "document_fingerprint": fingerprint(cfg.document),
-        "golden": str(golden_path),
-        "golden_fingerprint": fingerprint(golden_path),
-        "index_folder": str(index_report.folder),
-        "index_chunks": len(index.chunks),
-        "multi_section_chunk_share": _multi_section_share(index),
+        **_provenance(cfg.document, golden_path, index_report.folder, index),
         "retrieval_skipped": skipped,
         "cost_usd": cost,
         "seconds": round(time.perf_counter() - start, 1),
@@ -220,6 +195,49 @@ def run_experiment(
     save_run(folder, cfg, rows, metrics, meta)
     gate_errors = [run.question.id for run in gate_runs if not run.correct]
     return RunReport(folder, metrics, gate_errors, skipped, cost)
+
+
+def _run_parts(
+    questions: list[GoldenQuestion], cfg: ExperimentConfig, index: VectorIndex, llm: LLM | None
+) -> tuple[list[GateRun], list[QuestionRun], list[GenerationRun]]:
+    """Gate and retrieval on every question; answers and judge only with an `llm`."""
+    embed = load_embedder_for(cfg.embedding)
+    detector = build_detector(cfg.language_gate)
+    resources = Resources(index, embed, detector, llm) if llm else None
+    return (
+        run_gate(questions, detector, cfg.language_gate),
+        run_retrieval(questions, index, embed, cfg),
+        run_generation(questions, resources, cfg) if resources else [],
+    )
+
+
+def run_metrics(
+    gate_runs: list[GateRun],
+    retrieval_runs: list[QuestionRun],
+    generation_runs: list[GenerationRun],
+) -> dict[str, Metrics]:
+    """Each part's metrics per question category: retrieval, generation, and the gate."""
+    return {
+        "retrieval": aggregate((r.question.category, r.metrics) for r in retrieval_runs),
+        "generation": aggregate(
+            (r.question.category, r.metrics) for r in generation_runs if r.metrics
+        ),
+        "gate": {"all": score_gate(gate_runs)},
+    }
+
+
+def _provenance(
+    document: Path, golden_path: Path, index_folder: Path, index: VectorIndex
+) -> dict[str, object]:
+    """What the run was computed from: the document, the golden set and the index."""
+    return {
+        "document_fingerprint": fingerprint(document),
+        "golden": str(golden_path),
+        "golden_fingerprint": fingerprint(golden_path),
+        "index_folder": str(index_folder),
+        "index_chunks": len(index.chunks),
+        "multi_section_chunk_share": _multi_section_share(index),
+    }
 
 
 def run_cost(runs: list[GenerationRun]) -> dict[str, float]:
