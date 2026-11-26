@@ -111,7 +111,7 @@ def _soup_to_blocks(
 ) -> list[Block]:
     figure_containers = {id(c) for img in soup.find_all("img") if (c := _figure_container(img))}
     blocks: list[Block] = []
-    for element in soup.find_all(_BLOCK_TAGS):
+    for element in soup.find_all(_is_block_element):
         if not isinstance(element, Tag) or _is_nested_content(element, figure_containers):
             continue
         block = _element_to_block(element, source)
@@ -255,15 +255,33 @@ def _has_text(text: str | None) -> bool:
 def _figure_container(img: Tag) -> Tag | None:
     """The small element grouping an image with its caption, if any.
 
-    A parent `div`/`figure` qualifies only if it holds no structure of its own
+    The enclosing `<figure>`, even when the image is wrapped in a `<p>` or `<span>`
+    (#19), else a parent `div`. It qualifies only if it holds no structure of its own
     (headings, tables, other images): otherwise it is a section, not a figure.
     """
-    parent = img.parent
-    if not isinstance(parent, Tag) or parent.name not in _FIGURE_CONTAINERS:
+    figure = img.find_parent("figure")
+    container = figure if figure is not None else img.parent
+    if not isinstance(container, Tag) or container.name not in _FIGURE_CONTAINERS:
         return None
-    if parent.find([*_HEADING_TAGS, "table"]) or len(parent.find_all("img")) > 1:
+    if container.find([*_HEADING_TAGS, "table"]) or len(container.find_all("img")) > 1:
         return None
-    return parent
+    return container
+
+
+_CONTAINER_TAGS = ("div", "section", "figure", "ul", "ol", "dl", "blockquote")
+
+
+def _is_block_element(tag: Tag) -> bool:
+    return tag.name in _BLOCK_TAGS or _is_text_only_div(tag)
+
+
+def _is_text_only_div(tag: Tag) -> bool:
+    """#19: a <div> holding text but no blocks or containers is a paragraph without <p>."""
+    return (
+        tag.name == "div"
+        and tag.find([*_BLOCK_TAGS, *_CONTAINER_TAGS]) is None
+        and bool(tag.get_text().strip())
+    )
 
 
 def _is_nested_content(element: Tag, figure_containers: set[int]) -> bool:
@@ -317,10 +335,15 @@ def _list_item_text(item: Tag) -> str:
 
 
 def _figure_caption(img: Tag) -> str:
-    """Caption of an image: <figcaption>, else the text of its container (the image has none)."""
+    """Caption of an image: the whole text of its <figure> (title and caption, #19);
+    in a `div`, its <figcaption>, else the text of the div (the image has none)."""
     container = _figure_container(img)
     if container is None:
         return ""
+    if container.name == "figure":
+        # Joined part by part: title and caption are separate elements with no space.
+        parts = (" ".join(c.get_text().split()) for c in container)
+        return " ".join(part for part in parts if part)
     figcaption = container.find("figcaption")
     return _text(figcaption if isinstance(figcaption, Tag) else container)
 

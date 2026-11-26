@@ -411,3 +411,28 @@ def test_other_first_divs_say_nothing_about_the_role(make_epub: MakeEpub) -> Non
     path = make_epub([("a.xhtml", '<div class="sidenote"><p>Rest days count.</p></div>')])
 
     assert load_epub(path)[0].role == "body"
+
+
+def test_figure_keeps_title_and_caption_when_the_image_is_wrapped() -> None:
+    blocks = blocks_of(
+        '<figure><div data-type="title">Atrophy</div><p><span><img src="a.png"/></span></p>'
+        "<figcaption>Muscles shrink with disuse.</figcaption></figure><p>After.</p>"
+    )
+
+    assert blocks == [
+        Block("figure", "Atrophy Muscles shrink with disuse.", SOURCE),
+        Block("paragraph", "After.", SOURCE),
+    ]
+
+
+def test_text_only_divs_become_paragraphs() -> None:
+    blocks = blocks_of(
+        '<div class="box"><span>Stretch daily.</span></div>'
+        "<div><div>Inner text.</div><p>A real paragraph.</p></div>"
+    )
+
+    assert [(b.kind, b.text) for b in blocks] == [
+        ("paragraph", "Stretch daily."),
+        ("paragraph", "Inner text."),
+        ("paragraph", "A real paragraph."),
+    ]
