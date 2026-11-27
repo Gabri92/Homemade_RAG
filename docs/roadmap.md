@@ -89,7 +89,10 @@ It is split in two. Most of the risk of a public demo comes from files sent by s
 3. **Web chat** (Streamlit or Gradio, chosen at the start of the phase): pick a document, ask, read the answer with expandable citations (chapter/section + short excerpt). It calls the same `qa.answer()`: no logic in the UI. First on this machine, on the reference book.
    > Status: `homerag chat` with Gradio (ADR 0011), on this machine, on the curated document. Each citation opens in the chat (the whole chunk the model read) and in a source panel (the whole section with that chunk highlighted, the license, and a link to the book online).
 4. **Cost and abuse limits**: a spending limit on the API key in the Anthropic console (the final safety net, independent of the code); a global daily budget in the app (the real ceiling: without accounts, per-visitor limits can be bypassed); per-visitor limits on questions; a clear message when one is reached. Questions are not stored beyond what answering needs, and the page says so.
-5. **Hosting** on a public URL (platform chosen at the start of the phase): secrets only in the platform's secret store; the deployed files are checked so that the reference book and its derivatives are never included.
+5. **Usage metrics**: aggregate counters only, never the text of the questions: visitors per day (counted with a hash of the IP and a salt that changes every day, kept briefly; no IP stored), questions per day per document (suggested question, free question, own API key), cost per question and budget used (the key number of 4a), latency per stage (language gate, embedding, retrieval, generation), messages refused by the language gate and "not enough information" answers (a sign of the wrong document or weak retrieval), score of the top retrieved chunk (low = probably off-topic), limits reached, errors and cold starts. Optional 👍/👎 with a comment; with an explicit opt-in ("save this question and answer to improve the demo, do not enter personal data") the exchange becomes material for the curated documents' golden sets, without it only the count is kept.
+6. **Hosting** on a public URL (platform chosen at the start of the phase): secrets only in the platform's secret store; the deployed files are checked so that the reference book and its derivatives are never included.
+
+Also in the web chat before the public link: **streaming answers**, so the first words appear while the rest is generated (moved up from Phase 8: a visitor waits several seconds for a whole answer).
 
 In local use (the author, on the reference book) a 👍/👎 button saves the interaction as material for new golden set questions.
 
@@ -169,7 +172,6 @@ Same golden set and judge for both: compare quality per question category, citat
 
 Only if the build-in-public phase asks for it; the RAG pipeline and its evaluation come first.
 
-- Streaming answers, so the first words arrive while the rest is generated.
 - Multi-turn conversation in the UI, using the follow-up condensing from Phase 6.
 - Citations you can open: the cited section, with the cited passage highlighted.
 - A page to review the 👍/👎 feedback and turn it into golden set questions.
